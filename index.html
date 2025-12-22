@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Glass Cube Viewer</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.min.js"></script>
+  </head>
+  <body>
+    <div id="ui">
+      <div class="ui-title">Glass Cube Viewer</div>
+      <div class="ui-sub">
+        Pick up to 6 images from your Nicki folder to wrap the cube.
+      </div>
+      <div class="ui-row">
+        <button id="wallet-connect" class="ui-button" type="button">
+          Connect Wallet
+        </button>
+        <button id="wallet-disconnect" class="ui-button is-ghost" type="button">
+          Disconnect
+        </button>
+      </div>
+      <div id="wallet-status" class="ui-hint">Wallet: not connected.</div>
+      <label class="ui-button">
+        Choose images
+        <input id="image-input" type="file" accept="image/*" multiple />
+      </label>
+      <button id="export-html" class="ui-button" type="button">
+        Export HTML
+      </button>
+      <div class="ui-hint">Tip: select multiple files at once.</div>
+    </div>
+    <main id="app"></main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

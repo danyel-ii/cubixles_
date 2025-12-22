@@ -1,0 +1,15 @@
+{
+  "accountAssociation": {
+    "header": "REPLACE_WITH_HEADER",
+    "payload": "REPLACE_WITH_PAYLOAD",
+    "signature": "REPLACE_WITH_SIGNATURE"
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "IceCube",
+    "iconUrl": "https://example.com/icon.png",
+    "homeUrl": "https://example.com",
+    "requiredChains": ["eip155:1", "eip155:11155111"],
+    "requiredCapabilities": ["wallet.getEthereumProvider"]
+  }
+}
