@@ -7,8 +7,8 @@
   "miniapp": {
     "version": "1",
     "name": "IceCube",
-    "iconUrl": "https://example.com/icon.png",
-    "homeUrl": "https://example.com",
+    "iconUrl": "https://via.placeholder.com/256.png?text=IceCube",
+    "homeUrl": "https://cubeless-red.vercel.app/",
     "requiredChains": ["eip155:1", "eip155:11155111"],
     "requiredCapabilities": ["wallet.getEthereumProvider"]
   }
