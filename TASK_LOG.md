@@ -22,4 +22,4 @@
 | T11 — Contract spec | In Progress | IceCubeMinter contract + tests added in contracts/. |
 | T12 — Metadata builder | Open | Embed provenance bundle in tokenURI JSON. |
 | T13 — Storage decision | Open | Decide where metadata/image live. |
-| T14 — Direct mint call | Open | Mint flow via wallet provider. |
+| T14 — Direct mint call | In Progress | Mint UI added; awaiting deployed contract + ABI. |

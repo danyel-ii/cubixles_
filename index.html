@@ -41,6 +41,23 @@
         <div id="nft-selection" class="ui-hint">Selected 0 / 3</div>
         <div id="nft-grid" class="ui-grid"></div>
       </div>
+      <div class="ui-section">
+        <div class="ui-section-title">Mint</div>
+        <div id="mint-status" class="ui-hint">Connect your wallet to mint.</div>
+        <div class="ui-row">
+          <input
+            id="mint-payment"
+            class="ui-input"
+            type="number"
+            min="0"
+            step="0.0001"
+            placeholder="ETH amount"
+          />
+          <button id="mint-submit" class="ui-button" type="button">
+            Mint NFT
+          </button>
+        </div>
+      </div>
     </div>
     <main id="app"></main>
     <script type="module" src="/src/main.js"></script>

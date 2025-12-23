@@ -24,6 +24,7 @@ import { fetchBackgroundDataUrl } from "./app/app-exporter.js";
 import { initWalletUi } from "./wallet/wallet-ui.js";
 import { Buffer } from "buffer";
 import { initNftPickerUi } from "./nft/picker-ui.js";
+import { initMintUi } from "./mint/mint-ui.js";
 
 if (!globalThis.Buffer) {
   globalThis.Buffer = Buffer;
@@ -47,6 +48,7 @@ window.setup = function setup() {
   bindUi();
   initWalletUi();
   initNftPickerUi();
+  initMintUi();
   fetchBackgroundDataUrl();
 };
 

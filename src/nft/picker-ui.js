@@ -60,6 +60,9 @@ export function initNftPickerUi() {
     selectionEl.textContent = `Selected ${selection.length} / ${MAX_SELECTION}`;
     clearButton.disabled = selection.length === 0 || isLoading;
     applyButton.disabled = selection.length !== MAX_SELECTION || isLoading;
+    if (typeof document !== "undefined") {
+      document.dispatchEvent(new CustomEvent("nft-selection-change"));
+    }
   }
 
   function renderInventory() {

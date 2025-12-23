@@ -80,6 +80,23 @@ button.ui-button {
   border: 1px dashed rgba(255, 255, 255, 0.3);
 }
 
+.ui-input {
+  flex: 1;
+  min-width: 120px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(15, 19, 28, 0.95);
+  color: #eaf0ff;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.ui-input::placeholder {
+  color: rgba(230, 233, 239, 0.45);
+}
+
 .ui-hint {
   margin-top: 6px;
   font-size: 11px;
