@@ -60,6 +60,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         string calldata tokenURI,
         NftRef[] calldata refs
     ) external payable nonReentrant returns (uint256 tokenId) {
+        // Revert if refs length is outside 1..6 to prevent ambiguous split math.
         require(refs.length >= 1 && refs.length <= 6, "Invalid reference count");
         uint256 perRefRoyalty = (MINT_PRICE * MINT_ROYALTY_BPS) / 10000 / refs.length;
         address[] memory royaltyReceivers = new address[](refs.length);
@@ -81,6 +82,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
 
         uint256 royaltyTotal = perRefRoyalty * supportedCount;
         uint256 requiredValue = MINT_PRICE + royaltyTotal;
+        // Revert if sender does not cover mint price + royalty on top.
         require(msg.value >= requiredValue, "Insufficient mint payment");
 
         tokenId = _nextTokenId;
