@@ -8,3 +8,8 @@
 - `contractAddress` stored in EIP-55 checksum format.
 - `tokenUri` + `image` store both `{ original, resolved }`.
 - Provenance stores full `sourceMetadata.raw` JSON.
+
+## 2025-12-23 — T13 Storage Decision (v0)
+
+- Token URI is emitted as a data URI for fast iteration.
+- A `tokenUriProvider` abstraction isolates the encoding step for future IPFS/Arweave.

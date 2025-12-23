@@ -5,6 +5,8 @@ export const state = {
   faceTextures: [],
   isLoadingLocal: false,
   selectedDataUrls: [],
+  frostedTexture: null,
+  textureCache: new Map(),
   nftInventory: [],
   nftSelection: [],
   nftStatus: "idle",

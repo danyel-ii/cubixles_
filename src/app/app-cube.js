@@ -6,12 +6,13 @@ export function drawTexturedFaces() {
   const face = config.cubeSize * 0.98;
   const tintAlpha = 210;
   const faces = state.faceTextures;
-  drawFace(faces[0], 0, 0, half, 0, 0, 0, false, face, tintAlpha);
-  drawFace(faces[1], 0, 0, -half, 0, PI, 0, true, face, tintAlpha);
-  drawFace(faces[2], half, 0, 0, 0, HALF_PI, 0, false, face, tintAlpha);
-  drawFace(faces[3], -half, 0, 0, 0, -HALF_PI, 0, true, face, tintAlpha);
-  drawFace(faces[4], 0, -half, 0, -HALF_PI, 0, 0, false, face, tintAlpha);
-  drawFace(faces[5], 0, half, 0, HALF_PI, 0, 0, true, face, tintAlpha);
+  // Face order: +X, -X, +Y, -Y, +Z, -Z
+  drawFace(faces[0], half, 0, 0, 0, HALF_PI, 0, false, face, tintAlpha); // +X
+  drawFace(faces[1], -half, 0, 0, 0, -HALF_PI, 0, true, face, tintAlpha); // -X
+  drawFace(faces[2], 0, half, 0, HALF_PI, 0, 0, true, face, tintAlpha); // +Y
+  drawFace(faces[3], 0, -half, 0, -HALF_PI, 0, 0, false, face, tintAlpha); // -Y
+  drawFace(faces[4], 0, 0, half, 0, 0, 0, false, face, tintAlpha); // +Z
+  drawFace(faces[5], 0, 0, -half, 0, PI, 0, true, face, tintAlpha); // -Z
 }
 
 function drawFace(img, x, y, z, rx, ry, rz, mirrorX, size, alpha) {

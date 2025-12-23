@@ -17,8 +17,10 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
 2. **tokenId**: must be a decimal string derived from `BigInt`.
    - Parse raw IDs as `BigInt` first.
    - Store as base-10 string to support large token IDs.
-3. **contractAddress**: must be **EIP-55 checksum** string.
-4. **URI normalization**: store `{ original, resolved }` for both `tokenUri` and `image`.
+3. **token standard**: only allow ERC-721 (`ownerOf` gating).
+   - Skip/ignore non-ERC-721 items.
+4. **contractAddress**: must be **EIP-55 checksum** string.
+5. **URI normalization**: store `{ original, resolved }` for both `tokenUri` and `image`.
    - `original` is the exact value returned by the source.
    - `resolved` converts `ipfs://…` to an HTTPS gateway URL.
 5. **Raw metadata**: provenance stores full source metadata as received.
@@ -99,5 +101,27 @@ type ProvenanceBundle = {
 
 ## Face Mapping
 
-TODO (T9): define which faces receive the selected NFTs and how remaining
-faces are handled (repeat / blank / frosted).
+v0 mapping order (fixed):
+
+- Faces are ordered `+X, -X, +Y, -Y, +Z, -Z`.
+- Assign selected NFTs in order of selection.
+- If fewer than 6 are selected, remaining faces use a frosted glass texture.
+
+## Mint Metadata Schema (tokenURI JSON)
+
+```ts
+type MintMetadata = {
+  schemaVersion: 1;
+  name: string;
+  description: string;
+  image: string | null;
+  provenanceBundle: ProvenanceBundle;
+  references: Array<{
+    chainId: 11155111;
+    contractAddress: string;
+    tokenId: string;
+    tokenIdNumber: number | null; // null if > MAX_SAFE_INTEGER
+    image: ResolvedUri | null;
+  }>;
+};
+```

@@ -3,15 +3,9 @@ import { ICECUBE_CONTRACT } from "../config/contracts";
 import { buildProvenanceBundle } from "../nft/indexer";
 import { subscribeWallet } from "../wallet/wallet";
 import { state } from "../app/app-state.js";
+import { buildTokenUri } from "./token-uri-provider.js";
 
 const SEPOLIA_CHAIN_ID = 11155111;
-
-function toBase64Json(value) {
-  const json = JSON.stringify(value);
-  const utf8 = encodeURIComponent(json);
-  const safe = unescape(utf8);
-  return `data:application/json;base64,${btoa(safe)}`;
-}
 
 function formatError(error) {
   if (error instanceof Error) {
@@ -109,13 +103,27 @@ export function initMintUi() {
         SEPOLIA_CHAIN_ID
       );
       const primaryImage = state.nftSelection[0]?.image?.resolved ?? null;
+      const referenceSummary = state.nftSelection.map((nft) => {
+        const raw = BigInt(nft.tokenId);
+        const safe =
+          raw <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(raw) : null;
+        return {
+          chainId: nft.chainId,
+          contractAddress: nft.contractAddress,
+          tokenId: nft.tokenId,
+          tokenIdNumber: safe,
+          image: nft.image,
+        };
+      });
       const metadata = {
+        schemaVersion: 1,
         name: "IceCube",
         description: "IceCube mint gated by 1 to 6 NFTs.",
         image: primaryImage,
-        provenance: bundle,
+        provenanceBundle: bundle,
+        references: referenceSummary,
       };
-      const tokenUri = toBase64Json(metadata);
+      const tokenUri = buildTokenUri(metadata);
       const refs = state.nftSelection.map((nft) => ({
         contractAddress: nft.contractAddress,
         tokenId: BigInt(nft.tokenId),

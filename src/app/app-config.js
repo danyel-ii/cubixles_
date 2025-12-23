@@ -12,4 +12,8 @@ export const config = {
     min: 260,
     max: 900,
   },
+  textureMaxSize: {
+    desktop: 1024,
+    mobile: 768,
+  },
 };

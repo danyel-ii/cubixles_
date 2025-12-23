@@ -1,7 +1,12 @@
 import { getNftsForOwner } from "./indexer";
 import { subscribeWallet } from "../wallet/wallet";
 import { state } from "../app/app-state.js";
-import { fillFaceTextures } from "../app/app-utils.js";
+import {
+  fillFaceTextures,
+  mapSelectionToFaceTextures,
+  downscaleImageToMax,
+  getMaxTextureSize,
+} from "../app/app-utils.js";
 
 const CHAIN_ID = 11155111;
 const MAX_SELECTION = 6;
@@ -38,6 +43,7 @@ export function initNftPickerUi() {
 
   let inventory = [];
   let selectedKeys = new Set();
+  let selectedOrder = [];
   let currentAddress = null;
   let isLoading = false;
 
@@ -51,15 +57,18 @@ export function initNftPickerUi() {
     isLoading = loading;
     refreshButton.disabled = loading || !currentAddress;
     clearButton.disabled = selectedKeys.size === 0 || loading;
-    applyButton.disabled = selectedKeys.size !== MAX_SELECTION || loading;
+    applyButton.disabled = selectedKeys.size < 1 || selectedKeys.size > MAX_SELECTION || loading;
   }
 
   function updateSelection() {
-    const selection = inventory.filter((nft) => selectedKeys.has(buildKey(nft)));
+    const inventoryMap = new Map(inventory.map((nft) => [buildKey(nft), nft]));
+    selectedOrder = selectedOrder.filter((key) => selectedKeys.has(key) && inventoryMap.has(key));
+    const selection = selectedOrder.map((key) => inventoryMap.get(key));
     state.nftSelection = selection;
     selectionEl.textContent = `Selected ${selection.length} / ${MAX_SELECTION}`;
     clearButton.disabled = selection.length === 0 || isLoading;
-    applyButton.disabled = selection.length !== MAX_SELECTION || isLoading;
+    applyButton.disabled =
+      selection.length < 1 || selection.length > MAX_SELECTION || isLoading;
     if (typeof document !== "undefined") {
       document.dispatchEvent(new CustomEvent("nft-selection-change"));
     }
@@ -119,8 +128,10 @@ export function initNftPickerUi() {
       card.addEventListener("click", () => {
         if (selectedKeys.has(key)) {
           selectedKeys.delete(key);
+          selectedOrder = selectedOrder.filter((item) => item !== key);
         } else if (selectedKeys.size < MAX_SELECTION) {
           selectedKeys.add(key);
+          selectedOrder.push(key);
         } else {
           setStatus("Selection is limited to 6 NFTs.", "error");
           return;
@@ -152,6 +163,7 @@ export function initNftPickerUi() {
       state.nftStatus = "ready";
       const validKeys = new Set(nfts.map((nft) => buildKey(nft)));
       selectedKeys = new Set([...selectedKeys].filter((key) => validKeys.has(key)));
+      selectedOrder = selectedOrder.filter((key) => validKeys.has(key));
       if (!nfts.length) {
         setStatus("No Sepolia NFTs found for this wallet.");
       } else {
@@ -184,16 +196,24 @@ export function initNftPickerUi() {
     if (typeof loadImage !== "function") {
       return Promise.reject(new Error("Image loader unavailable."));
     }
-    const loaders = urls.map(
-      (url) =>
-        new Promise((resolve) => {
-          loadImage(
-            url,
-            (img) => resolve(img),
-            () => resolve(null)
-          );
-        })
-    );
+    const maxSize = getMaxTextureSize();
+    const loaders = urls.map((url) => {
+      const cached = state.textureCache.get(url);
+      if (cached) {
+        return Promise.resolve(cached);
+      }
+      return new Promise((resolve) => {
+        loadImage(
+          url,
+          (img) => {
+            const scaled = downscaleImageToMax(img, maxSize);
+            state.textureCache.set(url, scaled);
+            resolve(scaled);
+          },
+          () => resolve(null)
+        );
+      });
+    });
     return Promise.all(loaders);
   }
 
@@ -205,6 +225,7 @@ export function initNftPickerUi() {
 
   clearButton.addEventListener("click", () => {
     selectedKeys = new Set();
+    selectedOrder = [];
     updateSelection();
     renderInventory();
     if (inventory.length) {
@@ -213,7 +234,7 @@ export function initNftPickerUi() {
   });
 
   applyButton.addEventListener("click", async () => {
-    const selection = inventory.filter((nft) => selectedKeys.has(buildKey(nft)));
+    const selection = state.nftSelection;
     if (selection.length < 1 || selection.length > MAX_SELECTION) {
       setStatus("Select 1 to 6 NFTs to continue.", "error");
       return;
@@ -224,6 +245,7 @@ export function initNftPickerUi() {
       return;
     }
     setLoading(true);
+    state.isLoadingLocal = true;
     setStatus("Applying NFTs to cube...");
     try {
       const images = await loadImages(imageUrls);
@@ -231,7 +253,11 @@ export function initNftPickerUi() {
       if (usable.length !== imageUrls.length) {
         throw new Error("Failed to load one or more NFT images.");
       }
-      state.faceTextures = fillFaceTextures(usable);
+      const faceTextures = mapSelectionToFaceTextures(
+        usable,
+        state.frostedTexture
+      );
+      state.faceTextures = faceTextures;
       state.selectedDataUrls = imageUrls;
       setStatus("NFTs applied to cube.", "success");
     } catch (error) {
@@ -239,6 +265,7 @@ export function initNftPickerUi() {
         error instanceof Error ? error.message : "Failed to apply NFTs.";
       setStatus(message, "error");
     } finally {
+      state.isLoadingLocal = false;
       setLoading(false);
       updateSelection();
       renderInventory();
@@ -258,6 +285,7 @@ export function initNftPickerUi() {
     currentAddress = null;
     inventory = [];
     selectedKeys = new Set();
+    selectedOrder = [];
     state.nftInventory = [];
     state.nftSelection = [];
     state.nftStatus = "idle";

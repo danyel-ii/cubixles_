@@ -1,6 +1,10 @@
 import { config } from "./app/app-config.js";
 import { state } from "./app/app-state.js";
-import { resolveUrl, fillFaceTextures } from "./app/app-utils.js";
+import {
+  resolveUrl,
+  fillFaceTextures,
+  createFrostedTexture,
+} from "./app/app-utils.js";
 import { applyLights } from "./app/app-scene.js";
 import {
   preloadBackground,
@@ -42,6 +46,7 @@ window.setup = function setup() {
   pixelDensity(1);
   textureMode(NORMAL);
   noStroke();
+  state.frostedTexture = createFrostedTexture();
   initBackdrop();
   buildEdges();
   state.faceTextures = fillFaceTextures(state.defaultTextures);

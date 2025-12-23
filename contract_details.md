@@ -27,7 +27,7 @@ mint(string tokenURI, NftRef[] refs) payable returns (uint256 tokenId)
 Key steps:
 
 1. **Reference count check**: `refs.length` must be between 1 and 6.
-2. **Ownership validation**: each `NftRef` must be owned by `msg.sender`.
+2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
 3. **Mint + metadata**: mint new token ID and store `tokenURI`.
 4. **Mint royalty split**: if `msg.value > 0`, split by:
    - 20% to `creator`

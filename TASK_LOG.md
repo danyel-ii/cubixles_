@@ -17,9 +17,9 @@
 | T6 — Alchemy inventory | Done | Added Alchemy client + indexer with Sepolia gating and SAFE-INT checks. |
 | T7 — Alchemy provenance | Done | Added provenance fetch + bundle builder with raw metadata + URI normalization. |
 | T8 — NFT picker UI | Done | Wallet-driven picker with 1–6 selection limit. |
-| T9 — Face mapping rules | Open | Define in spec doc. |
-| T10 — Cube textures from provenance | Open | Wire metadata images into cube. |
-| T11 — Contract spec | In Progress | IceCubeMinter contract + tests for 1–6 refs. |
+| T9 — Face mapping rules | Done | Fixed +X,-X,+Y,-Y,+Z,-Z order + frosted fallback. |
+| T10 — Cube textures from provenance | In Progress | Apply selection textures with caching + downscale. |
+| T11 — Contract spec | In Progress | IceCubeMinter contract + tests for 1–6 refs (forge test: 8 pass, 2025-12-23). |
 | T12 — Metadata builder | In Progress | Mint UI builds JSON data URI with provenance. |
 | T13 — Storage decision | Open | Decide where metadata/image live. |
 | T14 — Direct mint call | In Progress | Mint UI added; awaiting deployed contract + ABI. |

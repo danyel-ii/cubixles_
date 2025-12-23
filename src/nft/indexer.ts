@@ -10,6 +10,7 @@ import { resolveUri } from "../utils/uri";
 type AlchemyNft = {
   contract?: { address?: string };
   tokenId?: string;
+  tokenType?: string;
   name?: string | null;
   tokenUri?: { raw?: string } | string | null;
   collection?: { name?: string | null };
@@ -92,6 +93,9 @@ export async function getNftsForOwner(
   return owned
     .map((nft) => {
       try {
+        if (nft.tokenType && nft.tokenType !== "ERC721") {
+          throw new Error("Unsupported token standard.");
+        }
         const contractAddress = normalizeAddress(nft.contract?.address);
         const tokenId = parseTokenId(nft.tokenId);
         const tokenUri = resolveUri(extractTokenUri(nft));
