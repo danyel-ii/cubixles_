@@ -1,4 +1,4 @@
-# IceCubeMinter Deployment (Sepolia)
+# cubeless Deployment (IceCubeMinter, Sepolia)
 
 ## Review Status
 

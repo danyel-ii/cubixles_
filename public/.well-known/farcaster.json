@@ -5,7 +5,7 @@
     "signature": "nlQp0hWsi2L6kytZt7jkypWXBwGb79H41lJJOKJleuB9dGw3eGsb3GN0EvF/sr1fS4XQavbiG8DE6g32G07Q/hw="
   },
   "miniapp": {
-    "name": "cubeLess",
+    "name": "cubeless",
     "homeUrl": "https://cubeless-red.vercel.app",
     "iconUrl": "/assets/cube_icon_1.png"
   }

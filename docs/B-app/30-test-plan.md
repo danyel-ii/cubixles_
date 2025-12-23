@@ -1,4 +1,4 @@
-# IceCube v0 — Test Plan
+# cubeless v0 — Test Plan
 
 ## Review Status
 

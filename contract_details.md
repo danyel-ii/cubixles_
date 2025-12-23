@@ -1,4 +1,4 @@
-# IceCubeMinter Contract Details
+# cubeless Contract Details (IceCubeMinter)
 
 ## Review Status
 
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs 0.0027 ETH plus a 10% royalty. Mint royalties split 20% to the creator, 20% to the $Less treasury (placeholder), and 60% across the referenced NFT contracts (per NFT). Resale royalties are 5% via ERC-2981 and routed to an on-chain splitter. The on-chain logic verifies ownership, mints, stores the token URI, and splits ETH; token metadata and provenance are built in the miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `animation_url`.
+IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs 0.0027 ETH plus a 10% royalty. Mint royalties split 20% to the creator, 20% to the $Less treasury (placeholder), and 60% across the referenced NFT contracts (per NFT). Resale royalties are 5% via ERC-2981 and routed to an on-chain splitter. The on-chain logic verifies ownership, mints, stores the token URI, and splits ETH; token metadata and provenance are built in the cubeless miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `animation_url`.
 
 ## Contract Overview
 

@@ -1,4 +1,4 @@
-# IceCube Farcaster Miniapp Task Log
+# cubeless Farcaster Miniapp Task Log
 
 ## Review Status
 

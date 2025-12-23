@@ -35,8 +35,8 @@ export function buildMintMetadata(selection, provenanceBundle) {
 
   return {
     schemaVersion: 1,
-    name: "IceCube",
-    description: "IceCube mint gated by 1 to 6 NFTs.",
+    name: "cubeless",
+    description: "cubeless mint gated by 1 to 6 NFTs.",
     image: thumbnail,
     animation_url: getMintAnimationUrl(),
     provenance: provenanceBundle,

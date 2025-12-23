@@ -1,4 +1,4 @@
-# IceCube Miniapp v0 Spec — Provenance Shapes (Sepolia)
+# cubeless Miniapp v0 Spec — Provenance Shapes (Sepolia)
 
 ## Review Status
 

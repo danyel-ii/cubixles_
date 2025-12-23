@@ -1,4 +1,4 @@
-# IceCube Code Structure
+# cubeless Code Structure
 
 ## Review Status
 

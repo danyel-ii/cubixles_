@@ -56,7 +56,7 @@ function buildStandaloneHtml(dataUrls, startRotX, startRotY, startZoom, backgrou
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Glass Cube Viewer</title>
+    <title>cubeless</title>
     <style>
       html, body { margin: 0; padding: 0; height: 100%; background: #0d0f13; overflow: hidden; }
       canvas { display: block; touch-action: none; }
