@@ -19,7 +19,7 @@
 | T8 — NFT picker UI | Done | Wallet-driven picker with 3-item selection limit. |
 | T9 — Face mapping rules | Open | Define in spec doc. |
 | T10 — Cube textures from provenance | Open | Wire metadata images into cube. |
-| T11 — Contract spec | Open | Ownership-gated mint design. |
+| T11 — Contract spec | In Progress | IceCubeMinter contract + tests added in contracts/. |
 | T12 — Metadata builder | Open | Embed provenance bundle in tokenURI JSON. |
 | T13 — Storage decision | Open | Decide where metadata/image live. |
 | T14 — Direct mint call | Open | Mint flow via wallet provider. |
