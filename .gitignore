@@ -7,3 +7,5 @@ dist/
 contracts/lib/
 contracts/cache/
 contracts/out/
+contracts/.github/
+contracts/.gitmodules
