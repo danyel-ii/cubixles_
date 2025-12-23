@@ -2,7 +2,7 @@
 
 ## Review Status
 
-- Last reviewed: 2025-12-23
+- Last reviewed: 2025-12-24
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -21,11 +21,12 @@ This list captures items still needed from you to complete v0.
 
 ## M1 — Manifest Finalization
 
-- Update `/.well-known/farcaster.json`:
+- Confirm `/.well-known/farcaster.json`:
   - `accountAssociation.header`, `payload`, `signature`
-  - `miniapp.homeUrl` (final)
-  - `miniapp.iconUrl` (final)
-  - confirm any remaining placeholder URLs/icons are replaced
+  - `miniapp` and `frame` are identical (required by validator)
+  - `miniapp.version` is set
+  - `iconUrl`, `imageUrl`, `splashImageUrl` are HTTPS and deployed
+- Add `public/icon.png`, `public/image.png`, `public/splash.png` (or update URLs to hosted assets).
 
 ## T13 — Storage Decision (Metadata)
 
