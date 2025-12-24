@@ -12,6 +12,8 @@ export type NftItem = {
   tokenUri: ResolvedUri | null;
   image: ResolvedUri | null;
   source: "alchemy";
+  collectionFloorEth?: number;
+  collectionFloorRetrievedAt?: string | null;
 };
 
 export type ProvenanceNft = {
@@ -25,6 +27,8 @@ export type ProvenanceNft = {
   };
   retrievedVia: "alchemy";
   retrievedAt: string;
+  collectionFloorEth?: number;
+  collectionFloorRetrievedAt?: string | null;
 };
 
 export type ProvenanceBundle = {
@@ -32,4 +36,7 @@ export type ProvenanceBundle = {
   selectedBy: string;
   retrievedAt: string;
   nfts: ProvenanceNft[];
+  floorSummary?: {
+    sumFloorEth: number;
+  };
 };

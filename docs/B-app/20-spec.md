@@ -29,7 +29,9 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
 5. **URI normalization**: store `{ original, resolved }` for both `tokenUri` and `image`.
    - `original` is the exact value returned by the source.
    - `resolved` converts `ipfs://…` to an HTTPS gateway URL.
-5. **Raw metadata**: provenance stores full source metadata as received.
+6. **Raw metadata**: provenance stores full source metadata as received.
+7. **Floor snapshot (optional)**: store collection floor ETH + retrieval timestamp at mint time.
+   - Sepolia default: `0` when floor data is unavailable.
 
 ## Types
 
@@ -54,6 +56,8 @@ type NftItem = {
   tokenUri: ResolvedUri | null;
   image: ResolvedUri | null;
   source: "alchemy";
+  collectionFloorEth?: number;
+  collectionFloorRetrievedAt?: string | null;
 };
 ```
 
@@ -74,6 +78,8 @@ type ProvenanceNft = {
   };
   retrievedVia: "alchemy";
   retrievedAt: string; // ISO timestamp
+  collectionFloorEth?: number;
+  collectionFloorRetrievedAt?: string | null;
 };
 ```
 
@@ -85,6 +91,9 @@ type ProvenanceBundle = {
   selectedBy: string; // EIP-55 checksum wallet address
   retrievedAt: string; // ISO timestamp
   nfts: ProvenanceNft[]; // length 1..6
+  floorSummary?: {
+    sumFloorEth: number;
+  };
 };
 ```
 
@@ -134,16 +143,17 @@ type MintMetadata = {
     tokenId: string;
     tokenIdNumber: number | null; // null if > MAX_SAFE_INTEGER
     image: ResolvedUri | null;
+    collectionFloorEth?: number;
+    collectionFloorRetrievedAt?: string | null;
   }>;
+  provenanceSummary?: {
+    sumFloorEth: number;
+  };
 };
 ```
 
 ## Mint Economics (v0)
 
-- Mint price: `0.0027 ETH`
-- Mint royalty: `10%` of mint price, charged on top.
-- Mint royalty split:
-  - `20%` creator
-  - `20%` $Less treasury (placeholder)
-  - `60%` split equally per referenced NFT (uses ERC-2981 `royaltyInfo` receiver)
-- If a referenced NFT does not implement ERC-2981, its royalty slice is skipped.
+- Mint price: `0.0017 ETH`
+- Mint accepts `msg.value >= mintPrice` and refunds overpayment.
+- Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter.

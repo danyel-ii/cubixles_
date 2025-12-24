@@ -1,11 +1,11 @@
 import { getAddress } from "ethers";
-import { alchemyGet } from "./alchemyClient";
+import { alchemyGet } from "../alchemy/client";
 import type {
   NftItem,
   ProvenanceBundle,
   ProvenanceNft,
-} from "../types/provenance";
-import { resolveUri } from "../utils/uri";
+} from "../../types/provenance";
+import { resolveUri } from "../../shared/utils/uri";
 
 type AlchemyNft = {
   contract?: { address?: string };

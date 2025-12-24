@@ -1,12 +1,12 @@
-import { getNftsForOwner } from "./indexer";
-import { subscribeWallet } from "../wallet/wallet";
-import { state } from "../app/app-state.js";
+import { getNftsForOwner } from "../../data/nft/indexer";
+import { subscribeWallet } from "../wallet/wallet.js";
+import { state } from "../../app/app-state.js";
 import {
   fillFaceTextures,
   mapSelectionToFaceTextures,
   downscaleImageToMax,
   getMaxTextureSize,
-} from "../app/app-utils.js";
+} from "../../app/app-utils.js";
 
 const CHAIN_ID = 11155111;
 const MAX_SELECTION = 6;

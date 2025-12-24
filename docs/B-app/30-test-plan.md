@@ -9,7 +9,7 @@
 This plan defines the tests needed to trust the system end-to-end:
 - Interactive p5-based NFT (`animation_url`)
 - Provenance refs (1–6 NFTs)
-- Economics (fixed mint price + mint-time royalty routing)
+- Economics (fixed mint price + ERC-2981 resale royalties)
 - Hosted tokenURI (IPFS via Pinata + Vercel endpoints)
 - Farcaster miniapp wallet connect + mint UX
 
@@ -23,12 +23,9 @@ This plan defines the tests needed to trust the system end-to-end:
    - includes `animation_url` to IPFS-hosted HTML (the p5 work)
    - optionally includes `image` thumbnail (static) for wallets/markets
 4. **Economics**:
-   - mint requires at least `BASE_MINT_PRICE + MINT_ROYALTY_TOPUP`
-   - the “royalty pot” is split:
-     - 60% / N across **referenced NFTs that implement ERC-2981** (skip those without 2981)
-     - 20% creator
-     - 20% $Less placeholder
-   - **refund overpayment** (contract returns any excess ETH to minter)
+   - mint requires `msg.value >= 0.0017 ETH`
+   - mint pays `0.0017 ETH` to owner and refunds any overpayment
+   - ERC-2981 resale royalties route to RoyaltySplitter (bps = 500)
 5. **Resale royalties (ERC-2981)**:
    - `royaltyInfo(tokenId, salePrice)` returns the **splitter** as receiver
    - bps matches configured value
@@ -56,17 +53,14 @@ This plan defines the tests needed to trust the system end-to-end:
 - tokenId increments / uniqueness
 
 **D. Payment requirements**
-- mint reverts if `msg.value < requiredTotal`
-- mint succeeds if `msg.value == requiredTotal`
-- mint succeeds if `msg.value > requiredTotal` and refunds delta
+- mint reverts if `msg.value < 0.0017 ETH`
+- mint succeeds if `msg.value == 0.0017 ETH`
+- mint succeeds if `msg.value > 0.0017 ETH` and refunds delta
 
-**E. Mint-time splits**
-Given N references where `k` implement ERC-2981 (k may be 0):
-- creator receives exactly 20% of mint-time royalty pot (define pot precisely)
-- less treasury receives exactly 20%
-- each ERC-2981 receiver receives exactly `(60% / k)` * pot (if k > 0)
-- if k == 0, the “60% slice” is not paid (or is reallocated, depending on spec) — lock expected behavior and assert it
-- sum(paidOut) + refund == msg.value (within 1 wei if rounding rules exist)
+**E. RoyaltySplitter behavior**
+- when router unset → forwards 100% ETH to owner
+- when swap reverts → forwards 100% ETH to owner (does not revert)
+- when swap succeeds → forwards $LESS to owner, then remaining ETH to owner
 
 **F. ERC-2981 resale royalty**
 - `royaltyInfo(ourTokenId, salePrice)` returns `(splitter, expectedAmount)`
@@ -156,8 +150,12 @@ For `/api/pin-metadata`:
   - wallet connected
   - on Sepolia
   - provenance fetched
+- floor snapshot computed for current selection
   - pinning succeeded (if option B)
-- “max payment” autofill matches economics formula
+- mint payment autofill matches `0.0017 ETH`
+- floor snapshot UI shows per-NFT and total floor values
+- floor snapshot defaults to `0` on Sepolia
+- Leaderboard view opens and returns to main UI
 
 ## 4) End-to-end tests — required (at least one “golden path”)
 

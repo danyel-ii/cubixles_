@@ -8,7 +8,19 @@
     <script src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.min.js"></script>
   </head>
   <body>
-    <div id="ui">
+    <div id="overlay" class="overlay">
+      <div class="overlay-card">
+        <div class="overlay-title">cubeless</div>
+        <div class="overlay-sub">
+          Ownership-gated minting for your provenance.
+        </div>
+        <div class="overlay-hint">Connect your wallet when you're ready.</div>
+        <button id="enter-btn" class="overlay-button" type="button">
+          Enter
+        </button>
+      </div>
+    </div>
+    <div id="ui" class="ui-panel">
       <div class="ui-title">cubeless</div>
       <div class="ui-sub">
         Choose 1 to 6 Sepolia NFTs to wrap the cube.
@@ -22,6 +34,11 @@
         </button>
       </div>
       <div id="wallet-status" class="ui-hint">Wallet: not connected.</div>
+      <div class="ui-row">
+        <button id="leaderboard-open" class="ui-button is-ghost" type="button">
+          Leaderboard
+        </button>
+      </div>
       <div class="ui-section">
         <div class="ui-section-title">NFT picker</div>
         <div id="nft-status" class="ui-hint">
@@ -44,6 +61,10 @@
       <div class="ui-section">
         <div class="ui-section-title">Mint</div>
         <div id="mint-status" class="ui-hint">Connect your wallet to mint.</div>
+        <div id="mint-floor-summary" class="ui-hint">
+          Total floor (snapshot): 0.0000 ETH
+        </div>
+        <div id="mint-floor-list" class="ui-floor-list"></div>
         <div class="ui-row">
           <input
             id="mint-payment"
@@ -57,7 +78,22 @@
             Mint NFT
           </button>
         </div>
-        <div class="ui-hint">Mint price: 0.0027 ETH + 10% royalty.</div>
+        <div class="ui-hint">Mint price: 0.0017 ETH.</div>
+      </div>
+    </div>
+    <div id="leaderboard" class="ui-panel is-hidden">
+      <div class="ui-title">Leaderboard</div>
+      <div class="ui-sub">Mint history coming soon.</div>
+      <div class="ui-section">
+        <div class="ui-section-title">Contract</div>
+        <div id="leaderboard-contract" class="ui-hint"></div>
+        <div id="leaderboard-chain" class="ui-hint"></div>
+        <div id="leaderboard-updated" class="ui-hint"></div>
+      </div>
+      <div class="ui-row">
+        <button id="leaderboard-back" class="ui-button is-ghost" type="button">
+          Back
+        </button>
       </div>
     </div>
     <main id="app"></main>

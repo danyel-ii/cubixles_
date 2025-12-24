@@ -24,10 +24,9 @@ struct NftRef {
 ## Payable Semantics
 
 - `mint` is payable.
-- Mint price is fixed at 0.0027 ETH.
-- Mint royalty is 10% of the mint price (0.00027 ETH) and is added on top.
-- If an NFT does not support ERC-2981, its royalty slice is skipped and not charged.
-- If any royalty receiver reverts, the mint reverts (no partial transfers).
+- Mint price is fixed at 0.0017 ETH.
+- Mint pays the owner directly and refunds any excess.
+- If the owner transfer fails, the mint reverts (no partial transfers).
 
 ## Gating Rules
 
@@ -37,23 +36,23 @@ struct NftRef {
 
 ## Royalty Policy
 
-- Mint-time split of `msg.value`:
-  - 20% `creator`
-  - 20% `$Less` treasury (placeholder for buy)
-  - 60% split equally per referenced NFT contract (ERC-2981 receiver)
-- Resale royalties use ERC-2981 with default 5% BPS, paid to `resaleSplitter`.
-  - Mint uses a reentrancy guard around the payable split.
+- Mint-time payout goes to `owner()`.
+- Resale royalties use ERC-2981 with default 5% BPS, paid to `RoyaltySplitter`.
+  - RoyaltySplitter calls a router with half the royalty when configured; otherwise it forwards ETH to owner.
+  - If the router call fails, the full amount is forwarded to owner.
+  - If the router call succeeds, any $LESS received is transferred to owner before forwarding remaining ETH.
 
 ## Admin Controls
 
-- `setRoyaltyReceivers(creator, lessTreasury, resaleSplitter)`
-- `setResaleRoyalty(bps, receiver)`
+- `setRoyaltyReceiver(resaleSplitter)` (resets bps to 5%)
+- `setResaleRoyalty(bps, receiver)` (bps capped at 10%)
 
 ## Deployment Inputs
 
 Environment variables read by `contracts/script/DeployIceCube.s.sol`:
 
-- `ICECUBE_CREATOR`
-- `ICECUBE_LESS_TREASURY`
-- `ICECUBE_RESALE_SPLITTER`
+- `ICECUBE_OWNER`
+- `ICECUBE_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
+- `ICECUBE_ROUTER` (optional, leave unset for no-swap mode)
+- `ICECUBE_SWAP_CALLDATA` (optional, router calldata)
 - `ICECUBE_RESALE_BPS` (optional, defaults to 500)

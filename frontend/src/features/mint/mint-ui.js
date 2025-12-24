@@ -1,8 +1,9 @@
 import { BrowserProvider, Contract, parseEther } from "ethers";
-import { ICECUBE_CONTRACT } from "../config/contracts";
-import { buildProvenanceBundle } from "../nft/indexer";
-import { subscribeWallet } from "../wallet/wallet";
-import { state } from "../app/app-state.js";
+import { ICECUBE_CONTRACT } from "../../config/contracts";
+import { buildProvenanceBundle } from "../../data/nft/indexer";
+import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
+import { subscribeWallet } from "../wallet/wallet.js";
+import { state } from "../../app/app-state.js";
 import {
   buildMintMetadata,
   getMintAnimationUrl,
@@ -10,8 +11,7 @@ import {
 import { buildTokenUri } from "./token-uri-provider.js";
 
 const SEPOLIA_CHAIN_ID = 11155111;
-const MINT_PRICE = 0.0027;
-const MINT_ROYALTY_BPS = 1000;
+const MINT_PRICE = 0.0017;
 const IS_DEV = Boolean(import.meta?.env?.DEV);
 
 function formatError(error) {
@@ -29,6 +29,8 @@ export function initMintUi() {
   const statusEl = document.getElementById("mint-status");
   const mintButton = document.getElementById("mint-submit");
   const amountInput = document.getElementById("mint-payment");
+  const floorSummaryEl = document.getElementById("mint-floor-summary");
+  const floorListEl = document.getElementById("mint-floor-list");
 
   if (!statusEl || !mintButton || !amountInput) {
     return;
@@ -36,6 +38,7 @@ export function initMintUi() {
 
   let walletState = null;
   const devChecklist = IS_DEV ? initDevChecklist(statusEl.parentElement) : null;
+  const floorCache = new Map();
 
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
@@ -46,6 +49,70 @@ export function initMintUi() {
   function setDisabled(disabled) {
     mintButton.disabled = disabled;
     amountInput.disabled = disabled;
+  }
+
+  function formatEth(value) {
+    if (typeof value !== "number" || Number.isNaN(value)) {
+      return "0.0000";
+    }
+    return value.toFixed(4);
+  }
+
+  async function refreshFloorSnapshot() {
+    if (!floorSummaryEl || !floorListEl) {
+      return;
+    }
+    const selection = state.nftSelection;
+    if (!selection.length) {
+      floorSummaryEl.textContent = "Total floor (snapshot): 0.0000 ETH";
+      floorListEl.textContent = "Select NFTs to view floor snapshot.";
+      return;
+    }
+
+    const uniqueContracts = new Map();
+    selection.forEach((nft) => {
+      if (!uniqueContracts.has(nft.contractAddress)) {
+        uniqueContracts.set(nft.contractAddress, nft.chainId);
+      }
+    });
+
+    await Promise.all(
+      [...uniqueContracts.entries()].map(async ([contract, chainId]) => {
+        if (floorCache.has(contract)) {
+          return;
+        }
+        const snapshot = await getCollectionFloorSnapshot(contract, chainId);
+        floorCache.set(contract, snapshot);
+      })
+    );
+
+    let sumFloor = 0;
+    floorListEl.innerHTML = "";
+    selection.forEach((nft) => {
+      const snapshot = floorCache.get(nft.contractAddress) ?? {
+        floorEth: 0,
+        retrievedAt: null,
+      };
+      nft.collectionFloorEth = snapshot.floorEth;
+      nft.collectionFloorRetrievedAt = snapshot.retrievedAt;
+      sumFloor += snapshot.floorEth;
+
+      const row = document.createElement("div");
+      row.className = "ui-floor-row";
+
+      const label = document.createElement("span");
+      const collection = nft.collectionName || "Unknown collection";
+      label.textContent = `${collection} #${nft.tokenId}`;
+
+      const value = document.createElement("span");
+      value.textContent = `${formatEth(snapshot.floorEth)} ETH`;
+
+      row.appendChild(label);
+      row.appendChild(value);
+      floorListEl.appendChild(row);
+    });
+
+    floorSummaryEl.textContent = `Total floor (snapshot): ${formatEth(sumFloor)} ETH`;
   }
 
   function updateEligibility() {
@@ -85,6 +152,7 @@ export function initMintUi() {
 
   document.addEventListener("nft-selection-change", () => {
     updateEligibility();
+    refreshFloorSnapshot();
   });
 
   mintButton.addEventListener("click", async () => {
@@ -99,6 +167,7 @@ export function initMintUi() {
     setDisabled(true);
     setStatus("Building provenance bundle...");
     try {
+      await refreshFloorSnapshot();
       const provider = new BrowserProvider(walletState.provider);
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== SEPOLIA_CHAIN_ID) {
@@ -148,33 +217,28 @@ export function initMintUi() {
   });
 
   if (!amountInput.value) {
-    const maxRoyalty = (MINT_PRICE * MINT_ROYALTY_BPS) / 10000;
-    amountInput.value = (MINT_PRICE + maxRoyalty).toFixed(6);
+    amountInput.value = MINT_PRICE.toFixed(6);
   }
 
   updateEligibility();
+  refreshFloorSnapshot();
 }
 
 function buildDiagnostics({ selection, metadata, tokenUri, amountInput, walletAddress }) {
-  const royaltyTopup = (MINT_PRICE * MINT_ROYALTY_BPS) / 10000;
-  const requiredTotal = MINT_PRICE + royaltyTopup;
-  const selectionCount = selection.length;
-  const perRefRoyalty =
-    selectionCount > 0 ? (royaltyTopup * 0.6) / selectionCount : 0;
+  const sumFloorEth = selection.reduce((total, nft) => {
+    if (typeof nft.collectionFloorEth !== "number" || Number.isNaN(nft.collectionFloorEth)) {
+      return total;
+    }
+    return total + nft.collectionFloorEth;
+  }, 0);
 
   return {
     walletAddress,
-    selectionCount,
+    selectionCount: selection.length,
     economics: {
       mintPriceEth: MINT_PRICE,
-      royaltyBps: MINT_ROYALTY_BPS,
-      royaltyTopupEth: royaltyTopup,
-      requiredTotalEth: requiredTotal,
-      creatorShareEth: royaltyTopup * 0.2,
-      lessTreasuryShareEth: royaltyTopup * 0.2,
-      perRefShareEth: perRefRoyalty,
+      sumFloorEth,
       amountInputEth: amountInput ? Number(amountInput) : null,
-      assumesAllRefsImplementErc2981: true,
     },
     uris: {
       animationUrl: metadata.animation_url || null,

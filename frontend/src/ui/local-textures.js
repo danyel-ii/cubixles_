@@ -1,10 +1,8 @@
-import { state } from "./app-state.js";
-import { fillFaceTextures } from "./app-utils.js";
-import { handleExport } from "./app-exporter.js";
+import { state } from "../app/app-state.js";
+import { fillFaceTextures } from "../app/app-utils.js";
 
-export function bindUi() {
+export function initLocalTextureUi() {
   const input = document.getElementById("image-input");
-  const exportButton = document.getElementById("export-html");
   if (!input) {
     return;
   }
@@ -17,9 +15,6 @@ export function bindUi() {
     }
     loadLocalTextures(files);
   });
-  if (exportButton) {
-    exportButton.addEventListener("click", handleExport);
-  }
 }
 
 function loadLocalTextures(files) {

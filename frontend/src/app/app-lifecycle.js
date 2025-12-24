@@ -23,11 +23,8 @@ import {
   onTouchMoved,
   onTouchEnded,
 } from "./app-interaction.js";
-import { bindUi } from "./app-ui.js";
 import { fetchBackgroundDataUrl } from "./app-exporter.js";
-import { initWalletUi } from "../wallet/wallet-ui.js";
-import { initNftPickerUi } from "../nft/picker-ui.js";
-import { initMintUi } from "../mint/mint-ui.js";
+import { initUiRoot } from "../ui/ui-root.js";
 
 function preloadApp() {
   state.defaultTextures = config.sourceUrls.map((url) =>
@@ -45,10 +42,7 @@ function setupApp() {
   initBackdrop();
   buildEdges();
   state.faceTextures = fillFaceTextures(state.defaultTextures);
-  bindUi();
-  initWalletUi();
-  initNftPickerUi();
-  initMintUi();
+  initUiRoot();
   fetchBackgroundDataUrl();
 }
 

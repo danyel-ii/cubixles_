@@ -6,10 +6,13 @@ type AlchemyResponse<T> = {
 };
 
 function getAlchemyBaseUrl(chainId: number, apiKey: string): string {
+  if (chainId === 1) {
+    return `https://eth-mainnet.g.alchemy.com/nft/${API_VERSION}/${apiKey}`;
+  }
   if (chainId === 11155111) {
     return `https://eth-sepolia.g.alchemy.com/nft/${API_VERSION}/${apiKey}`;
   }
-  throw new Error("v0 requires Sepolia (chainId 11155111).");
+  throw new Error("Unsupported chain for Alchemy NFT API.");
 }
 
 export async function alchemyGet<T>(

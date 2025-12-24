@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 export default defineConfig({
+  root: "frontend",
   plugins: [
     nodePolyfills({
       include: ["buffer", "process"],
@@ -11,6 +12,10 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    outDir: "../dist",
+    emptyOutDir: true,
+  },
   resolve: {
     alias: {
       buffer: "buffer",
