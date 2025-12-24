@@ -9,7 +9,8 @@ The repo is now aligned on the "cubeless" name, the Farcaster manifest includes 
 - **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired.
 - **Provenance**: NFT selection -> provenance bundle -> mint metadata pipeline is in place.
 - **Mint UI**: builds metadata JSON (still data URI), includes `animation_url`, and logs dev diagnostics.
-- **Contracts**: Foundry tests pass (13 total); mint price is fixed at `0.0017 ETH` and royalties are routed to RoyaltySplitter.
+- **Contracts**: Foundry tests pass (28 total); mint price is fixed at `0.0017 ETH` and royalties are routed to RoyaltySplitter.
+- **Security**: threat model, invariants, static analysis plan, and runbook added under `docs/security/`.
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` on Sepolia) + Leaderboard scaffold are live.
 - **Branding**: UI titles, metadata name, and docs are aligned to "cubeless".
 
@@ -32,7 +33,7 @@ The repo is now aligned on the "cubeless" name, the Farcaster manifest includes 
 
 ## Tests
 
-- `forge test`: pass (13 tests).
+- `forge test`: pass (28 tests).
 - `npm test`: no frontend tests configured (placeholder script only).
 
 ## Open items (must finish before v0)

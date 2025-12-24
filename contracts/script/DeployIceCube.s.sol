@@ -10,7 +10,7 @@ contract DeployIceCube is Script {
         address owner = vm.envAddress("ICECUBE_OWNER");
         address lessToken = vm.envOr(
             "ICECUBE_LESS_TOKEN",
-            address(0x9c2ca573009F181EAc634C4D6E44a0977c24f335)
+            address(0x9C2CA573009F181EAc634C4d6e44A0977C24f335)
         );
         address router = vm.envOr("ICECUBE_ROUTER", address(0));
         bytes memory swapCalldata = vm.envOr("ICECUBE_SWAP_CALLDATA", bytes(""));

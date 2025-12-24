@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { Test } from "forge-std/Test.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { RoyaltySplitter } from "../src/royalties/RoyaltySplitter.sol";
+import { ReceiverRevertsOnReceive } from "./mocks/Receivers.sol";
 
 contract RevertingRouter {
     fallback() external payable {
@@ -75,5 +76,19 @@ contract RoyaltySplitterTest is Test {
         assertTrue(ok);
         assertEq(owner.balance, 1 ether);
         assertEq(less.balanceOf(owner), 250 ether);
+    }
+
+    function testRevertsWhenOwnerCannotReceiveEth() public {
+        ReceiverRevertsOnReceive receiver = new ReceiverRevertsOnReceive();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            address(receiver),
+            address(0),
+            address(0),
+            ""
+        );
+
+        vm.deal(address(this), 1 ether);
+        vm.expectRevert("Transfer failed");
+        address(splitter).call{ value: 1 ether }("");
     }
 }

@@ -83,6 +83,21 @@ logic are split into smaller modules.
   - Exports IceCubeMinter ABI from the Foundry output directory.
 - `contracts/test/*.t.sol`
   - Foundry tests for core contract behavior.
+- `contracts/test/fuzz/*.t.sol`
+  - Fuzz tests for payment boundaries and ownership gating.
+- `contracts/test/invariants/*.t.sol`
+  - Invariant tests for mint value conservation and ERC-2981 receiver.
+- `contracts/test/fork/*.t.sol`
+  - Optional mainnet fork tests (requires `MAINNET_RPC_URL`).
+
+## Security Docs
+
+- `docs/security/THREAT_MODEL.md`
+- `docs/security/INVARIANTS.md`
+- `docs/security/KNOWN_LIMITATIONS.md`
+- `docs/security/STATIC_ANALYSIS.md`
+- `docs/security/SECURITY_RUNBOOK.md`
+- `docs/security/FORK_TESTING.md`
 
 ## Rendering Flow
 
