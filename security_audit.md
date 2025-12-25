@@ -37,7 +37,9 @@ Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: Not run in this pass. Coverage gate is 90% minimum; report writes to `contracts/coverage_report.md`.
+Result: FAIL (80.93% line coverage; minimum is 90%).
+- Report: `contracts/coverage_report.md` (grouped by contract).
+- Primary gaps: deploy scripts and portions of `IceCubeMinter` + `RoyaltySplitter` (see report).
 
 ### Invariants (standalone run)
 Command:

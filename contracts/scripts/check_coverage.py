@@ -5,11 +5,19 @@ import sys
 
 
 def run_forge_coverage() -> None:
+    env = dict(os.environ)
+    env.setdefault("FOUNDRY_DISABLE_SIGNATURES", "1")
+    env.setdefault("FOUNDRY_DISABLE_ETHERSCAN", "1")
+    env.setdefault("FOUNDRY_OFFLINE", "true")
+    env.setdefault("NO_PROXY", "*")
+    env.setdefault("HTTP_PROXY", "")
+    env.setdefault("HTTPS_PROXY", "")
     result = subprocess.run(
         ["forge", "coverage", "--report", "lcov"],
         check=False,
         stdout=sys.stdout,
         stderr=sys.stderr,
+        env=env,
     )
     if result.returncode != 0:
         sys.exit(result.returncode)
@@ -77,7 +85,7 @@ def write_report(path: str, covered: int, total: int, per_file: dict[str, dict[s
 
 
 def main() -> None:
-    threshold = float(os.environ.get("COVERAGE_MIN", "70.0"))
+    threshold = float(os.environ.get("COVERAGE_MIN", "90.0"))
     run_forge_coverage()
     lcov_path = os.path.join(os.getcwd(), "lcov.info")
     if not os.path.exists(lcov_path):

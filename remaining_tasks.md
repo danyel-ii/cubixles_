@@ -2,7 +2,7 @@
 
 ## Review Status
 
-- Last reviewed: 2025-12-24
+- Last reviewed: 2025-12-25
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -42,6 +42,7 @@ These changes are implemented in code; verify in the UI.
 ## T15 — Coverage Gate (Verify)
 
 - Run `npm run coverage:contracts` and review `contracts/coverage_report.md` (90% minimum).
+- Current coverage is 80.93% (fail); add tests or exclude scripts to reach 90%.
   - Token URI decodes to metadata JSON with `animation_url` + provenance
 - Confirm $LESS token address is set before production
 - Confirm RoyaltySplitter forwards $LESS received from swaps to the owner

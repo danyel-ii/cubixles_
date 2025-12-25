@@ -1,4 +1,4 @@
-# cubeless v0 — State of Review (2025-12-24)
+# cubeless v0 — State of Review (2025-12-25)
 
 ## Summary
 
@@ -11,7 +11,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 - **Mint UI**: builds metadata JSON (data URI), includes token-specific `animation_url` (`/m/<tokenId>`), GIF traits, and logs diagnostics.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render.
 - **Contracts**: Foundry tests pass (39 total); mint price is dynamic from $LESS supply (rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter. Onchain $LESS supply snapshots + delta views are live.
-- **Security**: threat model, invariants, static analysis plan, and runbook added under `docs/security/` (coverage gate 90% via `npm run coverage:contracts`).
+- **Security**: threat model, invariants, static analysis plan, and runbook added under `docs/security/` (coverage gate 90% via `npm run coverage:contracts`, currently failing at 80.93%).
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` on Sepolia) + Leaderboard ranking by ΔLESS are live.
 - **$LESS metrics**: $LESS supply HUD + ΔLESS HUD and leaderboard ranking by `deltaFromLast` are wired.
 - **Branding**: UI titles, metadata name, and docs are aligned to "cubeless".

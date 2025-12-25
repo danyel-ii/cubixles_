@@ -2,7 +2,7 @@
 
 ## Review Status
 
-- Last reviewed: 2025-12-24
+- Last reviewed: 2025-12-25
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -118,6 +118,11 @@ logic are split into smaller modules.
 - `docs/security/INVARIANTS.md`
 - `docs/security/KNOWN_LIMITATIONS.md`
 - `docs/security/STATIC_ANALYSIS.md`
+
+## Root Docs
+
+- `MASTER_DOC.md`
+  - Master index, glossary, and doc map.
 - `docs/security/SECURITY_RUNBOOK.md`
 - `docs/security/FORK_TESTING.md`
 

@@ -2,7 +2,7 @@
 
 ## Review Status
 
-- Last reviewed: 2025-12-24
+- Last reviewed: 2025-12-25
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -30,3 +30,5 @@
 | T15 — Branding alignment | Done | UI, metadata, docs, and manifest use "cubeless" branding. |
 | T13 — Storage decision | Open | Pin p5 app directory + metadata JSON to IPFS and return hosted `tokenURI`. |
 | T14 — Direct mint call | In Progress | Mint UI added; awaiting deployed contract + ABI. |
+| T16 — Coverage gate + report | In Progress | Coverage report generated; current line coverage 80.93% (target 90%). |
+| T17 — MASTER_DOC | Done | Added MASTER_DOC with doc map + glossary. |
