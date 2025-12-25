@@ -19,7 +19,7 @@
 | T2 — Bundler scaffolding + ES modules | Done | Vite scaffold + ES modules verified in dev. |
 | T3 — Wallet provider integration | Done | Added Farcaster SDK wallet connect/disconnect UI + state. |
 | T4 — Manifest capabilities | Done | Added `/.well-known/farcaster.json` with accountAssociation + miniapp/frame config (version + URLs). |
-| T5 — Spec shapes | Done | Added `docs/B-app/20-spec.md` and `frontend/src/types/provenance.ts`. |
+| T5 — Spec shapes | Done | Added `docs/B-app/20-spec.md` and `app/_client/src/types/provenance.ts`. |
 | T6 — Alchemy inventory | Done | Added Alchemy client + indexer with Sepolia gating and SAFE-INT checks. |
 | T7 — Alchemy provenance | Done | Added provenance fetch + bundle builder with raw metadata + URI normalization. |
 | T8 — NFT picker UI | Done | Wallet-driven picker with 1–6 selection limit. |

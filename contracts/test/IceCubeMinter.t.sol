@@ -116,6 +116,42 @@ contract IceCubeMinterTest is Test {
         assertEq(minter.tokenURI(tokenId), "ipfs://token");
     }
 
+    function testPreviewTokenIdCanonicalizesRefs() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        IceCubeMinter.NftRef[] memory shuffled = new IceCubeMinter.NftRef[](3);
+        shuffled[0] = refs[2];
+        shuffled[1] = refs[0];
+        shuffled[2] = refs[1];
+
+        uint256 idA = _previewTokenId(minterAddr, DEFAULT_SALT, refs);
+        uint256 idB = _previewTokenId(minterAddr, DEFAULT_SALT, shuffled);
+
+        assertEq(idA, idB);
+    }
+
+    function testMintTracksEnumeration() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterAddr, price);
+
+        vm.prank(minterAddr);
+        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
+
+        assertEq(minter.totalMinted(), 1);
+        assertEq(minter.tokenIdByIndex(1), tokenId);
+        assertEq(minter.minterByTokenId(tokenId), minterAddr);
+    }
+
     function testRoyaltyInfoDefaults() public {
         (address receiver, uint256 amount) = minter.royaltyInfo(1, 1 ether);
         assertEq(receiver, resaleSplitter);
@@ -298,7 +334,7 @@ contract IceCubeMinterTest is Test {
         minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
-    function testTokenIdOrderSensitivity() public {
+    function testTokenIdCanonicalOrderIgnoresInputOrder() public {
         address minterAddr = makeAddr("minter");
         uint256 tokenA = nftA.mint(minterAddr);
         uint256 tokenB = nftB.mint(minterAddr);
@@ -313,7 +349,7 @@ contract IceCubeMinterTest is Test {
         uint256 previewA = _previewTokenId(minterAddr, DEFAULT_SALT, refsA);
         uint256 previewB = _previewTokenId(minterAddr, DEFAULT_SALT, refsB);
 
-        assertTrue(previewA != previewB);
+        assertEq(previewA, previewB);
     }
 
     function testCurrentMintPriceSupplyZero() public {

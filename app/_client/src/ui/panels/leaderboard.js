@@ -1,4 +1,4 @@
-import { BrowserProvider, Contract, id } from "ethers";
+import { BrowserProvider, Contract } from "ethers";
 import { ICECUBE_CONTRACT } from "../../config/contracts";
 import { subscribeWallet } from "../../features/wallet/wallet.js";
 
@@ -18,6 +18,21 @@ function formatDelta(value) {
 
 function isZeroAddress(address) {
   return !address || address === "0x0000000000000000000000000000000000000000";
+}
+
+function shortenAddress(address) {
+  if (!address) {
+    return "—";
+  }
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
+
+async function fetchIdentity(address) {
+  const response = await fetch(`/api/identity?address=${address}`);
+  if (!response.ok) {
+    return null;
+  }
+  return response.json();
 }
 
 export function initLeaderboardUi() {
@@ -79,26 +94,15 @@ export function initLeaderboardUi() {
       ICECUBE_CONTRACT.abi,
       browserProvider
     );
-    const topic = id("Minted(uint256,address,bytes32,bytes32)");
-    const logs = await browserProvider.getLogs({
-      address: ICECUBE_CONTRACT.address,
-      fromBlock: 0,
-      toBlock: "latest",
-      topics: [topic],
-    });
-    const tokenIds = [];
-    logs.forEach((log) => {
-      try {
-        const parsed = contract.interface.parseLog(log);
-        const tokenId = parsed?.args?.tokenId;
-        if (tokenId !== null && tokenId !== undefined) {
-          tokenIds.push(BigInt(tokenId));
-        }
-      } catch (error) {
-        return;
-      }
-    });
-    return [...new Set(tokenIds.map((id) => id.toString()))].map((id) => BigInt(id));
+    const totalMinted = await contract.totalMinted();
+    const count = Number(totalMinted);
+    if (!count) {
+      return [];
+    }
+    const ids = await Promise.all(
+      Array.from({ length: count }, (_, index) => contract.tokenIdByIndex(index + 1))
+    );
+    return ids.map((tokenId) => BigInt(tokenId));
   }
 
   async function fetchLeaderboard(provider) {
@@ -118,14 +122,24 @@ export function initLeaderboardUi() {
     }
     const entries = await Promise.all(
       tokenIds.map(async (tokenId) => {
-        const delta = await contract.deltaFromLast(tokenId);
-        return { tokenId, delta: BigInt(delta) };
+        const [delta, minter] = await Promise.all([
+          contract.deltaFromLast(tokenId),
+          contract.minterByTokenId(tokenId),
+        ]);
+        return { tokenId, delta: BigInt(delta), minter };
       })
     );
     entries.sort((a, b) => (a.delta > b.delta ? -1 : a.delta < b.delta ? 1 : 0));
+    const sliced = entries.slice(0, MAX_ENTRIES);
+    const identityEntries = await Promise.all(
+      sliced.map(async (entry) => {
+        const identity = entry.minter ? await fetchIdentity(entry.minter) : null;
+        return { ...entry, identity };
+      })
+    );
     const supplyNow = await contract.lessSupplyNow();
     return {
-      entries: entries.slice(0, MAX_ENTRIES),
+      entries: identityEntries,
       supplyNow: BigInt(supplyNow),
     };
   }
@@ -141,13 +155,40 @@ export function initLeaderboardUi() {
       const row = document.createElement("div");
       row.className = "ui-list-row";
 
-      const label = document.createElement("span");
+      const label = document.createElement("a");
+      label.href = `/m/${entry.tokenId.toString()}`;
       label.textContent = `#${index + 1} · Token ${entry.tokenId.toString()}`;
+      label.className = "ui-link";
+
+      const identity = entry.identity;
+      const identitySpan = document.createElement("span");
+      if (identity?.farcaster?.username) {
+        const link = document.createElement("a");
+        link.href = identity.farcaster.url || `https://warpcast.com/${identity.farcaster.username}`;
+        link.textContent = `@${identity.farcaster.username}`;
+        link.className = "ui-link";
+        identitySpan.appendChild(link);
+      } else if (identity?.ens) {
+        const link = document.createElement("a");
+        link.href = `https://app.ens.domains/${identity.ens}`;
+        link.textContent = identity.ens;
+        link.className = "ui-link";
+        identitySpan.appendChild(link);
+      } else if (entry.minter) {
+        const link = document.createElement("a");
+        link.href = `https://etherscan.io/address/${entry.minter}`;
+        link.textContent = shortenAddress(entry.minter);
+        link.className = "ui-link";
+        identitySpan.appendChild(link);
+      } else {
+        identitySpan.textContent = "—";
+      }
 
       const value = document.createElement("span");
       value.textContent = `ΔLESS ${formatDelta(entry.delta)}`;
 
       row.appendChild(label);
+      row.appendChild(identitySpan);
       row.appendChild(value);
       listEl.appendChild(row);
     });

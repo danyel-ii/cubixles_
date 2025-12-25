@@ -26,6 +26,9 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
 
     address public immutable lessToken;
     address public resaleSplitter;
+    uint256 public totalMinted;
+    mapping(uint256 => uint256) public tokenIdByIndex;
+    mapping(uint256 => address) public minterByTokenId;
 
     event Minted(uint256 indexed tokenId, address indexed minter, bytes32 salt, bytes32 refsHash);
     event MintSupplySnapshotted(uint256 indexed tokenId, uint256 supply);
@@ -61,12 +64,15 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         uint256 price = currentMintPrice();
         require(msg.value >= price, "INSUFFICIENT_ETH");
 
-        bytes32 refsHash = hashRefs(refs);
+        bytes32 refsHash = _hashRefsCanonical(refs);
         tokenId = _computeTokenId(msg.sender, salt, refsHash);
         require(_ownerOf(tokenId) == address(0), "TOKENID_EXISTS");
 
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, tokenURI);
+        totalMinted += 1;
+        tokenIdByIndex[totalMinted] = tokenId;
+        minterByTokenId[tokenId] = msg.sender;
 
         emit Minted(tokenId, msg.sender, salt, refsHash);
 
@@ -93,7 +99,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         bytes32 salt,
         NftRef[] calldata refs
     ) external view returns (uint256) {
-        bytes32 refsHash = hashRefs(refs);
+        bytes32 refsHash = _hashRefsCanonical(refs);
         return _computeTokenId(msg.sender, salt, refsHash);
     }
 
@@ -167,12 +173,35 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         require(success, "Transfer failed");
     }
 
-    function hashRefs(NftRef[] calldata refs) internal pure returns (bytes32) {
-        bytes memory packed = "";
+    function _hashRefsCanonical(NftRef[] calldata refs) internal pure returns (bytes32) {
+        NftRef[] memory sorted = new NftRef[](refs.length);
         for (uint256 i = 0; i < refs.length; i += 1) {
-            packed = abi.encodePacked(packed, refs[i].contractAddress, refs[i].tokenId);
+            sorted[i] = refs[i];
+        }
+        for (uint256 i = 1; i < sorted.length; i += 1) {
+            NftRef memory key = sorted[i];
+            uint256 j = i;
+            while (j > 0 && _refLessThan(key, sorted[j - 1])) {
+                sorted[j] = sorted[j - 1];
+                j -= 1;
+            }
+            sorted[j] = key;
+        }
+        bytes memory packed = "";
+        for (uint256 i = 0; i < sorted.length; i += 1) {
+            packed = abi.encodePacked(packed, sorted[i].contractAddress, sorted[i].tokenId);
         }
         return keccak256(packed);
+    }
+
+    function _refLessThan(NftRef memory a, NftRef memory b) internal pure returns (bool) {
+        if (a.contractAddress < b.contractAddress) {
+            return true;
+        }
+        if (a.contractAddress > b.contractAddress) {
+            return false;
+        }
+        return a.tokenId < b.tokenId;
     }
 
     function _computeTokenId(

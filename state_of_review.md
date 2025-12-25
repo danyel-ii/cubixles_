@@ -2,18 +2,19 @@
 
 ## Summary
 
-The repo is aligned on the "cubeless" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `animation_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs). Contract tests pass locally, mint pricing is dynamic based on $LESS totalSupply (base `0.0015 ETH`, rounded up to the nearest `0.0001 ETH`), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The remaining work is primarily deployment setup (IPFS pinning, manifest assets, and onchain deployment wiring).
+The repo is aligned on the "cubeless" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `animation_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs). Contract tests pass locally, mint pricing is dynamic based on $LESS totalSupply (base `0.0015 ETH`, rounded up to the nearest `0.0001 ETH`), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The Next.js app router now serves the UI, with hardened `/api/*` routes handling Alchemy and Pinata server-side.
 
 ## What’s working
 
-- **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired.
+- **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired; data reads proxy through `/api/nfts` (no client keys).
 - **Provenance**: NFT selection -> provenance bundle -> mint metadata pipeline is in place.
-- **Mint UI**: builds metadata JSON (data URI), includes token-specific `animation_url` (`/m/<tokenId>`), GIF traits, and logs diagnostics.
+- **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `animation_url` (`/m/<tokenId>`), GIF traits, and logs diagnostics.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render.
 - **Contracts**: Foundry tests pass (39 total); mint price is dynamic from $LESS supply (base `0.0015 ETH`, rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter with 50% burn on $LESS proceeds. Onchain $LESS supply snapshots + delta views are live.
 - **Security**: threat model, invariants, static analysis plan, and runbook added under `docs/security/` (coverage gate 90% via `npm run coverage:contracts`, currently failing at 80.93%).
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` on Sepolia) + Leaderboard ranking by ΔLESS are live.
 - **$LESS metrics**: $LESS supply HUD + ΔLESS HUD and leaderboard ranking by `deltaFromLast` are wired.
+- **Server routes**: `/api/nfts`, `/api/pin/metadata`, `/api/nonce`, `/api/identity` are available under Next app router.
 - **Branding**: UI titles, metadata name, and docs are aligned to "cubeless".
 
 ## Current manifest status
@@ -42,7 +43,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 ## Open items (must finish before v0)
 
 ### Manifest + assets
-- Add `frontend/public/icon.png`, `frontend/public/image.png`, `frontend/public/splash.png` (or update URLs to hosted assets).
+- Add `public/icon.png`, `public/image.png`, `public/splash.png` (or update URLs to hosted assets).
 - Re-validate manifest on Farcaster after deploy.
 
 ### Storage / tokenURI
@@ -63,11 +64,11 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 
 - **Manifest assets missing** → Farcaster validation fails.
 - **Vercel cache / wrong repo** → stale deployment behavior.
-- **TokenURI still data URI** → not aligned with IPFS-hosted interactive asset plan.
+- **TokenURI pinning depends on server secrets** → ensure `PINATA_JWT` is set in Vercel.
 
 ## Next recommended actions (short list)
 
-1. Add the three manifest images under `frontend/public/` or update the URLs.
+1. Add the three manifest images under `public/` or update the URLs.
 2. Confirm Vercel build is using `main` from `cubeless_` and redeploy with cache cleared.
 3. Implement IPFS pinning flow and switch `tokenUriProvider`.
 4. Deploy Sepolia contract and re-test mint from the miniapp.

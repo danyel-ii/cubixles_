@@ -6,7 +6,7 @@ import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
 import { subscribeWallet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
 import { buildMintMetadata } from "./mint-metadata.js";
-import { buildTokenUri } from "./token-uri-provider.js";
+import { pinTokenMetadata } from "./token-uri-provider.js";
 import {
   computeGifSeed,
   computeVariantIndex,
@@ -19,7 +19,8 @@ const FALLBACK_BASE_PRICE_WEI = 1_500_000_000_000_000n;
 const ONE_BILLION = 1_000_000_000n;
 const WAD = 1_000_000_000_000_000_000n;
 const PRICE_STEP_WEI = 100_000_000_000_000n;
-const IS_DEV = Boolean(import.meta?.env?.DEV);
+const IS_DEV =
+  typeof process !== "undefined" && process.env.NODE_ENV !== "production";
 
 function formatError(error) {
   if (error instanceof Error) {
@@ -39,6 +40,26 @@ function generateSalt() {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return `0x${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function sortRefsCanonically(refs) {
+  return [...refs].sort((a, b) => {
+    const addrA = BigInt(a.contractAddress);
+    const addrB = BigInt(b.contractAddress);
+    if (addrA < addrB) {
+      return -1;
+    }
+    if (addrA > addrB) {
+      return 1;
+    }
+    if (a.tokenId < b.tokenId) {
+      return -1;
+    }
+    if (a.tokenId > b.tokenId) {
+      return 1;
+    }
+    return 0;
+  });
 }
 
 export function initMintUi() {
@@ -348,11 +369,20 @@ export function initMintUi() {
         walletState.address,
         SEPOLIA_CHAIN_ID
       );
-      const refs = state.nftSelection.map((nft) => ({
+      const refsFaces = state.nftSelection.map((nft) => ({
+        contractAddress: nft.contractAddress,
+        tokenId: nft.tokenId,
+      }));
+      const refsForContract = state.nftSelection.map((nft) => ({
         contractAddress: nft.contractAddress,
         tokenId: BigInt(nft.tokenId),
       }));
-      const previewTokenId = await contract.previewTokenId(salt, refs);
+      const refsCanonical = sortRefsCanonically(refsForContract);
+      const refsCanonicalMeta = refsCanonical.map((ref) => ({
+        contractAddress: ref.contractAddress,
+        tokenId: ref.tokenId.toString(),
+      }));
+      const previewTokenId = await contract.previewTokenId(salt, refsCanonical);
       const lessSupplyMint = await contract.lessSupplyNow();
       const tokenId = BigInt(previewTokenId);
       const selectionSeed = computeGifSeed({
@@ -373,6 +403,8 @@ export function initMintUi() {
         chainId: SEPOLIA_CHAIN_ID,
         selection: state.nftSelection,
         provenanceBundle: bundle,
+        refsFaces,
+        refsCanonical: refsCanonicalMeta,
         animationUrl,
         imageUrl,
         gif: {
@@ -382,7 +414,8 @@ export function initMintUi() {
           lessSupplyMint: lessSupplyMint.toString(),
         },
       });
-      const tokenUri = buildTokenUri(metadata);
+      setStatus("Pinning metadata...");
+      const tokenUri = await pinTokenMetadata(metadata);
       if (devChecklist) {
         const diagnostics = buildDiagnostics({
           selection: state.nftSelection,
@@ -405,7 +438,7 @@ export function initMintUi() {
         : {};
 
       setStatus("Submitting mint transaction...");
-      const tx = await contract.mint(salt, tokenUri, refs, overrides);
+      const tx = await contract.mint(salt, tokenUri, refsCanonical, overrides);
       setStatus("Waiting for confirmation...");
       const receipt = await tx.wait();
       const mintedTokenId = extractMintedTokenId(receipt, contract);

@@ -42,3 +42,16 @@
 - `previewTokenId` is used client-side to build token-specific `animation_url`.
 - `animation_url` now points to `https://<domain>/m/<tokenId>` (Vercel viewer).
 - Metadata includes GIF traits (`gif.*`) and an `image` pointing to the GIF library.
+
+## 2025-12-25 — Server-Only Keys + Next.js Migration Start
+
+- Begin migration to Next.js to host `/api/*` routes on Vercel.
+- Client no longer uses Alchemy keys directly; `/api/nfts` proxies allowlisted Alchemy + RPC calls.
+- Metadata pinning moves server-side via `/api/pin/metadata` using `PINATA_JWT`.
+- Nonce endpoint added at `/api/nonce` for future auth flows.
+
+## 2025-12-25 — Canonical Refs + Onchain Enumeration
+
+- TokenId hashing now uses canonical (sorted) refs to avoid order-based collisions.
+- `refsFaces` (face order) and `refsCanonical` (sorted set) are stored in metadata.
+- `totalMinted` + `tokenIdByIndex` added for onchain enumeration.

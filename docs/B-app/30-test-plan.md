@@ -118,11 +118,23 @@ For `/api/pin-image`:
 - rejects invalid content types
 - enforces max size (to prevent abuse)
 
-For `/api/pin-metadata`:
+For `/api/pin/metadata`:
 - accepts metadata JSON
 - validates required fields exist (`name`, `animation_url`, `provenance`, `schemaVersion`)
 - returns `{ ipfsUri, gatewayUrl }`
 - rejects malformed JSON
+
+For `/api/nonce`:
+- returns a unique nonce (UUID)
+
+For `/api/nfts`:
+- accepts `mode=alchemy` requests with allowlisted Alchemy NFT paths
+- accepts `mode=rpc` batch `eth_call` requests
+- caches responses and returns minimized payloads
+
+For `/api/identity`:
+- returns Farcaster identity when configured (Neynar API key)
+- falls back to ENS or address when unavailable
 
 **Security tests**
 - endpoint does not echo secrets in response/logs

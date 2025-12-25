@@ -3,7 +3,7 @@ import {
   computeVariantIndex,
   decodeVariantIndex,
   gifIpfsUrl,
-} from "../frontend/src/gif/variant.js";
+} from "../app/_client/src/gif/variant.js";
 
 const input = {
   tokenId: 1n,

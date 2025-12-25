@@ -15,6 +15,7 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
 - Chain: Sepolia only (`chainId: 11155111`).
 - Two types: `NftItem` (inventory UI), `ProvenanceBundle` (mint metadata).
 - No UI or contract logic in this doc.
+- Inventory and metadata reads are proxied through server routes (`/api/nfts`), not direct client keys.
 
 ## Core Rules (v0)
 
@@ -63,6 +64,7 @@ type NftItem = {
 
 Notes:
 - `tokenUri` and `image` may be null if metadata is missing or invalid.
+- `source: "alchemy"` indicates the upstream provider; the browser uses `/api/nfts` for access.
 
 ### `ProvenanceNft`
 
@@ -125,9 +127,10 @@ v0 mapping order (fixed):
 ## Mint Metadata Schema (tokenURI JSON)
 
 Notes:
-- `animation_url` should point to the IPFS-hosted p5 miniapp entry (e.g. `ipfs://<appDirCID>/index.html`).
-- `image` is an optional static thumbnail for marketplaces.
+- `animation_url` should point to the token viewer route (e.g. `https://<domain>/m/<tokenId>`).
+- `image` is an optional static thumbnail for marketplaces (GIF library).
 - `provenance` stores the full bundle for traceability.
+- `provenance.refsFaces` preserves face order; `provenance.refsCanonical` is the sorted list used for tokenId hashing.
 
 ```ts
 type MintMetadata = {
@@ -152,6 +155,8 @@ type MintMetadata = {
     schemaVersion: 1;
     mintedBy: string;
     refs: Array<{ contractAddress: string; tokenId: string }>;
+    refsFaces?: Array<{ contractAddress: string; tokenId: string }>;
+    refsCanonical?: Array<{ contractAddress: string; tokenId: string }>;
   };
   references: Array<{
     chainId: 11155111;
@@ -180,6 +185,7 @@ type MintMetadata = {
 ## Deterministic TokenId
 
 - `tokenId = keccak256("cubeless:tokenid:v1", minter, salt, refsHash)`
+- `refsHash` is computed from a canonical sort of refs (by contract + tokenId).
 - Clients call `previewTokenId(salt, refs)` to build metadata before mint.
 
 ## $LESS Delta Metric (UI/Leaderboard)

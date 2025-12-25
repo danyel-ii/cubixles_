@@ -39,7 +39,7 @@ Key steps:
    - `factor = 1 + (1B - supply) / 1B`, clamped at 1.0 when supply ≥ 1B
    - `price = base * factor`
    - `price` is rounded up to the nearest `0.0001 ETH`
-4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and `refsHash`.
+4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and a **canonical** `refsHash` (refs sorted by contract + tokenId).
 5. **Mint + metadata**: mint token and store `tokenURI`.
 6. **Mint payout**: transfers `currentMintPrice()` to `owner()` and refunds any excess to `msg.sender`.
 
@@ -58,6 +58,7 @@ These values power the in-app ΔLESS HUD and the leaderboard ranking (canonical 
 
 - `previewTokenId(bytes32 salt, NftRef[] refs)` returns the exact tokenId the mint will use.
 - Clients should call `previewTokenId` before pinning metadata to build a token-specific `animation_url`.
+- `totalMinted` and `tokenIdByIndex(index)` provide onchain enumeration for the leaderboard.
 
 ## Royalty Logic
 
@@ -101,14 +102,13 @@ File: `contracts/test/IceCubeMinter.t.sol`
 
 ## Frontend Integration
 
-File: `frontend/src/config/contracts.ts` reads deployment + ABI.
+File: `app/_client/src/config/contracts.ts` reads deployment + ABI.
 
-Mint UI: `frontend/src/features/mint/mint-ui.js`
+Mint UI: `app/_client/src/features/mint/mint-ui.js`
 
 - Builds provenance bundle from selected NFTs.
-- Creates a JSON metadata object with `image` (GIF), `animation_url` (`/m/<tokenId>`), `gif` traits, and `provenance.refs`.
-- Encodes metadata as a data URI for now and calls `mint(salt, tokenURI, refs)` on Sepolia.
-- The intended production flow is to pin the metadata JSON to IPFS and pass `ipfs://<metaCID>` as `tokenURI`.
+- Creates a JSON metadata object with `image` (GIF), `animation_url` (`/m/<tokenId>`), `gif` traits, and `provenance.refsFaces` + `provenance.refsCanonical`.
+- Pins metadata via `/api/pin/metadata` and calls `mint(salt, tokenURI, refs)` on Sepolia with the resulting `ipfs://` URI.
 
 ## Known Placeholders / TODOs
 
@@ -116,4 +116,4 @@ Mint UI: `frontend/src/features/mint/mint-ui.js`
 - RoyaltySplitter uses a router call if configured; otherwise it forwards ETH to owner.
 - When the router call fails, all ETH is forwarded to owner.
 - When the router call succeeds, any $LESS received is split 50% to burn address and 50% to owner, then any remaining ETH balance is forwarded to owner.
-- Metadata storage is currently a data URI; production should pin metadata to IPFS and reference the p5 app via `animation_url`.
+- Metadata is pinned to IPFS via the server route and references the token viewer via `animation_url`.

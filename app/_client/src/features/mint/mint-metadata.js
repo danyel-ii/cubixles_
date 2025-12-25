@@ -68,12 +68,14 @@ export function buildMintMetadata({
   chainId,
   selection,
   provenanceBundle,
+  refsFaces,
+  refsCanonical,
   animationUrl,
   imageUrl,
   gif,
 }) {
   const provenance = enrichProvenance(provenanceBundle, selection);
-  const refs = selection.map((nft) => ({
+  const refs = refsFaces ?? selection.map((nft) => ({
     contractAddress: nft.contractAddress,
     tokenId: nft.tokenId,
   }));
@@ -105,6 +107,8 @@ export function buildMintMetadata({
       mintedBy: minter,
       chainId,
       refs,
+      refsFaces: refsFaces ?? refs,
+      refsCanonical: refsCanonical ?? refs,
     },
     attributes,
     references: buildReferenceSummary(selection),

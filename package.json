@@ -4,13 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "test": "echo \"No frontend tests configured\"",
     "coverage:contracts": "cd contracts && python3 scripts/check_coverage.py"
   },
   "devDependencies": {
+    "next": "^14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "vite": "^5.2.0",
     "vite-plugin-node-polyfills": "^0.24.0"
   },

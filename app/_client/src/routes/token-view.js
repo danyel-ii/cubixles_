@@ -30,6 +30,9 @@ function setStatus(message, tone = "neutral") {
 
 function resolveRefs(metadata) {
   const provenance = metadata?.provenance ?? null;
+  if (provenance?.refsFaces && Array.isArray(provenance.refsFaces)) {
+    return provenance.refsFaces;
+  }
   if (provenance?.refs && Array.isArray(provenance.refs)) {
     return provenance.refs;
   }

@@ -39,60 +39,43 @@ export async function fetchLessDelta(provider, tokenId) {
   };
 }
 
-function getAlchemyRpcUrl(chainId) {
-  const apiKey = import.meta.env.VITE_ALCHEMY_API_KEY;
-  if (!apiKey) {
-    throw new Error("Missing VITE_ALCHEMY_API_KEY.");
-  }
-  if (chainId === 11155111) {
-    return `https://eth-sepolia.g.alchemy.com/v2/${apiKey}`;
-  }
-  if (chainId === 1) {
-    return `https://eth-mainnet.g.alchemy.com/v2/${apiKey}`;
-  }
-  throw new Error("Unsupported chain for delta fetch.");
-}
-
-async function rpcCall(url, to, data) {
-  const body = {
-    jsonrpc: "2.0",
-    id: 1,
-    method: "eth_call",
-    params: [
-      {
-        to,
-        data,
-      },
-      "latest",
-    ],
-  };
-  const response = await fetch(url, {
+async function rpcCallBatch(chainId, calls) {
+  const response = await fetch("/api/nfts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      mode: "rpc",
+      chainId,
+      calls,
+    }),
   });
   if (!response.ok) {
     throw new Error(`RPC call failed (${response.status}).`);
   }
   const json = await response.json();
-  if (!json?.result) {
-    throw new Error("RPC response missing result.");
+  if (!Array.isArray(json)) {
+    throw new Error("RPC response missing results.");
   }
-  return json.result;
+  return json;
 }
 
 async function fetchLessDeltaFromRpc(tokenId) {
-  const url = getAlchemyRpcUrl(ICECUBE_CONTRACT.chainId);
   const iface = new Interface(ICECUBE_CONTRACT.abi);
   const supplyData = iface.encodeFunctionData("lessSupplyNow");
   const lastData = iface.encodeFunctionData("deltaFromLast", [tokenId]);
   const mintData = iface.encodeFunctionData("deltaFromMint", [tokenId]);
 
-  const [supplyRaw, lastRaw, mintRaw] = await Promise.all([
-    rpcCall(url, ICECUBE_CONTRACT.address, supplyData),
-    rpcCall(url, ICECUBE_CONTRACT.address, lastData),
-    rpcCall(url, ICECUBE_CONTRACT.address, mintData),
+  const results = await rpcCallBatch(ICECUBE_CONTRACT.chainId, [
+    { to: ICECUBE_CONTRACT.address, data: supplyData },
+    { to: ICECUBE_CONTRACT.address, data: lastData },
+    { to: ICECUBE_CONTRACT.address, data: mintData },
   ]);
+  const supplyRaw = results[0]?.result;
+  const lastRaw = results[1]?.result;
+  const mintRaw = results[2]?.result;
+  if (!supplyRaw || !lastRaw || !mintRaw) {
+    throw new Error("RPC response missing result.");
+  }
 
   const supplyNow = iface.decodeFunctionResult("lessSupplyNow", supplyRaw)[0];
   const deltaFromLast = iface.decodeFunctionResult("deltaFromLast", lastRaw)[0];

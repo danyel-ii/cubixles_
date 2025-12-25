@@ -448,6 +448,15 @@ body.is-minted .preview-bar {
   color: rgba(230, 233, 239, 0.75);
 }
 
+.ui-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ui-link:hover {
+  text-decoration: underline;
+}
+
 .ui-grid {
   margin-top: 8px;
   display: grid;

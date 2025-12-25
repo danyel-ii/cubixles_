@@ -1,5 +1,5 @@
 function readEnvValue(key) {
-  const raw = import.meta?.env?.[key];
+  const raw = typeof process !== "undefined" ? process.env[key] : undefined;
   if (typeof raw !== "string") {
     return null;
   }
@@ -8,11 +8,14 @@ function readEnvValue(key) {
 }
 
 export function getGifLibraryCid() {
-  return readEnvValue("VITE_GIF_LIBRARY_CID") ?? "GIF_LIBRARY_CID_TBD";
+  return (
+    readEnvValue("NEXT_PUBLIC_GIF_LIBRARY_CID") ??
+    "bafybeidr5grosbcwqg6hghnippmu4jgho2wc7n6g42aunityr5ee3u6xru"
+  );
 }
 
 export function getTokenViewBaseUrl() {
-  const explicit = readEnvValue("VITE_TOKEN_VIEW_BASE_URL");
+  const explicit = readEnvValue("NEXT_PUBLIC_TOKEN_VIEW_BASE_URL");
   if (explicit) {
     return explicit.replace(/\/$/, "");
   }

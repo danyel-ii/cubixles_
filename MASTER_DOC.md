@@ -15,6 +15,12 @@ This document is the single entry point for cubeless documentation. It explains 
 - `contract_details.md` — Contract architecture, mint flow, pricing, and royalty behavior.
 - `contracts/DEPLOYMENT_SEPOLIA.md` — Sepolia deployment steps + environment variables.
 
+### Next.js (App Router)
+- `app/api/nonce/route.js` — Nonce endpoint for client auth flows.
+- `app/api/pin/metadata/route.js` — Server-side Pinata pinning for metadata.
+- `app/api/nfts/route.js` — Alchemy NFT proxy + RPC batch (cached, minimized).
+- `app/api/identity/route.js` — Farcaster/ENS identity lookup for the leaderboard.
+
 ### Security + Audit
 - `docs/security/THREAT_MODEL.md` — Threats, assets, trust boundaries.
 - `docs/security/INVARIANTS.md` — Invariants and safety properties.

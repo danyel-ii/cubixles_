@@ -47,7 +47,12 @@ These changes are implemented in code; verify in the UI.
 ## T16 — Fork Tests (Verify)
 
 - Mainnet fork tests now pass using `MAINNET_RPC_URL`; keep re-running after contract changes.
-  - Token URI decodes to metadata JSON with `animation_url` + provenance
+
+## T17 — Next.js Migration (In Progress)
+
+- UI now runs under the Next.js app router (`app/`), with client modules under `app/_client/`.
+- Server routes live under `app/api/*` (nonce, Pinata pinning, NFT proxy).
+- Finish validating the Next build on Vercel (token viewer `/m/<tokenId>`).
 - Confirm $LESS token address is set before production
 - Confirm RoyaltySplitter forwards $LESS received from swaps to the owner
 
@@ -58,13 +63,13 @@ These changes are implemented in code; verify in the UI.
   - `miniapp` and `frame` are identical (required by validator)
   - `miniapp.version` is set
   - `iconUrl`, `imageUrl`, `splashImageUrl` are HTTPS and deployed
-- Add `frontend/public/icon.png`, `frontend/public/image.png`, `frontend/public/splash.png` (or update URLs to hosted assets).
+- Add `public/icon.png`, `public/image.png`, `public/splash.png` (or update URLs to hosted assets).
 
 ## T13 — Storage Decision (Metadata)
 
-- Pin the metadata JSON (tokenURI) with `animation_url = https://<domain>/m/<tokenId>`.
-- Decide on a thumbnail capture flow (optional) and update `image`.
-- Update `tokenUriProvider` to return the hosted `ipfs://<metaCID>` URL.
+- Verify metadata pinning works end-to-end (`/api/pin/metadata`).
+- Confirm `animation_url = https://<domain>/m/<tokenId>` resolves in the viewer.
+- Decide on a thumbnail capture flow (optional) and update `image` if needed.
 
 ## Contract Ops
 
