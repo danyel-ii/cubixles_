@@ -29,7 +29,7 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (39 tests)
+Result: PASS (41 tests)
 - Fork tests executed but skipped because `MAINNET_RPC_URL` was not set.
 
 ### Coverage (Solidity)
@@ -37,8 +37,8 @@ Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: FAIL (80.93% line coverage; minimum is 90%).
-- Report: `contracts/coverage_report.md` (grouped by contract).
+Result: FAIL (82.58% line coverage; minimum is 90%).
+- Report: `docs/reports/coverage_report.md` (grouped by contract).
 - Primary gaps: deploy scripts and portions of `IceCubeMinter` + `RoyaltySplitter` (see report).
 
 ### Invariants (standalone run)
@@ -69,10 +69,11 @@ Result: No frontend tests configured (placeholder script).
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 135 warnings (missing NatSpec, import-path-check, and gas lint warnings).
+  - Result: 0 errors, 147 warnings (missing NatSpec, import-path-check, and gas lint warnings).
 - Local slither run:
-  - Command: `cd contracts && /Users/danyel-ii/Library/Python/3.9/bin/slither .`
-  - Result: 9 findings (warnings):
+  - Command: `cd contracts && python3 -m slither .`
+  - Result: 10 findings (warnings):
+    - divide-before-multiply: `_roundUp` math
     - dangerous strict equality: `lessBalance == 0`, `amount == 0`
     - missing zero-address validation: `lessToken`, `router` (constructor + setRouter)
     - external calls inside loop: `ownerOf` in mint refs loop

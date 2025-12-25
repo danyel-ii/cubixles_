@@ -41,8 +41,8 @@ These changes are implemented in code; verify in the UI.
 
 ## T15 — Coverage Gate (Verify)
 
-- Run `npm run coverage:contracts` and review `contracts/coverage_report.md` (90% minimum).
-- Current coverage is 80.93% (fail); add tests or exclude scripts to reach 90%.
+- Run `npm run coverage:contracts` and review `docs/reports/coverage_report.md` (90% minimum).
+- Current coverage is 82.58% (fail); add tests or exclude scripts to reach 90%.
 
 ## T16 — Fork Tests (Verify)
 

@@ -12,8 +12,8 @@ This document is the single entry point for cubeless documentation. It explains 
 - `docs/01-decision-log.md` — Dated decisions that explain why certain choices were made.
 
 ### Contracts + Deployment
-- `contract_details.md` — Contract architecture, mint flow, pricing, and royalty behavior.
-- `contracts/DEPLOYMENT_SEPOLIA.md` — Sepolia deployment steps + environment variables.
+- `docs/contracts/contract_details.md` — Contract architecture, mint flow, pricing, and royalty behavior.
+- `docs/contracts/DEPLOYMENT_SEPOLIA.md` — Sepolia deployment steps + environment variables.
 
 ### Next.js (App Router)
 - `app/api/nonce/route.js` — Nonce endpoint for client auth flows.
@@ -28,16 +28,16 @@ This document is the single entry point for cubeless documentation. It explains 
 - `docs/security/STATIC_ANALYSIS.md` — Slither/solhint usage and policy.
 - `docs/security/SECURITY_RUNBOOK.md` — Runbook for tests, incidents, and gates.
 - `docs/security/FORK_TESTING.md` — Mainnet fork harness and how to run.
-- `security_audit.md` — Latest audit execution results + tooling outcomes.
+- `docs/security/security_audit.md` — Latest audit execution results + tooling outcomes.
 
 ### Project Status + Tasks
-- `state_of_review.md` — Snapshot of repo alignment and current health.
-- `remaining_tasks.md` — Owner action items to finish v0.
-- `TASK_LOG.md` — Chronological task execution log.
-- `STRUCTURE.md` — Repository layout and module responsibilities.
+- `docs/status/state_of_review.md` — Snapshot of repo alignment and current health.
+- `docs/status/remaining_tasks.md` — Owner action items to finish v0.
+- `docs/status/TASK_LOG.md` — Chronological task execution log.
+- `docs/overview/STRUCTURE.md` — Repository layout and module responsibilities.
 
 ### Generated Reports
-- `contracts/coverage_report.md` — Solidity line coverage report (grouped by contract).
+- `docs/reports/coverage_report.md` — Solidity line coverage report (grouped by contract).
 
 ## Workflow (How to Use These Docs)
 
@@ -48,11 +48,11 @@ This document is the single entry point for cubeless documentation. It explains 
    - Follow `docs/B-app/30-test-plan.md`.
    - Use `docs/security/SECURITY_RUNBOOK.md` for test + security gates.
 3) **Review + deployment**
-   - Validate `contract_details.md` and `contracts/DEPLOYMENT_SEPOLIA.md`.
+   - Validate `docs/contracts/contract_details.md` and `docs/contracts/DEPLOYMENT_SEPOLIA.md`.
 4) **Security posture**
-   - Review `docs/security/*` and update `security_audit.md`.
+   - Review `docs/security/*` and update `docs/security/security_audit.md`.
 5) **Status + next steps**
-   - Check `state_of_review.md` and `remaining_tasks.md`.
+   - Check `docs/status/state_of_review.md` and `docs/status/remaining_tasks.md`.
 
 ## Glossary
 
@@ -73,7 +73,7 @@ This document is the single entry point for cubeless documentation. It explains 
 cd contracts
 forge test -vvv
 
-# Coverage (writes contracts/coverage_report.md)
+# Coverage (writes docs/reports/coverage_report.md)
 npm run coverage:contracts
 
 # Static analysis
@@ -84,6 +84,6 @@ slither .
 
 ## Quick Health Checklist
 
-- `security_audit.md` updated with latest tool runs.
-- `contracts/coverage_report.md` regenerated after test updates.
-- `state_of_review.md` and `remaining_tasks.md` reflect current status.
+- `docs/security/security_audit.md` updated with latest tool runs.
+- `docs/reports/coverage_report.md` regenerated after test updates.
+- `docs/status/state_of_review.md` and `docs/status/remaining_tasks.md` reflect current status.

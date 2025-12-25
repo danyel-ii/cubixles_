@@ -128,7 +128,7 @@ are split into smaller modules.
 
 ## Root Docs
 
-- `MASTER_DOC.md`
+- `docs/overview/MASTER_DOC.md`
   - Master index, glossary, and doc map.
 
 ## Next.js (App Router)

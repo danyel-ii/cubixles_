@@ -33,7 +33,7 @@ slither .
 - `forge test`
 - `solhint` (Solidity lint)
 - `slither` (static analysis)
-- `forge coverage` (minimum 90% line coverage; report at `contracts/coverage_report.md`)
+- `forge coverage` (minimum 90% line coverage; report at `docs/reports/coverage_report.md`)
 
 ## Incident response
 1. Freeze deployments if a critical issue is found.

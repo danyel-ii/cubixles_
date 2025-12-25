@@ -86,6 +86,7 @@ def write_report(path: str, covered: int, total: int, per_file: dict[str, dict[s
 
 def main() -> None:
     threshold = float(os.environ.get("COVERAGE_MIN", "90.0"))
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
     run_forge_coverage()
     lcov_path = os.path.join(os.getcwd(), "lcov.info")
     if not os.path.exists(lcov_path):
@@ -96,7 +97,7 @@ def main() -> None:
         print("coverage check: no lines tracked", file=sys.stderr)
         sys.exit(1)
     pct = (covered / total) * 100
-    report_path = os.path.join(os.getcwd(), "coverage_report.md")
+    report_path = os.path.join(root_dir, "docs", "reports", "coverage_report.md")
     write_report(report_path, covered, total, per_file)
     print(f"coverage check: {covered}/{total} lines = {pct:.2f}% (min {threshold:.2f}%)")
     print(f"coverage report: {report_path}")

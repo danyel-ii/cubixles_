@@ -1,11 +1,4 @@
-function readEnvValue(key) {
-  const raw = typeof process !== "undefined" ? process.env[key] : undefined;
-  if (typeof raw !== "string") {
-    return null;
-  }
-  const trimmed = raw.trim();
-  return trimmed ? trimmed : null;
-}
+import { readEnvValue } from "../shared/utils/env.js";
 
 export function getGifLibraryCid() {
   return (

@@ -1,12 +1,14 @@
 const TOTAL_SUPPLY_SELECTOR = "0x18160ddd";
 const BALANCE_OF_SELECTOR = "0x70a08231";
+import { readEnvValue } from "../../shared/utils/env.js";
+
 const BURN_ADDRESS =
-  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_LESS_BURN_ADDRESS) ||
+  readEnvValue("NEXT_PUBLIC_LESS_BURN_ADDRESS") ||
   "0x000000000000000000000000000000000000dEaD";
 
 function getLessTokenAddress() {
   return (
-    (typeof process !== "undefined" && process.env.NEXT_PUBLIC_LESS_TOKEN_ADDRESS) ||
+    readEnvValue("NEXT_PUBLIC_LESS_TOKEN_ADDRESS") ||
     "0x9c2ca573009f181eac634c4d6e44a0977c24f335"
   );
 }
