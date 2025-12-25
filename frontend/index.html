@@ -152,6 +152,9 @@
         <button id="ui-preview" class="ui-button is-ghost ui-preview-btn" type="button">
           Preview
         </button>
+        <button id="ui-landing" class="ui-button is-ghost" type="button">
+          Landing
+        </button>
       </div>
     </div>
     <div id="preview-bar" class="preview-bar is-hidden">
@@ -178,7 +181,17 @@
         <button id="leaderboard-back" class="ui-button is-ghost" type="button">
           Back
         </button>
+        <button id="leaderboard-landing" class="ui-button is-ghost" type="button">
+          Landing
+        </button>
       </div>
+    </div>
+    <div id="debug-panel" class="debug-panel is-hidden" aria-live="polite">
+      <div class="debug-header">
+        <span>Debug</span>
+        <button id="debug-close" class="debug-close" type="button">×</button>
+      </div>
+      <pre id="debug-log" class="debug-log"></pre>
     </div>
     <main id="app"></main>
     <script type="module" src="/src/main.js"></script>

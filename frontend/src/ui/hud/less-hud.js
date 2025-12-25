@@ -2,16 +2,29 @@ import { state } from "../../app/app-state.js";
 import { fetchLessTotalSupply } from "../../data/chain/less-supply.js";
 
 const WAD = 1_000_000_000_000_000_000n;
+const THOUSAND = 1_000n * WAD;
+const TEN_THOUSAND = 10_000n * WAD;
+const MILLION = 1_000_000n * WAD;
 const REFRESH_MS = 60000;
 
+function formatFixed(value, divisor) {
+  const scaled = (value * 100n) / divisor;
+  const whole = scaled / 100n;
+  const decimals = scaled % 100n;
+  return `${whole.toString()}.${decimals.toString().padStart(2, "0")}`;
+}
+
 function formatSupply(value) {
-  if (!value) {
+  if (value === null || value === undefined) {
     return "—";
   }
-  const whole = value / WAD;
-  const decimals = value % WAD;
-  const decimalStr = (decimals / 10_000_000_000_000n).toString().padStart(4, "0");
-  return `${whole.toString()}.${decimalStr}`;
+  if (value < THOUSAND) {
+    return (value / WAD).toString();
+  }
+  if (value < MILLION) {
+    return `${formatFixed(value, TEN_THOUSAND)} x10k`;
+  }
+  return `${formatFixed(value, MILLION)}M`;
 }
 
 export function initLessSupplyHud() {

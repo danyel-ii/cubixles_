@@ -23,6 +23,7 @@ function isZeroAddress(address) {
 export function initLeaderboardUi() {
   const openButton = document.getElementById("leaderboard-open");
   const backButton = document.getElementById("leaderboard-back");
+  const landingButton = document.getElementById("leaderboard-landing");
   const mainPanel = document.getElementById("ui");
   const leaderboardPanel = document.getElementById("leaderboard");
   const contractEl = document.getElementById("leaderboard-contract");
@@ -35,6 +36,7 @@ export function initLeaderboardUi() {
   if (
     !openButton ||
     !backButton ||
+    !landingButton ||
     !mainPanel ||
     !leaderboardPanel ||
     !contractEl ||
@@ -189,6 +191,10 @@ export function initLeaderboardUi() {
 
   openButton.addEventListener("click", showLeaderboard);
   backButton.addEventListener("click", showMain);
+  landingButton.addEventListener("click", () => {
+    showMain();
+    document.dispatchEvent(new CustomEvent("open-overlay"));
+  });
 
   document.addEventListener("open-leaderboard", showLeaderboard);
 

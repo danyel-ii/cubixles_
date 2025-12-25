@@ -32,12 +32,22 @@ export async function connectWallet() {
     let providerSource = provider ? "browser" : null;
 
     if (!provider) {
-      try {
-        provider = await sdk.wallet.getEthereumProvider();
-        providerSource = "farcaster";
-      } catch (error) {
-        throw error;
+      const canUseMiniApp = Boolean(sdk?.isInMiniApp && sdk?.wallet?.getEthereumProvider);
+      const inMiniApp = canUseMiniApp
+        ? await sdk.isInMiniApp().catch(() => false)
+        : false;
+      if (!inMiniApp) {
+        setState({
+          status: "unavailable",
+          address: null,
+          provider: null,
+          providerSource: null,
+          error: "Open in Warpcast or a wallet browser (MetaMask/Coinbase).",
+        });
+        return;
       }
+      provider = await sdk.wallet.getEthereumProvider();
+      providerSource = "farcaster";
     }
 
     const accounts = await requestAccounts(provider);
@@ -47,6 +57,13 @@ export async function connectWallet() {
     }
     setState({ status: "connected", address, provider, providerSource });
   } catch (error) {
+    if (typeof document !== "undefined") {
+      document.dispatchEvent(
+        new CustomEvent("wallet-error", {
+          detail: error?.message || "Unable to connect wallet.",
+        })
+      );
+    }
     setState({
       status: "error",
       address: null,

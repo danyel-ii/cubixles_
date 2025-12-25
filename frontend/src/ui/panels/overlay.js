@@ -8,6 +8,10 @@ export function initOverlay() {
     return;
   }
 
+  function show() {
+    overlay.classList.remove("is-hidden");
+  }
+
   function dismiss() {
     overlay.classList.add("is-hidden");
   }
@@ -24,4 +28,6 @@ export function initOverlay() {
       aboutPanel.classList.toggle("is-open");
     });
   }
+
+  document.addEventListener("open-overlay", show);
 }

@@ -25,6 +25,8 @@ export function initUiRoot() {
   initPreviewUi();
   initUiTouchGuards();
   initTokenIdFromUrl();
+  initLandingReturn();
+  initDebugPanel();
 }
 
 function initUiTouchGuards() {
@@ -61,4 +63,75 @@ function initTokenIdFromUrl() {
   } catch (error) {
     state.currentCubeTokenId = null;
   }
+}
+
+function initLandingReturn() {
+  const landingButton = document.getElementById("ui-landing");
+  const mainPanel = document.getElementById("ui");
+  if (!landingButton || !mainPanel) {
+    return;
+  }
+  landingButton.addEventListener("click", () => {
+    mainPanel.classList.remove("is-hidden");
+    document.dispatchEvent(new CustomEvent("open-overlay"));
+  });
+}
+
+function initDebugPanel() {
+  const panel = document.getElementById("debug-panel");
+  const logEl = document.getElementById("debug-log");
+  const closeButton = document.getElementById("debug-close");
+  if (!panel || !logEl || !closeButton) {
+    return;
+  }
+
+  let buffer = [];
+
+  function append(entry) {
+    buffer.push(entry);
+    if (buffer.length > 80) {
+      buffer = buffer.slice(-80);
+    }
+    logEl.textContent = buffer.join("\n");
+    panel.classList.remove("is-hidden");
+  }
+
+  function formatPayload(payload) {
+    if (payload === null || payload === undefined) {
+      return String(payload);
+    }
+    if (payload instanceof Error) {
+      return payload.message;
+    }
+    if (typeof payload === "object") {
+      try {
+        return JSON.stringify(payload);
+      } catch (error) {
+        return "[object]";
+      }
+    }
+    return String(payload);
+  }
+
+  function logWithPrefix(prefix, payload) {
+    append(`${prefix} ${formatPayload(payload)}`);
+  }
+
+  window.addEventListener("error", (event) => {
+    const details = event?.error?.stack || event?.message || "Unknown error";
+    logWithPrefix("[error]", details);
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event?.reason;
+    logWithPrefix("[promise]", reason);
+  });
+
+  document.addEventListener("wallet-error", (event) => {
+    logWithPrefix("[wallet]", event?.detail || "Wallet error");
+  });
+
+  closeButton.addEventListener("click", () => {
+    panel.classList.add("is-hidden");
+  });
 }

@@ -1,4 +1,6 @@
 const TOTAL_SUPPLY_SELECTOR = "0x18160ddd";
+const BALANCE_OF_SELECTOR = "0x70a08231";
+const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 
 function getAlchemyRpcUrl() {
   const apiKey = import.meta.env.VITE_ALCHEMY_API_KEY;
@@ -18,29 +20,42 @@ function getLessTokenAddress() {
 export async function fetchLessTotalSupply() {
   const url = getAlchemyRpcUrl();
   const token = getLessTokenAddress();
-  const body = {
+  const payload = {
     jsonrpc: "2.0",
     id: 1,
     method: "eth_call",
-    params: [
-      {
-        to: token,
-        data: TOTAL_SUPPLY_SELECTOR,
-      },
-      "latest",
-    ],
+    params: [],
   };
+  const balanceOfData = `${BALANCE_OF_SELECTOR}${BURN_ADDRESS.slice(2).padStart(64, "0")}`;
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify([
+      {
+        ...payload,
+        params: [{ to: token, data: TOTAL_SUPPLY_SELECTOR }, "latest"],
+        id: 1,
+      },
+      {
+        ...payload,
+        params: [{ to: token, data: balanceOfData }, "latest"],
+        id: 2,
+      },
+    ]),
   });
   if (!response.ok) {
     throw new Error(`LESS supply fetch failed (${response.status}).`);
   }
   const json = await response.json();
-  if (!json?.result) {
+  if (!Array.isArray(json) || json.length < 2) {
+    throw new Error("LESS supply response missing results.");
+  }
+  const totalSupply = json.find((item) => item?.id === 1)?.result;
+  const burnBalance = json.find((item) => item?.id === 2)?.result;
+  if (!totalSupply || !burnBalance) {
     throw new Error("LESS supply response missing result.");
   }
-  return BigInt(json.result);
+  const supply = BigInt(totalSupply);
+  const burned = BigInt(burnBalance);
+  return supply > burned ? supply - burned : 0n;
 }

@@ -51,6 +51,13 @@ export function initWalletUi() {
       return;
     }
 
+    if (safeState.status === "unavailable") {
+      statusEl.textContent = `Wallet: ${safeState.error || "Unavailable."}`;
+      connectButton.disabled = false;
+      disconnectButton.disabled = true;
+      return;
+    }
+
     statusEl.textContent = "Wallet: not connected.";
     connectButton.disabled = false;
     disconnectButton.disabled = true;
