@@ -1,5 +1,7 @@
 # cubeless — Threat Model
 
+Last updated: 2025-12-26
+
 ## Scope
 - Contracts: `IceCubeMinter`, `RoyaltySplitter`
 - Assets: mint payments, ERC-721 tokens, royalties, $LESS proceeds, tokenURI integrity

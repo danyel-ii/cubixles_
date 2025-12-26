@@ -1,5 +1,7 @@
 # Release Process
 
+Last updated: 2025-12-26
+
 ## Versioning
 - Use Semantic Versioning: MAJOR.MINOR.PATCH
 
@@ -11,7 +13,7 @@
    - If on macOS, set `NO_PROXY="*"`, `HTTP_PROXY=""`, `HTTPS_PROXY=""`
    - Command: `npm run fork-test`
 2. Update `CHANGELOG.md` with release notes.
-3. Verify `docs/security/security_audit.md` is current.
+3. Verify `docs/30-SECURITY/SECURITY_AUDIT.md` is current.
 4. Verify deployment artifacts and contract addresses.
 
 ## Release steps

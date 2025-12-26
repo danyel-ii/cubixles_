@@ -1,5 +1,7 @@
 # cubeless Deployment (IceCubeMinter, Sepolia)
 
+Last updated: 2025-12-26
+
 ## Review Status
 
 - Last reviewed: 2025-12-26
@@ -8,16 +10,16 @@
 
 ## Mint Signature
 
-```
-mint(bytes32 salt, string tokenURI, NftRef[] refs) payable returns (uint256 tokenId)
+```solidity
+mint(bytes32 salt, string calldata tokenURI, NftRef[] calldata refs) external payable returns (uint256 tokenId)
 ```
 
 `NftRef` shape:
 
-```
+```solidity
 struct NftRef {
-  address contractAddress;
-  uint256 tokenId;
+    address contractAddress;
+    uint256 tokenId;
 }
 ```
 

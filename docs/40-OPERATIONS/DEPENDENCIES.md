@@ -1,5 +1,7 @@
 # Dependency Management
 
+Last updated: 2025-12-26
+
 ## Node/Frontend
 - Dependencies are declared in `package.json`.
 - Exact versions are locked in `package-lock.json`.

@@ -1,5 +1,7 @@
 # cubeless — Known Limitations
 
+Last updated: 2025-12-26
+
 1. **Strict receiver failure policy**
    - Mint and royalty distribution revert if ETH or $LESS transfers fail.
    - This is intentional but means a misconfigured owner address can block mints or royalty flows.

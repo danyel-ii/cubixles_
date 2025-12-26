@@ -1,11 +1,13 @@
 # cubeLess — Master Index
 
+Last updated: 2025-12-26
+
 This is the top-level entry point for project documentation.
 
 Start here:
-- `docs/overview/MASTER_DOC.md`
-- `docs/contracts/contract_details.md`
-- `docs/security/security_audit.md`
+- `docs/00-OVERVIEW/MASTER.md`
+- `docs/20-CONTRACTS/CONTRACT_DETAILS.md`
+- `docs/30-SECURITY/SECURITY_AUDIT.md`
 
 Quick commands:
 - `npm run dev`

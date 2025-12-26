@@ -1,5 +1,7 @@
 # Solidity Coverage Report
 
+Last updated: 2025-12-26
+
 Total: 229/241 lines = 95.02%
 Excluded: contracts/script/**
 

@@ -1,5 +1,7 @@
 # cubeless v0 — State of Review (2025-12-26)
 
+Last updated: 2025-12-26
+
 ## Summary
 
 The repo is aligned on the "cubeless" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `animation_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs). Contract tests pass locally, mint pricing is dynamic based on $LESS totalSupply (base `0.0015 ETH`, rounded up to the nearest `0.0001 ETH`), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The Next.js app router serves the UI, with hardened `/api/*` routes handling Alchemy and Pinata server-side. Coverage now passes the 90% gate (95.02%).
@@ -11,7 +13,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 - **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `animation_url` (`/m/<tokenId>`), GIF traits, and logs diagnostics.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render.
 - **Contracts**: Foundry tests pass (51 total); mint price is dynamic from $LESS supply (base `0.0015 ETH`, rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter with 50% burn on $LESS proceeds. Onchain $LESS supply snapshots + delta views are live.
-- **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/security/` (coverage gate 90% via `npm run coverage:contracts`, currently passing at 95.02%).
+- **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/30-SECURITY/` (coverage gate 90% via `npm run coverage:contracts`, currently passing at 95.02%).
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` on Sepolia) + Leaderboard ranking by ΔLESS are live.
 - **$LESS metrics**: $LESS supply HUD + ΔLESS HUD and leaderboard ranking by `deltaFromLast` are wired.
 - **Server routes**: `/api/nfts`, `/api/pin/metadata`, `/api/nonce`, `/api/identity` are available under Next app router with rate limits, schema validation, and safe logging.

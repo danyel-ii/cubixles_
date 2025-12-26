@@ -1,4 +1,6 @@
 # cubeLess — Security & Edge-Case Coverage Implementation Results
+
+Last updated: 2025-12-26
 Date: 2025-12-26
 
 ## Scope
@@ -7,7 +9,7 @@ Date: 2025-12-26
 - Tooling: Slither + Solhint configs, CI workflow, client secret scan
 
 ## Implemented artifacts
-- Docs: `docs/security/THREAT_MODEL.md`, `docs/security/INVARIANTS.md`, `docs/security/KNOWN_LIMITATIONS.md`, `docs/security/STATIC_ANALYSIS.md`, `docs/security/SECURITY_RUNBOOK.md`, `docs/security/FORK_TESTING.md`
+- Docs: `docs/30-SECURITY/THREAT_MODEL.md`, `docs/30-SECURITY/INVARIANTS.md`, `docs/30-SECURITY/KNOWN_LIMITATIONS.md`, `docs/30-SECURITY/STATIC_ANALYSIS.md`, `docs/30-SECURITY/SECURITY_RUNBOOK.md`, `docs/30-SECURITY/FORK_TESTING.md`
 - CI: `.github/workflows/ci.yml`
 - Static analysis config: `contracts/.solhint.json`, `contracts/slither.config.json`
 - Mocks: `contracts/test/mocks/MockERC721s.sol`, `contracts/test/mocks/Receivers.sol`
@@ -15,14 +17,14 @@ Date: 2025-12-26
 - Fuzz tests: `contracts/test/fuzz/IceCubeMinterFuzz.t.sol`
 - Invariants: `contracts/test/invariants/IceCubeMinterInvariants.t.sol`
 - Fork tests: `contracts/test/fork/MainnetFork.t.sol`
- - Endpoint hardening: nonce + signature auth, rate limits, Zod validation, size caps, safe logging
- - Client secret scan: `scripts/check-client-secrets.mjs`
+- Endpoint hardening: nonce + signature auth, rate limits, Zod validation, size caps, safe logging
+- Client secret scan: `scripts/check-client-secrets.mjs`
 
 ## Policy decisions captured
 - Receiver failure policy is strict: mint/royalty transfers revert on failed ETH or token transfer.
 - `ownerOf` revert or mismatch causes mint revert.
 - Refund exactness: `msg.value - currentMintPrice()` is returned to minter.
-- RoyaltySplitter forwards $LESS (if any) and remaining ETH to owner on swap success.
+- RoyaltySplitter splits $LESS 50% to burn address and 50% to owner on swap success, then forwards remaining ETH to owner.
 
 ## Test results
 ### Unit + edge + fuzz + invariants
@@ -40,7 +42,7 @@ Command:
 npm run coverage:contracts
 ```
 Result: PASS (95.02% line coverage; minimum is 90%).
-- Report: `docs/reports/coverage_report.md` (grouped by contract).
+- Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
 
 ### Invariants (standalone run)
@@ -54,8 +56,12 @@ Result: PASS (3 tests, 128k handler calls)
 ### Fork tests (mainnet)
 Command:
 ```sh
-cd contracts
-forge test --fork-url "$MAINNET_RPC_URL" --match-path "test/fork/*" -vvv
+export MAINNET_RPC_URL="https://your-mainnet-rpc"
+export FORK_BLOCK_NUMBER=19000000
+export NO_PROXY="*"
+export HTTP_PROXY=""
+export HTTPS_PROXY=""
+npm run fork-test
 ```
 Result: PASS (2 tests)
 - `ownerOf` reverted (non-standard or restricted), logged and allowed.

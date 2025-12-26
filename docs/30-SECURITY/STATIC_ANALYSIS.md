@@ -1,5 +1,7 @@
 # cubeless — Static Analysis
 
+Last updated: 2025-12-26
+
 ## Tools
 - Slither (static analyzer)
 - Solhint (linting)
@@ -28,5 +30,5 @@ If `slither` is not on PATH (common with user-local installs), run:
 ```
 
 ## Triage policy
-- Any Slither finding must be fixed or documented in `docs/security/KNOWN_LIMITATIONS.md`.
+- Any Slither finding must be fixed or documented in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
 - If an issue is accepted, include rationale and severity.

@@ -1,8 +1,10 @@
 # Decision Log
 
+Last updated: 2025-12-26
+
 ## Review Status
 
-- Last reviewed: 2025-12-24
+- Last reviewed: 2025-12-26
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -17,7 +19,7 @@
 
 ## 2025-12-23 — T13 Storage Decision (v0)
 
-- Token URI is emitted as a data URI for fast iteration.
+- Token URI was initially emitted as a data URI for fast iteration.
 - A `tokenUriProvider` abstraction isolates the encoding step for future IPFS/Arweave.
 
 ## 2025-12-23 → 2025-12-24 — Mint Economics + $LESS Metrics
@@ -32,7 +34,7 @@
 
 ## 2025-12-24 — Interactive Metadata (p5.js)
 
-- Mint metadata includes `animation_url` pointing to the IPFS-hosted p5 app entry.
+- Mint metadata includes `animation_url` pointing to the token viewer route (`/m/<tokenId>`).
 - `image` is treated as an optional thumbnail, not the primary work.
 - Provenance bundle is stored under `provenance` in the tokenURI JSON.
 
@@ -48,10 +50,15 @@
 - Begin migration to Next.js to host `/api/*` routes on Vercel.
 - Client no longer uses Alchemy keys directly; `/api/nfts` proxies allowlisted Alchemy + RPC calls.
 - Metadata pinning moves server-side via `/api/pin/metadata` using `PINATA_JWT`.
-- Nonce endpoint added at `/api/nonce` for future auth flows.
+- Nonce endpoint added at `/api/nonce` for `/api/pin/metadata` auth flows.
 
 ## 2025-12-25 — Canonical Refs + Onchain Enumeration
 
 - TokenId hashing now uses canonical (sorted) refs to avoid order-based collisions.
 - `refsFaces` (face order) and `refsCanonical` (sorted set) are stored in metadata.
 - `totalMinted` + `tokenIdByIndex` added for onchain enumeration.
+
+## 2025-12-26 — Storage + Migration Complete
+
+- TokenURI is pinned via `/api/pin/metadata` (Pinata) and stored as `ipfs://<CID>`.
+- Next.js App Router migration is complete; browser uses only `/api/*` for secrets.

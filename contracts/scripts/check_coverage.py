@@ -102,7 +102,7 @@ def main() -> None:
         print("coverage check: no lines tracked", file=sys.stderr)
         sys.exit(1)
     pct = (covered / total) * 100
-    report_path = os.path.join(root_dir, "docs", "reports", "coverage_report.md")
+    report_path = os.path.join(root_dir, "docs", "50-REPORTS", "COVERAGE_REPORT.md")
     write_report(report_path, covered, total, per_file)
     print(f"coverage check: {covered}/{total} lines = {pct:.2f}% (min {threshold:.2f}%)")
     print(f"coverage report: {report_path}")

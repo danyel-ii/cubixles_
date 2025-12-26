@@ -1,5 +1,7 @@
 # Support
 
+Last updated: 2025-12-26
+
 ## Bug reports
 - Open an issue with a minimal reproduction and environment details.
 - Include logs or screenshots when relevant.

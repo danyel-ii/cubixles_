@@ -1,8 +1,10 @@
 # cubeless Miniapp v0 Spec — Provenance Shapes (Sepolia)
 
+Last updated: 2025-12-26
+
 ## Review Status
 
-- Last reviewed: 2025-12-23
+- Last reviewed: 2025-12-26
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -192,6 +194,7 @@ type MintMetadata = {
 
 - The contract snapshots $LESS totalSupply at mint and on transfer (totalSupply is treated as remaining supply).
 - The canonical UI/leaderboard metric is `deltaFromLast(tokenId)` (snapshot minus current supply, clamped to 0).
+ - The UI “$LESS supply” HUD displays remaining supply as `totalSupply - balanceOf(BURN_ADDRESS)` using the server-side RPC proxy.
 
 ## Token Viewer Route
 

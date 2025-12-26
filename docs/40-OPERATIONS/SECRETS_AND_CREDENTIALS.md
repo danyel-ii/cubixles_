@@ -1,5 +1,7 @@
 # Secrets and Credentials Policy
 
+Last updated: 2025-12-26
+
 ## Scope
 Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 
@@ -13,7 +15,7 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 - Revoke any leaked keys immediately.
 
 ## Access control
-- Limit secret access to maintainers listed in `docs/governance/MAINTAINERS.md`.
+- Limit secret access to maintainers listed in `docs/40-OPERATIONS/MAINTAINERS.md`.
 
 ## Required secrets
 - `PINATA_JWT`
@@ -23,4 +25,4 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 ## Incident response
 - Remove compromised keys from providers.
 - Audit recent deployments and access logs.
-- Document incident in `docs/security/KNOWN_LIMITATIONS.md`.
+- Document incident in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.

@@ -1,8 +1,10 @@
 # cubeless v0 — Test Plan
 
+Last updated: 2025-12-26
+
 ## Review Status
 
-- Last reviewed: 2025-12-23
+- Last reviewed: 2025-12-26
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -32,8 +34,7 @@ This plan defines the tests needed to trust the system end-to-end:
    - `royaltyInfo(tokenId, salePrice)` returns the **splitter** as receiver
    - bps matches configured value
 6. **Hosted tokenURI**:
-   - pin image -> `ipfs://<imageCID>`
-   - pin metadata (with `animation_url`) -> `ipfs://<metaCID>`
+   - pin metadata (with `animation_url` + GIF `image`) -> `ipfs://<metaCID>`
    - mint uses `tokenURI = ipfs://<metaCID>` (not `data:`)
 
 ## 1) Contract tests (Foundry) — required
@@ -75,13 +76,12 @@ This plan defines the tests needed to trust the system end-to-end:
 ### 1.2 Edge & adversarial tests (still deterministic)
 **G. Receiver failure behavior**
 - If a receiver is a contract that reverts on receive:
-  - decide expected behavior: revert entire mint OR skip + refund OR redirect
-  - write test for the chosen behavior
+  - mint reverts with `EthTransferFailed`
+  - RoyaltySplitter reverts with `EthTransferFailed` when forwarding ETH
 
 **H. Rounding**
-- If pot splits produce remainders:
-  - define rounding rule (floor) + who gets remainder (refund vs treasury)
-  - assert it
+- `currentMintPrice()` is rounded up to the nearest `0.0001 ETH`.
+- Assert boundary cases (exact step, just under step, zero).
 
 **I. Reentrancy**
 - If your mint does external calls (ETH sends), add:
@@ -111,24 +111,18 @@ Use Foundry fuzzing to generate:
 **Goal:** Ensure the upload pipeline is correct, stable, and never leaks secrets.
 
 ### 2.1 Unit tests (mock Pinata)
-For `/api/pin-image`:
-- accepts PNG upload (multipart or base64 — whichever we implement)
-- forwards bytes to Pinata with Authorization header (server-side only)
-- returns `{ ipfsUri, gatewayUrl }`
-- rejects invalid content types
-- enforces max size (to prevent abuse)
-
 For `/api/pin/metadata`:
-- accepts metadata JSON
+- accepts `{ address, nonce, signature, payload }`
 - validates required fields exist (`name`, `animation_url`, `provenance`, `schemaVersion`)
-- returns `{ ipfsUri, gatewayUrl }`
+- rejects invalid nonce/signature with `401`
+- returns `{ cid, tokenURI }` and caches by payload hash
 - rejects malformed JSON
 
 For `/api/nonce`:
-- returns a unique nonce (UUID)
+- returns a stateless HMAC-signed nonce and `expiresAt`
 
 For `/api/nfts`:
-- accepts `mode=alchemy` requests with allowlisted Alchemy NFT paths
+- accepts allowlisted Alchemy NFT paths (`getNFTsForOwner`, `getNFTMetadata`, `getFloorPrice`)
 - accepts `mode=rpc` batch `eth_call` requests
 - caches responses and returns minimized payloads
 
@@ -204,7 +198,7 @@ This is the “ship gate” checklist:
 3. Ensure network = Sepolia
 4. Select 1..6 NFTs (owned on Sepolia)
 5. Mint:
-   - observe two pins (image + metadata) returning ipfs URIs
+   - observe metadata pin returning an ipfs URI
    - wallet shows tx with correct `value`
 6. Confirm onchain:
    - transaction success

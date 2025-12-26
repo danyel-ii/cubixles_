@@ -1,5 +1,7 @@
 # cubeLess
 
+Last updated: 2025-12-26
+
 cubeLess is a miniapp that lets users mint interactive cubes whose provenance is tied to NFTs they already own.
 The frontend runs on Next.js, and the contracts are built and tested with Foundry.
 
@@ -46,9 +48,9 @@ Copy `.env.example` to `.env` and set values. The Next.js server reads server-on
 ## Documentation
 Start with:
 - `MASTER.md`
-- `docs/overview/MASTER_DOC.md`
-- `docs/contracts/contract_details.md`
-- `docs/security/security_audit.md`
+- `docs/00-OVERVIEW/MASTER.md`
+- `docs/20-CONTRACTS/CONTRACT_DETAILS.md`
+- `docs/30-SECURITY/SECURITY_AUDIT.md`
 
 ## Support
 See `SUPPORT.md` for defect reporting and help channels.

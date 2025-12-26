@@ -1,8 +1,10 @@
 # cubeless Contract Details (IceCubeMinter)
 
+Last updated: 2025-12-26
+
 ## Review Status
 
-- Last reviewed: 2025-12-24
+- Last reviewed: 2025-12-26
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -27,8 +29,8 @@ Contract: `contracts/src/icecube/IceCubeMinter.sol`
 
 Function signature:
 
-```
-mint(bytes32 salt, string tokenURI, NftRef[] refs) payable returns (uint256 tokenId)
+```solidity
+mint(bytes32 salt, string calldata tokenURI, NftRef[] calldata refs) external payable returns (uint256 tokenId)
 ```
 
 Key steps:
@@ -50,10 +52,12 @@ Mint payment uses a direct ETH transfer. If the owner transfer fails, the mint r
 
 - `mintSupplySnapshot(tokenId)` stores the $LESS totalSupply at mint.
 - `lastSupplySnapshot(tokenId)` updates on every non-mint transfer (sales and gifts are treated the same).
-- `lessSupplyNow()` exposes the current totalSupply (treated as remaining supply, including burns).
+- `lessSupplyNow()` exposes the current totalSupply (onchain supply as reported by the token).
 - `deltaFromMint(tokenId)` and `deltaFromLast(tokenId)` return snapshot minus current supply (clamped to 0).
 
 These values power the in-app ΔLESS HUD and the leaderboard ranking (canonical metric: `deltaFromLast`).
+
+Note: the UI “$LESS supply” HUD displays remaining supply as `totalSupply - balanceOf(BURN_ADDRESS)` via the server RPC proxy, which can differ from onchain `totalSupply` if burns do not reduce totalSupply.
 
 ## Deterministic TokenId Preview
 

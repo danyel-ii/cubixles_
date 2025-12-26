@@ -1,5 +1,7 @@
 # Contributing to cubeLess
 
+Last updated: 2025-12-26
+
 Thanks for your interest in contributing. This doc describes how to propose changes and the standards we expect.
 
 ## Ways to contribute

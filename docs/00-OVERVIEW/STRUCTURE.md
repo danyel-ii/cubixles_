@@ -1,8 +1,9 @@
 # cubeless Code Structure
 
+Last updated: 2025-12-26
+
 ## Review Status
 
-- Last reviewed: 2025-12-25
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -76,11 +77,11 @@ are split into smaller modules.
 - `app/_client/src/features/mint/token-uri-provider.js`
   - Token URI pinning helper.
 - `app/_client/src/data/chain/alchemy-client.ts`
-  - Alchemy NFT API wrapper (mainnet + Sepolia).
+  - Alchemy NFT API wrapper via `/api/nfts` (mainnet + Sepolia).
 - `app/_client/src/data/chain/icecube-reader.js`
-  - Reads tokenURI via JSON-RPC (no wallet required).
+  - Reads tokenURI via `/api/nfts` JSON-RPC (no wallet required).
 - `app/_client/src/data/chain/less-supply.js`
-  - Mainnet $LESS totalSupply fetcher (Alchemy JSON-RPC).
+  - Mainnet $LESS remaining supply fetcher via `/api/nfts` (totalSupply minus burn address).
 - `app/_client/src/data/chain/less-delta.js`
   - Onchain ΔLESS fetcher (deltaFromLast/deltaFromMint).
 - `app/_client/src/data/nft/indexer.ts`
@@ -117,30 +118,30 @@ are split into smaller modules.
 - `contracts/test/invariants/*.t.sol`
   - Invariant tests for mint value conservation and ERC-2981 receiver.
 - `contracts/test/fork/*.t.sol`
-  - Optional mainnet fork tests (requires `MAINNET_RPC_URL`).
+  - Mainnet fork tests (release gate via `npm run fork-test`).
 
 ## Security Docs
 
-- `docs/security/THREAT_MODEL.md`
-- `docs/security/INVARIANTS.md`
-- `docs/security/KNOWN_LIMITATIONS.md`
-- `docs/security/STATIC_ANALYSIS.md`
-- `docs/security/security_audit.md`
-- `docs/security/OSPS_BASELINE_2025-10-10.md`
+- `docs/30-SECURITY/THREAT_MODEL.md`
+- `docs/30-SECURITY/INVARIANTS.md`
+- `docs/30-SECURITY/KNOWN_LIMITATIONS.md`
+- `docs/30-SECURITY/STATIC_ANALYSIS.md`
+- `docs/30-SECURITY/SECURITY_AUDIT.md`
+- `docs/30-SECURITY/OSPS_BASELINE_2025-10-10.md`
 
 ## Governance + Operations Docs
 
-- `docs/governance/GOVERNANCE.md`
-- `docs/governance/MAINTAINERS.md`
-- `docs/operations/RELEASE.md`
-- `docs/operations/SECRETS_AND_CREDENTIALS.md`
-- `docs/operations/DEPENDENCIES.md`
+- `docs/40-OPERATIONS/GOVERNANCE.md`
+- `docs/40-OPERATIONS/MAINTAINERS.md`
+- `docs/40-OPERATIONS/RELEASE.md`
+- `docs/40-OPERATIONS/SECRETS_AND_CREDENTIALS.md`
+- `docs/40-OPERATIONS/DEPENDENCIES.md`
 
 ## Root Docs
 
 - `MASTER.md`
   - Top-level entry point linking into the docs tree.
-- `docs/overview/MASTER_DOC.md`
+- `docs/00-OVERVIEW/MASTER.md`
   - Master index, glossary, and doc map.
 - `README.md`
 - `CONTRIBUTING.md`
@@ -154,15 +155,15 @@ are split into smaller modules.
 - `next.config.js`
   - Next.js configuration.
 - `app/api/nonce/route.js`
-  - Returns a nonce for client auth flows.
+  - Returns a signed nonce for client auth flows.
 - `app/api/pin/metadata/route.js`
   - Pins metadata JSON to Pinata (server-side auth).
 - `app/api/nfts/route.js`
   - Alchemy NFT proxy + RPC batch (caching + minimized responses).
 - `app/api/identity/route.js`
   - Resolves Farcaster/ENS identity for leaderboard display.
-- `docs/security/SECURITY_RUNBOOK.md`
-- `docs/security/FORK_TESTING.md`
+- `docs/30-SECURITY/SECURITY_RUNBOOK.md`
+- `docs/30-SECURITY/FORK_TESTING.md`
 
 ## Server Utilities
 

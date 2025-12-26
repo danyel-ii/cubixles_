@@ -1,5 +1,7 @@
 # cubeless — Invariants
 
+Last updated: 2025-12-26
+
 ## I-1: Ownership gate
 Mint must revert if any referenced NFT is not owned by `msg.sender` or if `ownerOf` reverts.
 
