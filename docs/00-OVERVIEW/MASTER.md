@@ -39,6 +39,7 @@ This document is the single entry point for cubeless documentation. It explains 
 - `docs/40-OPERATIONS/RELEASE.md` — Release process and versioning.
 - `docs/40-OPERATIONS/SECRETS_AND_CREDENTIALS.md` — Secrets handling policy.
 - `docs/40-OPERATIONS/DEPENDENCIES.md` — Dependency tracking policy.
+- `docs/40-OPERATIONS/FOR_PROD.md` — Sepolia deploy + mint test + mainnet launch checklist.
 
 ### Project Status + Tasks
 - `docs/60-STATUS/STATE_OF_REVIEW.md` — Snapshot of repo alignment and current health.
