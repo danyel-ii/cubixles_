@@ -13,6 +13,7 @@ export default function RootLayout({ children }) {
       <head />
       <body>
         <Script
+          id="p5-lib"
           src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.min.js"
           strategy="beforeInteractive"
         />

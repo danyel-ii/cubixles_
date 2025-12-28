@@ -87,13 +87,14 @@ body.is-token-view #leaderboard {
 .overlay {
   position: fixed;
   inset: 0;
-  background: #000000;
+  background: rgba(5, 7, 12, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 32px;
   box-sizing: border-box;
+  backdrop-filter: blur(4px);
 }
 
 .overlay.is-hidden {

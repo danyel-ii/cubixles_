@@ -13,3 +13,5 @@ contracts/.github/
 contracts/.gitmodules
 assets/
 contracts/lcov.info
+.vercel
+.env*.local
