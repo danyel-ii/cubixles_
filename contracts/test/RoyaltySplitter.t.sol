@@ -12,6 +12,12 @@ contract RevertingRouter {
     }
 }
 
+contract SilentRevertingRouter {
+    fallback() external payable {
+        revert();
+    }
+}
+
 contract MockLess is ERC20 {
     constructor() ERC20("LESS", "LESS") {}
 
@@ -109,6 +115,25 @@ contract RoyaltySplitterTest is Test {
             2 ether,
             keccak256(abi.encodeWithSignature("Error(string)", "Swap failed"))
         );
+        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
+        assertTrue(ok);
+        assertEq(owner.balance, 2 ether);
+    }
+
+    function testForwardsAllWhenSwapRevertsWithoutReason() public {
+        SilentRevertingRouter router = new SilentRevertingRouter();
+        MockLess less = new MockLess();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            address(router),
+            hex"deadbeef",
+            burn
+        );
+
+        vm.deal(address(this), 2 ether);
+        vm.expectEmit(false, false, false, true);
+        emit SwapFailedFallbackToOwner(2 ether, keccak256(""));
         (bool ok, ) = address(splitter).call{ value: 2 ether }("");
         assertTrue(ok);
         assertEq(owner.balance, 2 ether);
