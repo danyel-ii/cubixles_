@@ -39,10 +39,10 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 ## Tests
 
 - `forge test`: pass (63 tests).
-- `npm run fork-test` with `MAINNET_RPC_URL` + `FORK_BLOCK_NUMBER=19000000` (and proxy vars cleared on macOS): **fail** (missing `MAINNET_RPC_URL`).
+- `npm run fork-test` with `MAINNET_RPC_URL` + `FORK_BLOCK_NUMBER=19000000` (and proxy vars cleared on macOS): pass (2 tests).
 - `npm test`: Vitest unit/component/API suite pass (22 tests).
 - `npm run test:ui`: Playwright smoke test pass (1 test).
-- `npm run check:no-client-secrets`: **fail** (Next.js build typecheck error in `contracts/lib/v4-core/test/js-scripts/src/getModifyLiquidityResult.ts`: `ethers.BigNumber` not exported).
+- `npm run check:no-client-secrets`: pass (no forbidden strings in the client bundle).
 - `npm audit --json`: 0 vulnerabilities after upgrading Vitest to v4.0.16.
 
 ## Open items (must finish before v0)

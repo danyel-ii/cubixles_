@@ -63,7 +63,9 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: FAIL (missing `MAINNET_RPC_URL` in local environment).
+Result: PASS (2 tests)
+- `ownerOf` reverted (non-standard or restricted), logged and allowed.
+- `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
 
 ### Frontend tests
 Command:
@@ -85,7 +87,7 @@ Command:
 ```sh
 npm run check:no-client-secrets
 ```
-Result: FAIL (Next.js build typecheck error in `contracts/lib/v4-core/test/js-scripts/src/getModifyLiquidityResult.ts`: `ethers.BigNumber` not exported).
+Result: PASS (no forbidden strings in the client bundle).
 
 ### Abuse checks (pin endpoint)
 Command:
