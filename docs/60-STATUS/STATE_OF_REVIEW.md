@@ -36,11 +36,11 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 - Vercel domain: `https://cubeless-red.vercel.app`
 - Risk: Vercel may be serving cached builds or pointing to an older repo/branch (verify source SHA and build output).
 - Mainnet contracts (2025-12-29):
-  - IceCubeMinter: `0xf301b9eba15a8af0f18513364ceae2719171a561`
-  - RoyaltySplitter: `0x5bd7d5f93ba55dfcfc4aa8cfa1109314f6890129`
+  - IceCubeMinter: `0x428032392237cb3ba908a6743994380dcfe7bb74`
+  - RoyaltySplitter: `0xbafeaa2bd3ecb0dde992727c289adfa227ca12e2`
   - Deploy txs:
-    - `0x24326c4b397d71377e1092a0620cd131965fad40d1c42eb917a9d96f32a9b6c6`
-    - `0x92d24f7fae756f58df05db3b5ce262878db347bdfe1c84454f025c41093ecad2`
+    - `0x01d5fea77ae8069a76dc3918852e8cdd7cdc65aff9ae9d164ca15d421384d695`
+    - `0x3eb75e212d9b81ebdedc22a74d73e765593d059084818c98defa3f4722eb3a1a`
 
 ## Tests
 
