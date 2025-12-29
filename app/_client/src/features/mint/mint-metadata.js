@@ -62,6 +62,16 @@ function enrichProvenance(provenanceBundle, selection) {
   };
 }
 
+function sanitizeProvenance(provenance) {
+  if (!provenance?.nfts) {
+    return provenance;
+  }
+  return {
+    ...provenance,
+    nfts: provenance.nfts.map(({ sourceMetadata, ...rest }) => rest),
+  };
+}
+
 export function buildMintMetadata({
   tokenId,
   minter,
@@ -75,7 +85,9 @@ export function buildMintMetadata({
   imageUrl,
   gif,
 }) {
-  const provenance = enrichProvenance(provenanceBundle, selection);
+  const provenance = sanitizeProvenance(
+    enrichProvenance(provenanceBundle, selection)
+  );
   const refs = refsFaces ?? selection.map((nft) => ({
     contractAddress: nft.contractAddress,
     tokenId: nft.tokenId,

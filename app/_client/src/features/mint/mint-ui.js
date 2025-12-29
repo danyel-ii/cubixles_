@@ -1,4 +1,4 @@
-import { BrowserProvider, Contract, parseEther } from "ethers";
+import { BrowserProvider, Contract } from "ethers";
 import { ICECUBE_CONTRACT } from "../../config/contracts";
 import { buildTokenViewUrl } from "../../config/links.js";
 import { buildProvenanceBundle } from "../../data/nft/indexer";
@@ -93,6 +93,7 @@ export function initMintUi() {
   if (shareLinkEl) {
     shareLinkEl.textContent = "";
   }
+  amountInput.readOnly = true;
 
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
@@ -440,6 +441,9 @@ export function initMintUi() {
           `Switch wallet to ${formatChainName(ICECUBE_CONTRACT.chainId)}.`
         );
       }
+      if (!currentMintPriceWei) {
+        throw new Error("Mint price unavailable. Try again shortly.");
+      }
       const signer = await provider.getSigner();
       const contract = new Contract(
         ICECUBE_CONTRACT.address,
@@ -517,12 +521,7 @@ export function initMintUi() {
       }
       state.currentCubeTokenId = tokenId;
       document.dispatchEvent(new CustomEvent("cube-token-change"));
-      const valueRaw = amountInput.value.trim();
-      const overrides = currentMintPriceWei
-        ? { value: currentMintPriceWei }
-        : valueRaw
-        ? { value: parseEther(valueRaw) }
-        : {};
+      const overrides = { value: currentMintPriceWei };
 
       setStatus("Submitting mint transaction...");
       const tx = await contract.mint(salt, tokenUri, refsCanonical, overrides);
