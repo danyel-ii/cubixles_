@@ -14,32 +14,60 @@ import { BalanceDelta, BalanceDeltaLibrary } from "@uniswap/v4-core/src/types/Ba
 import { TickMath } from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import { StateLibrary } from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 
+/// @title RoyaltySplitter
+/// @notice Splits mint ETH and optionally swaps half to LESS via Uniswap v4 PoolManager.
+/// @dev Uses PoolManager unlock + swap; swap failures fall back to owner.
 contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     using BalanceDeltaLibrary for BalanceDelta;
     using PoolIdLibrary for PoolKey;
     using StateLibrary for IPoolManager;
 
+    /// @notice LESS token address.
     address public immutable lessToken;
+    /// @notice Burn address for LESS.
     address public immutable burnAddress;
+    /// @notice Uniswap v4 PoolManager.
     IPoolManager public immutable poolManager;
+    /// @notice PoolKey for the ETH/LESS pool.
     PoolKey public poolKey;
+    /// @notice Whether swap to LESS is enabled.
     bool public swapEnabled;
+    /// @notice Max slippage in basis points (0 disables).
     uint16 public swapMaxSlippageBps;
+    /// @notice Upper bound for slippage.
     uint16 public constant MAX_SWAP_SLIPPAGE_BPS = 1000;
 
+    /// @notice LESS token address is required.
     error LessTokenRequired();
+    /// @notice PoolManager is required when enabling swaps.
     error PoolManagerRequired();
+    /// @notice PoolKey does not match expected ETH/LESS pool.
     error InvalidPoolKey();
+    /// @notice Slippage exceeds allowed maximum.
     error InvalidSlippageBps();
+    /// @notice Pool is not initialized.
     error PoolNotInitialized();
+    /// @notice Swap yielded no LESS output.
     error SwapOutputTooLow();
+    /// @notice ETH transfer failed.
     error EthTransferFailed(address recipient, uint256 amount);
+    /// @notice Only PoolManager can call unlockCallback.
     error PoolManagerOnly();
 
+    /// @notice Emitted when swap enabled toggles.
     event SwapEnabledUpdated(bool enabled);
+    /// @notice Emitted when slippage config changes.
     event SwapSlippageUpdated(uint16 maxSlippageBps);
+    /// @notice Emitted when swap fails and ETH is forwarded to owner.
     event SwapFailedFallbackToOwner(uint256 amount, bytes32 reasonHash);
 
+    /// @notice Create a new royalty splitter.
+    /// @param owner_ Owner who receives ETH and can configure settings.
+    /// @param lessToken_ LESS token address.
+    /// @param poolManager_ Uniswap v4 PoolManager (optional for no-swap).
+    /// @param poolKey_ PoolKey for ETH/LESS pool.
+    /// @param swapMaxSlippageBps_ Max slippage in basis points.
+    /// @param burnAddress_ Address to receive 50% of LESS.
     constructor(
         address owner_,
         address lessToken_,
@@ -70,14 +98,17 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         swapMaxSlippageBps = swapMaxSlippageBps_;
     }
 
+    /// @notice Accept ETH and process royalty split.
     receive() external payable nonReentrant {
         _handleRoyalty();
     }
 
+    /// @notice Fallback to handle ETH sent with calldata.
     fallback() external payable nonReentrant {
         _handleRoyalty();
     }
 
+    /// @notice Toggle swap behavior.
     function setSwapEnabled(bool enabled) external onlyOwner {
         if (enabled && address(poolManager) == address(0)) {
             revert PoolManagerRequired();
@@ -89,6 +120,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         emit SwapEnabledUpdated(enabled);
     }
 
+    /// @notice Configure max slippage in basis points.
     function setSwapMaxSlippageBps(uint16 maxSlippageBps) external onlyOwner {
         if (maxSlippageBps > MAX_SWAP_SLIPPAGE_BPS) {
             revert InvalidSlippageBps();
@@ -97,6 +129,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         emit SwapSlippageUpdated(maxSlippageBps);
     }
 
+    /// @dev Entry for ETH royalty handling.
     function _handleRoyalty() internal {
         uint256 amount = msg.value;
         if (amount == 0) {
@@ -123,6 +156,8 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
     }
 
+    /// @notice PoolManager callback to perform swap settlement.
+    /// @param data Encoded ETH amount input.
     function unlockCallback(bytes calldata data) external override returns (bytes memory) {
         if (msg.sender != address(poolManager)) {
             revert PoolManagerOnly();
@@ -163,6 +198,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         return abi.encode(amount0, amount1);
     }
 
+    /// @dev Split LESS balance between burn and owner.
     function _forwardLess() internal {
         uint256 lessBalance = IERC20(lessToken).balanceOf(address(this));
         if (lessBalance == 0) {
@@ -180,6 +216,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
     }
 
+    /// @dev Send ETH and revert on failure.
     function _send(address recipient, uint256 amount) internal {
         if (amount == 0) {
             return;
@@ -190,6 +227,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
     }
 
+    /// @dev Compute sqrtPrice limit based on slippage bps.
     function _slippageLimit(uint160 sqrtPriceX96) internal view returns (uint160) {
         if (swapMaxSlippageBps == 0) {
             return sqrtPriceX96;
@@ -202,6 +240,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         return uint160(limit);
     }
 
+    /// @dev Check that the pool has been initialized.
     function _poolInitialized() internal view returns (bool) {
         if (address(poolManager) == address(0)) {
             return false;

@@ -1,6 +1,6 @@
 # cubeless — Known Limitations
 
-Last updated: 2025-12-26
+Last updated: 2025-12-29
 
 1. **Strict receiver failure policy**
    - Mint and royalty distribution revert if ETH or $LESS transfers fail.
@@ -9,8 +9,8 @@ Last updated: 2025-12-26
 2. **ERC-721 heterogeneity**
    - `ownerOf` is assumed to be ERC-721 compliant. Non-compliant contracts may revert or return unexpected owners; mint will revert in those cases.
 
-3. **Router behavior is opaque**
-   - Swap logic uses PoolManager `unlock` + `swap` without on-chain price bounds; swap outcomes depend on pool liquidity and hook behavior.
+3. **PoolManager swap assumptions**
+   - Swap logic uses PoolManager `unlock` + `swap` and relies on a configured slippage cap; outcomes depend on pool liquidity and hook behavior.
 
 4. **$LESS token transfer assumptions**
    - The splitter assumes `IERC20.transfer` returns a boolean and reverts otherwise.
@@ -22,4 +22,4 @@ Last updated: 2025-12-26
    - The “last sale” snapshot uses any ERC-721 transfer (excluding mint), so gifts and sales are treated identically.
 
 7. **Static analysis false positives**
-   - Slither flags `_roundUp` and low-level calls; these are intentional and handled with explicit checks. See `docs/30-SECURITY/STATIC_ANALYSIS.md` for triage details.
+   - Slither flags `_roundUp`, low-level calls, and unused return values; these are intentional and handled with explicit checks. See `docs/30-SECURITY/STATIC_ANALYSIS.md` for triage details.

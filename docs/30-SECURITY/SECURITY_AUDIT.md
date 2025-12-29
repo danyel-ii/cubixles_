@@ -1,7 +1,7 @@
 # cubeLess — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2025-12-26
-Date: 2025-12-26
+Last updated: 2025-12-29
+Date: 2025-12-29
 
 ## Scope
 - Contracts: `IceCubeMinter`, `RoyaltySplitter`
@@ -33,7 +33,7 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (51 tests)
+Result: PASS (53 tests)
 - Fork tests executed with `MAINNET_RPC_URL` + `FORK_BLOCK_NUMBER=19000000` and proxy vars cleared (NO_PROXY/HTTP_PROXY/HTTPS_PROXY): PASS (2 tests).
 
 ### Coverage (Solidity)
@@ -41,9 +41,10 @@ Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: PASS (95.02% line coverage; minimum is 90%).
+Result: FAIL (86.81% line coverage; minimum is 90%).
 - Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
+- Action: add tests or adjust coverage threshold before mainnet release.
 
 ### Invariants (standalone run)
 Command:
@@ -102,16 +103,16 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 148 warnings (missing NatSpec, import-path-check, and gas lint warnings).
-- Local slither run:
-  - Command: `cd contracts && python3 -m slither .`
-  - Result: 7 findings (warnings):
+  - Result: 0 errors, 180 warnings (missing NatSpec, import-path-check, and gas lint warnings).
+- Local slither run (venv):
+  - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
+  - Result: 10 findings (warnings):
     - divide-before-multiply: `_roundUp` math
     - dangerous strict equality: `lessBalance == 0`, `amount == 0`
     - external calls inside loop: `ownerOf` in mint refs loop
+    - unused return values: PoolManager `unlock`, `getSlot0`, `settle`
     - low-level calls: `_transferEth`, PoolManager unlock+swap, `_send`
-  - Notes: findings reflect known design tradeoffs; triage pending.
-  - Note: `slither` is installed via user-local pip and not on PATH by default.
+  - Notes: findings reflect known design tradeoffs; triage captured below.
   - Triage: see `docs/30-SECURITY/STATIC_ANALYSIS.md` (accepted findings and rationale).
 
 ## Notes

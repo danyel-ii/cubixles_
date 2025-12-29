@@ -1,6 +1,6 @@
 # cubeless — Static Analysis
 
-Last updated: 2025-12-26
+Last updated: 2025-12-29
 
 ## Tools
 - Slither (static analyzer)
@@ -14,6 +14,11 @@ Last updated: 2025-12-26
 ```sh
 cd contracts
 npx solhint "src/**/*.sol"
+```
+
+```sh
+. .venv-slither/bin/activate
+cd contracts
 slither .
 ```
 
@@ -23,10 +28,11 @@ Coverage is enforced separately via:
 npm run coverage:contracts
 ```
 
-If `slither` is not on PATH (common with user-local installs), run:
+If `slither` is not on PATH, activate the local venv:
 
 ```sh
-/Users/danyel-ii/Library/Python/3.9/bin/slither .
+. .venv-slither/bin/activate
+slither .
 ```
 
 ## Triage policy
@@ -38,3 +44,4 @@ If `slither` is not on PATH (common with user-local installs), run:
 - **low-level calls (`_transferEth`, PoolManager unlock+swap, `_send`)**: Intentional; failures fall back to owner with `SwapFailedFallbackToOwner`.
 - **calls in loop (`ownerOf`)**: Bounded to `refs.length <= 6`, and reverts are handled via `RefOwnershipCheckFailed` / `RefNotOwned`. DoS risk is accepted for strict provenance integrity.
 - **strict equality (`amount == 0`, `lessBalance == 0`)**: Safe guard clauses to avoid unnecessary calls; no correctness risk.
+- **unused return values**: `unlock` is used for control flow; `getSlot0` uses only `sqrtPriceX96`; `settle` is used for side-effects. Accept.
