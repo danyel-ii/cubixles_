@@ -100,6 +100,7 @@ File: `contracts/test/IceCubeMinter.t.sol`
     - `ICECUBE_POOL_FEE` (optional)
     - `ICECUBE_POOL_TICK_SPACING` (optional)
     - `ICECUBE_POOL_HOOKS` (optional)
+    - `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, max 1000)
     - `ICECUBE_RESALE_BPS` (optional)
   - Writes deployment to `contracts/deployments/sepolia.json`.
 

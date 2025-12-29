@@ -62,4 +62,5 @@ Environment variables read by `contracts/script/DeployIceCube.s.sol`:
 - `ICECUBE_POOL_FEE` (optional, defaults to 0)
 - `ICECUBE_POOL_TICK_SPACING` (required if pool manager is set)
 - `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
+- `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `ICECUBE_RESALE_BPS` (optional, defaults to 500)
