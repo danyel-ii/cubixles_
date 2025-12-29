@@ -122,6 +122,13 @@ forge script script/DeployIceCube.s.sol \
 ```
 
 2) Export ABI + update frontend config with mainnet address.
+3) Record deployment:
+   - `contracts/deployments/mainnet.json`
+   - IceCubeMinter: `0x5bd7d5f93ba55dfcfc4aa8cfa1109314f6890129`
+   - RoyaltySplitter: `0xf301b9eba15a8af0f18513364ceae2719171a561`
+   - Deploy txs:
+     - `0x92d24f7fae756f58df05db3b5ce262878db347bdfe1c84454f025c41093ecad2`
+     - `0x24326c4b397d71377e1092a0620cd131965fad40d1c42eb917a9d96f32a9b6c6`
 
 ## 6) Mainnet launch validation
 
