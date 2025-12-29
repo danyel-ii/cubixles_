@@ -95,7 +95,7 @@ export default function AppShell() {
       </div>
       <div id="ui" className="ui-panel">
         <div className="ui-title">cubeless</div>
-        <div className="ui-sub">Choose 1 to 6 Sepolia NFTs to wrap the cube.</div>
+        <div className="ui-sub">Choose 1 to 6 Ethereum Mainnet NFTs to wrap the cube.</div>
         <div className="ui-row">
           <button id="wallet-connect" className="ui-button" type="button">
             Connect Wallet
@@ -115,7 +115,7 @@ export default function AppShell() {
         <div className="ui-section">
           <div className="ui-section-title">NFT picker</div>
           <div id="nft-status" className="ui-hint">
-            Connect your wallet to load Sepolia NFTs.
+            Connect your wallet to load Ethereum Mainnet NFTs.
           </div>
           <div className="ui-row">
             <button id="nft-refresh" className="ui-button is-ghost" type="button">
