@@ -38,8 +38,10 @@ describe("gif variant mapping", () => {
     expect(params.solarization_strength).toBe(SOLARIZATION_STRENGTH[0]);
   });
 
-  it("builds a padded GIF IPFS URL", () => {
+  it("builds a stable IPFS URL for the wallet GIF", () => {
     const url = gifIpfsUrl(7);
-    expect(url).toMatch(/gif_0007\.gif$/);
+    expect(url).toBe(
+      "ipfs://bafybeiap5a6tm3kpiizbjscfh5cafj245jjuchvfumz2azwyvs3y3ybvpy"
+    );
   });
 });
