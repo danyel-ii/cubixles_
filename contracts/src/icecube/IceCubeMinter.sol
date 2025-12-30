@@ -126,7 +126,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         emit Minted(tokenId, msg.sender, salt, refsHash);
 
         _snapshotSupply(tokenId, true);
-        _transferEth(owner(), price);
+        _transferEth(resaleSplitter, price);
 
         if (msg.value > price) {
             _transferEth(msg.sender, msg.value - price);

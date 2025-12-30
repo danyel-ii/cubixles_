@@ -99,7 +99,7 @@ contract IceCubeMinterTest is Test {
         minter.mint(DEFAULT_SALT, "ipfs://token", refs);
     }
 
-    function testMintPaysOwner() public {
+    function testMintPaysSplitter() public {
         address minterAddr = makeAddr("minter");
         uint256 tokenA = nftA.mint(minterAddr);
         uint256 tokenB = nftB.mint(minterAddr);
@@ -112,7 +112,7 @@ contract IceCubeMinterTest is Test {
         vm.prank(minterAddr);
         minter.mint{ value: amount }(DEFAULT_SALT, "ipfs://token", refs);
 
-        assertEq(owner.balance, amount);
+        assertEq(resaleSplitter.balance, amount);
     }
 
     function testMintSetsTokenUri() public {

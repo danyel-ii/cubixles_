@@ -35,13 +35,13 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 - Repo: `https://github.com/danyel-ii/cubeless_.git`
 - Vercel domain: `https://cubeless-red.vercel.app`
 - Risk: Vercel may be serving cached builds or pointing to an older repo/branch (verify source SHA and build output).
-- Mainnet contracts (2025-12-30, swaps enabled):
-  - IceCubeMinter: `0x411c51119aeaDD18eB58c9DB10A2b783220da133`
-  - RoyaltySplitter: `0x01B71A2672de87eEb757d869abc5960F6A717cF0`
+- Mainnet contracts (2025-12-30, swaps enabled, mint fees routed to splitter):
+  - IceCubeMinter: `0x4130F69f396f5478CFD1e1792e2970da4299383a`
+  - RoyaltySplitter: `0xf7B96E93D7E4b5aBf80E703Bb358E4Cb8aa53043`
   - Deploy txs:
-    - RoyaltySplitter CREATE: `0x14e8eb7ab8850ee5bb7a0427fc23ce3b1589cbc08ba1b7a0b0b78c6359fdb96b`
-    - IceCubeMinter CREATE: `0x51054f58efdce138aa682932ec79b0f90c5e70661d7f41a293b55e5b802e122c`
-    - Ownership transfer: `0xffbe4dc3da39af4824503c2681bac3aa50a2a1f5b85e3883948a9924f46bf6f9`
+    - RoyaltySplitter CREATE: `0xeda91b2834d1fab6b5ee931b1ca1c9a9cb26ab571d50477c62e13cccd2fa3c57`
+    - IceCubeMinter CREATE: `0x0d89d39da96ed1ff7b681d7a8f4c23dc388403b220fb1f6298834e14e9a03c6d`
+    - Ownership transfer: `0xf9c2f5a30edbadb28ae76564fd9c0ba2ee7eeafe7b775bfb474c910b44d59bba`
 
 ## Tests
 
