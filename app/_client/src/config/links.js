@@ -10,7 +10,11 @@ export function getGifLibraryCid() {
 export function getTokenViewBaseUrl() {
   const explicit = readEnvValue("NEXT_PUBLIC_TOKEN_VIEW_BASE_URL");
   if (explicit) {
-    return explicit.replace(/\/$/, "");
+    const trimmed = explicit.trim();
+    const normalized = /^https?:\/\//i.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`;
+    return normalized.replace(/\/$/, "");
   }
   if (typeof window !== "undefined" && window.location?.origin) {
     return window.location.origin;

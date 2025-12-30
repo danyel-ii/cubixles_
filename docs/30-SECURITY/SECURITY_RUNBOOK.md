@@ -64,3 +64,7 @@ python3 -m slither .
 ## Proxy IP headers
 - Trust `x-forwarded-for` only when `x-vercel-proxied-for` or `x-real-ip` is present.
 - Fall back to `x-real-ip` or `"unknown"` if proxy headers are missing.
+
+## HTTP security headers
+- Enforce CSP with `frame-ancestors` allowlist to support Farcaster embedding.
+- Configure the allowlist via `FRAME_ANCESTORS` (see `.env.example`).

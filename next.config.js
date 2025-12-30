@@ -3,6 +3,9 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
+    const frameAncestors =
+      process.env.FRAME_ANCESTORS ||
+      "'self' https://warpcast.com https://*.warpcast.com https://farcaster.xyz https://*.farcaster.xyz";
     const securityHeaders = [
       {
         key: "Content-Security-Policy",
@@ -10,7 +13,7 @@ const nextConfig = {
           "default-src 'self'",
           "base-uri 'self'",
           "form-action 'self'",
-          "frame-ancestors 'none'",
+          `frame-ancestors ${frameAncestors}`,
           "object-src 'none'",
           "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
           "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
@@ -23,7 +26,6 @@ const nextConfig = {
         ].join("; "),
       },
       { key: "X-Content-Type-Options", value: "nosniff" },
-      { key: "X-Frame-Options", value: "DENY" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       {
         key: "Strict-Transport-Security",

@@ -216,7 +216,7 @@ contract RoyaltySplitterTest is Test {
         vm.deal(address(this), 2 ether);
         vm.expectEmit(false, false, false, true);
         emit SwapFailedFallbackToOwner(
-            2 ether,
+            1 ether,
             keccak256(abi.encodeWithSignature("Error(string)", "Swap failed"))
         );
         (bool ok, ) = address(splitter).call{ value: 2 ether }("");
@@ -239,7 +239,7 @@ contract RoyaltySplitterTest is Test {
         vm.deal(address(this), 2 ether);
         vm.expectEmit(false, false, false, true);
         emit SwapFailedFallbackToOwner(
-            2 ether,
+            1 ether,
             keccak256("")
         );
         (bool ok, ) = address(splitter).call{ value: 2 ether }("");
@@ -263,8 +263,8 @@ contract RoyaltySplitterTest is Test {
         (bool ok, ) = address(splitter).call{ value: 2 ether }("");
         assertTrue(ok);
         assertEq(owner.balance, 1 ether);
-        assertEq(less.balanceOf(owner), 125 ether);
-        assertEq(less.balanceOf(burn), 125 ether);
+        assertEq(less.balanceOf(owner), 225 ether);
+        assertEq(less.balanceOf(burn), 25 ether);
     }
 
     function testRevertsWhenOwnerCannotReceiveEth() public {
@@ -299,7 +299,7 @@ contract RoyaltySplitterTest is Test {
         vm.deal(address(this), 2 ether);
         vm.expectEmit(false, false, false, true);
         emit SwapFailedFallbackToOwner(
-            2 ether,
+            1 ether,
             keccak256(abi.encodeWithSelector(RoyaltySplitter.SwapOutputTooLow.selector))
         );
         (bool ok, ) = address(splitter).call{ value: 2 ether }("");
@@ -322,7 +322,7 @@ contract RoyaltySplitterTest is Test {
         vm.deal(address(this), 2 ether);
         vm.expectEmit(false, false, false, true);
         emit SwapFailedFallbackToOwner(
-            2 ether,
+            1 ether,
             keccak256(
                 abi.encodeWithSelector(
                     RoyaltySplitter.SettleMismatch.selector,

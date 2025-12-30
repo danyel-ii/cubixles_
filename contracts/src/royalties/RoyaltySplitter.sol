@@ -142,13 +142,15 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             return;
         }
 
-        uint256 half = amount / 2;
-        if (half == 0) {
+        uint256 ethToOwner = amount / 2;
+        uint256 ethToSwap = amount - ethToOwner;
+        if (ethToSwap == 0) {
             _send(owner(), amount);
             return;
         }
 
-        try poolManager.unlock(abi.encode(half)) returns (bytes memory unlockResult) {
+        _send(owner(), ethToOwner);
+        try poolManager.unlock(abi.encode(ethToSwap)) returns (bytes memory unlockResult) {
             if (unlockResult.length == 64) {
                 (, int128 amount1) = abi.decode(unlockResult, (int128, int128));
                 if (amount1 <= 0) {
@@ -157,8 +159,8 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             }
             _send(owner(), address(this).balance);
         } catch (bytes memory reason) {
-            emit SwapFailedFallbackToOwner(amount, keccak256(reason));
-            _send(owner(), amount);
+            emit SwapFailedFallbackToOwner(ethToSwap, keccak256(reason));
+            _send(owner(), ethToSwap);
         }
     }
 
@@ -207,7 +209,15 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             }
         }
         if (amount1 > 0) {
-            poolManager.take(poolKey.currency1, owner(), uint256(uint128(amount1)));
+            uint256 output = uint256(uint128(amount1));
+            uint256 burnAmount = (output * 10) / 100;
+            uint256 ownerAmount = output - burnAmount;
+            if (burnAmount > 0) {
+                poolManager.take(poolKey.currency1, burnAddress, burnAmount);
+            }
+            if (ownerAmount > 0) {
+                poolManager.take(poolKey.currency1, owner(), ownerAmount);
+            }
         }
 
         return abi.encode(amount0, amount1);

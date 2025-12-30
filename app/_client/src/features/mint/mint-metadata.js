@@ -133,6 +133,7 @@ export function buildMintMetadata({
     description:
       "cubeLess mints interactive p5.js cubes whose provenance is tied to NFTs you already own. See animation_url in metadata for the interactive cube link.",
     image: imageUrl,
+    external_url: animationUrl,
     animation_url: animationUrl,
     provenance: {
       schemaVersion: 1,
