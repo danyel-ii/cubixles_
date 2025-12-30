@@ -12,7 +12,9 @@
     "test:ui": "playwright test",
     "coverage:contracts": "cd contracts && python3 scripts/check_coverage.py",
     "check:no-client-secrets": "npm run build && node scripts/check-client-secrets.mjs",
-    "fork-test": "bash scripts/fork-test.sh"
+    "fork-test": "bash scripts/fork-test.sh",
+    "bench:api": "node scripts/bench-api.mjs",
+    "monitor:swaps": "node scripts/monitor-swaps.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",

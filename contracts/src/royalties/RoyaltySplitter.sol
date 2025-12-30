@@ -18,6 +18,7 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 /// @title RoyaltySplitter
 /// @notice Splits mint ETH and optionally swaps half to LESS via Uniswap v4 PoolManager.
 /// @dev Uses PoolManager unlock + swap; swap failures fall back to owner.
+/// @author cubeless
 contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     using BalanceDeltaLibrary for BalanceDelta;
     using PoolIdLibrary for PoolKey;
@@ -56,10 +57,14 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     error PoolManagerOnly();
 
     /// @notice Emitted when swap enabled toggles.
+    /// @param enabled Whether swap is enabled.
     event SwapEnabledUpdated(bool enabled);
     /// @notice Emitted when slippage config changes.
+    /// @param maxSlippageBps Max slippage in bps.
     event SwapSlippageUpdated(uint16 maxSlippageBps);
     /// @notice Emitted when swap fails and ETH is forwarded to owner.
+    /// @param amount ETH amount forwarded.
+    /// @param reasonHash Hash of the revert reason.
     event SwapFailedFallbackToOwner(uint256 amount, bytes32 reasonHash);
 
     /// @notice Create a new royalty splitter.
@@ -110,6 +115,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     }
 
     /// @notice Toggle swap behavior.
+    /// @param enabled Whether swap to LESS is enabled.
     function setSwapEnabled(bool enabled) external onlyOwner {
         if (enabled && address(poolManager) == address(0)) {
             revert PoolManagerRequired();
@@ -122,6 +128,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     }
 
     /// @notice Configure max slippage in basis points.
+    /// @param maxSlippageBps Max slippage in bps (0 disables).
     function setSwapMaxSlippageBps(uint16 maxSlippageBps) external onlyOwner {
         if (maxSlippageBps > MAX_SWAP_SLIPPAGE_BPS) {
             revert InvalidSlippageBps();
@@ -166,6 +173,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
 
     /// @notice PoolManager callback to perform swap settlement.
     /// @param data Encoded ETH amount input.
+    /// @return Encoded balance delta.
     function unlockCallback(bytes calldata data) external override returns (bytes memory) {
         if (msg.sender != address(poolManager)) {
             revert PoolManagerOnly();

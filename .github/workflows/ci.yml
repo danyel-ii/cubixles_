@@ -55,6 +55,18 @@ jobs:
       - name: Client secret scan
         run: npm run check:no-client-secrets
 
+  npm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install deps
+        run: npm ci
+      - name: NPM audit
+        run: npm audit --audit-level=high
+
   slither:
     runs-on: ubuntu-latest
     steps:

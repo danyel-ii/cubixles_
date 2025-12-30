@@ -32,6 +32,11 @@ npm run test:ui
 npm run check:no-client-secrets
 ```
 
+### API benchmarks
+```sh
+BENCH_BASE_URL="http://127.0.0.1:3000" npm run bench:api
+```
+
 ### Fork tests (release gate)
 ```sh
 export MAINNET_RPC_URL="https://your-mainnet-rpc"
@@ -68,3 +73,14 @@ python3 -m slither .
 ## HTTP security headers
 - Enforce CSP with `frame-ancestors` allowlist to support Farcaster embedding.
 - Configure the allowlist via `FRAME_ANCESTORS` (see `.env.example`).
+
+## Circuit breakers
+- `DISABLE_PINNING` or `DISABLE_MINTING` to pause pinning/mints.
+- `DISABLE_ALCHEMY_API` or `DISABLE_ALCHEMY_RPC` to pause upstream reads.
+
+## Monitoring alerts
+- Configure `ALERT_WEBHOOK_URL` for mint spikes and pin failures.
+- Track swap failures with `npm run monitor:swaps` (requires `MAINNET_RPC_URL` and `ROYALTY_SPLITTER_ADDRESS`).
+
+## Formal verification (specs)
+- Draft specs live in `contracts/specs/` for royalty receiver and swap invariants.

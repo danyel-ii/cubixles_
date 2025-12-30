@@ -1,11 +1,12 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
-import { requireEnv } from "../../../src/server/env.js";
+import { requireEnv, readEnvBool } from "../../../src/server/env.js";
 import { checkRateLimit } from "../../../src/server/ratelimit.js";
 import { getClientIp } from "../../../src/server/request.js";
 import { logRequest } from "../../../src/server/log.js";
 import { nftRequestSchema, readJsonWithLimit, formatZodError } from "../../../src/server/validate.js";
 import { getCache, setCache } from "../../../src/server/cache.js";
+import { recordMetric } from "../../../src/server/metrics.js";
 
 const NFT_API_VERSION = "v3";
 const CACHE_TTL_MS = 60_000;
@@ -132,6 +133,13 @@ async function handleRequest(request) {
   try {
     const apiKey = getAlchemyKey();
     if (mode === "rpc") {
+      if (readEnvBool("DISABLE_ALCHEMY_RPC", false)) {
+        recordMetric("alchemy.rpc.disabled");
+        return NextResponse.json(
+          { error: "RPC calls are temporarily disabled", requestId },
+          { status: 503 }
+        );
+      }
       const calls = Array.isArray(validation.data.calls) ? validation.data.calls : [];
       if (!calls.length) {
         return NextResponse.json({ error: "Missing calls", requestId }, { status: 400 });
@@ -197,8 +205,30 @@ async function handleRequest(request) {
       return cachedResponse;
     }
 
+    if (readEnvBool("DISABLE_ALCHEMY_API", false)) {
+      recordMetric("alchemy.api.disabled");
+      const fallback = await getCache(`${cacheKey}:fallback`);
+      if (fallback) {
+        const fallbackResponse = NextResponse.json(fallback);
+        fallbackResponse.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
+        logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });
+        return fallbackResponse;
+      }
+      return NextResponse.json(
+        { error: "Alchemy API temporarily disabled", requestId },
+        { status: 503 }
+      );
+    }
+
     const alchemyResponse = await fetch(url.toString());
     if (!alchemyResponse.ok) {
+      const fallback = await getCache(`${cacheKey}:fallback`);
+      if (fallback) {
+        const fallbackResponse = NextResponse.json(fallback);
+        fallbackResponse.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
+        logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });
+        return fallbackResponse;
+      }
       return NextResponse.json(
         { error: `Alchemy request failed (${alchemyResponse.status})`, requestId },
         { status: alchemyResponse.status }
@@ -207,6 +237,7 @@ async function handleRequest(request) {
     const json = await alchemyResponse.json();
     const payload = minimizeResponse(path, json.result ?? json);
     await setCache(cacheKey, payload, CACHE_TTL_MS);
+    await setCache(`${cacheKey}:fallback`, payload);
     const payloadResponse = NextResponse.json(payload);
     payloadResponse.headers.set("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
     logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });

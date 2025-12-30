@@ -14,6 +14,7 @@ import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
 /// @title IceCubeMinter
 /// @notice Mints cubeLess NFTs with provenance-bound refs and ERC-2981 royalties.
 /// @dev Token IDs are derived from minter + salt + canonical refs hash.
+/// @author cubeless
 contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Reference to an ERC-721 token used for provenance.
     struct NftRef {
@@ -54,12 +55,21 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     mapping(uint256 => address) public minterByTokenId;
 
     /// @notice Emitted when a mint succeeds.
+    /// @param tokenId Minted token id.
+    /// @param minter Wallet that minted.
+    /// @param salt User-provided salt.
+    /// @param refsHash Canonical refs hash.
     event Minted(uint256 indexed tokenId, address indexed minter, bytes32 salt, bytes32 refsHash);
     /// @notice Emitted when mint supply snapshot is captured.
+    /// @param tokenId Minted token id.
+    /// @param supply LESS total supply snapshot.
     event MintSupplySnapshotted(uint256 indexed tokenId, uint256 supply);
     /// @notice Emitted when last supply snapshot is updated.
+    /// @param tokenId Token id updated.
+    /// @param supply LESS total supply snapshot.
     event LastSupplySnapshotted(uint256 indexed tokenId, uint256 supply);
     /// @notice Emitted when royalty receiver changes.
+    /// @param resaleSplitter New royalty receiver.
     event RoyaltyReceiverUpdated(address resaleSplitter);
 
     /// @notice Create a new minter instance.
@@ -134,11 +144,14 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice Current mint price based on LESS total supply.
+    /// @dev Price scales from 1x to 2x as LESS supply decreases, then rounds up.
+    /// @return Current mint price in wei.
     function currentMintPrice() public view returns (uint256) {
         uint256 supply = IERC20Minimal(lessToken).totalSupply();
         if (supply > ONE_BILLION) {
             supply = ONE_BILLION;
         }
+        // Scale price by remaining supply so lower supply increases mint cost.
         uint256 delta = ONE_BILLION - supply;
         uint256 factorWad = WAD + (delta * WAD) / ONE_BILLION;
         uint256 rawPrice = (BASE_PRICE_WEI * factorWad) / WAD;
@@ -148,6 +161,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Preview tokenId for the caller with the same derivation logic.
     /// @param salt User-provided salt.
     /// @param refs Provenance references to hash canonically.
+    /// @return tokenId Deterministic token id for this input.
     function previewTokenId(
         bytes32 salt,
         NftRef[] calldata refs
@@ -157,21 +171,28 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice Current LESS total supply.
+    /// @return Current total supply from LESS token.
     function lessSupplyNow() public view returns (uint256) {
         return IERC20Minimal(lessToken).totalSupply();
     }
 
     /// @notice LESS supply captured at mint time.
+    /// @param tokenId Token id to read.
+    /// @return LESS total supply snapshot at mint.
     function mintSupplySnapshot(uint256 tokenId) external view returns (uint256) {
         return _mintSupply[tokenId];
     }
 
     /// @notice LESS supply captured at last transfer time.
+    /// @param tokenId Token id to read.
+    /// @return LESS total supply snapshot at last transfer.
     function lastSupplySnapshot(uint256 tokenId) external view returns (uint256) {
         return _lastSupply[tokenId];
     }
 
     /// @notice Supply delta (mint snapshot minus current).
+    /// @param tokenId Token id to read.
+    /// @return Delta from mint snapshot.
     function deltaFromMint(uint256 tokenId) public view returns (uint256) {
         uint256 snapshot = _mintSupply[tokenId];
         uint256 supply = lessSupplyNow();
@@ -182,6 +203,8 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice Supply delta (last snapshot minus current).
+    /// @param tokenId Token id to read.
+    /// @return Delta from last snapshot.
     function deltaFromLast(uint256 tokenId) public view returns (uint256) {
         uint256 snapshot = _lastSupply[tokenId];
         uint256 supply = lessSupplyNow();
@@ -192,6 +215,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice Update the default royalty receiver.
+    /// @param resaleSplitter_ Address to receive ERC-2981 royalties.
     function setRoyaltyReceiver(address resaleSplitter_) external onlyOwner {
         require(resaleSplitter_ != address(0), "Resale splitter required");
         resaleSplitter = resaleSplitter_;
@@ -201,6 +225,8 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice Update the royalty rate and receiver.
+    /// @param bps New royalty bps (max 1000).
+    /// @param receiver Receiver for ERC-2981 royalties.
     function setResaleRoyalty(uint96 bps, address receiver) external onlyOwner {
         require(receiver != address(0), "Receiver required");
         require(bps <= 1000, "Royalty too high");
@@ -208,6 +234,8 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice ERC-165 support for ERC721URIStorage + ERC2981.
+    /// @param interfaceId Interface id to query.
+    /// @return True if interface supported.
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(ERC721URIStorage, ERC2981) returns (bool) {

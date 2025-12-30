@@ -22,13 +22,10 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 ## Current manifest status
 
 - `/.well-known/farcaster.json` includes:
-  - `accountAssociation` (set)
   - `miniapp` + `frame` blocks (identical as required)
   - `version` set to `"1"`
-- **Still missing**: hosted image assets referenced by:
-  - `https://cubeless-red.vercel.app/icon.png`
-  - `https://cubeless-red.vercel.app/image.png`
-  - `https://cubeless-red.vercel.app/splash.png`
+  - Hosted image assets under `/public` (icon, hero, splash, ogImage)
+- **Still required**: set `accountAssociation` in `public/.well-known/farcaster.json` with Farcaster-signed values.
 
 ## Deployment status
 

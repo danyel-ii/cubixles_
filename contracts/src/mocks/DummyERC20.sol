@@ -3,6 +3,9 @@ pragma solidity ^0.8.20;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+/// @title DummyERC20
+/// @notice Simple ERC20 used for tests.
+/// @author cubeless
 contract DummyERC20 is ERC20 {
     constructor(
         string memory name_,
