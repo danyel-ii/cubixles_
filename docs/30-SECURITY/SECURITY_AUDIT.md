@@ -24,7 +24,7 @@ Date: 2025-12-29
 - Receiver failure policy is strict: mint/royalty transfers revert on failed ETH or token transfer.
 - `ownerOf` revert or mismatch causes mint revert.
 - Refund exactness: `msg.value - currentMintPrice()` is returned to minter.
-- RoyaltySplitter splits $LESS 50% to burn address and 50% to owner on swap success, then forwards remaining ETH to owner.
+- RoyaltySplitter sends 50% ETH to owner, swaps 50% to $LESS, then sends 90% $LESS to owner and 10% to burn.
 
 ## Test results
 ### Unit + edge + fuzz + invariants
@@ -33,7 +33,7 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (63 tests)
+Result: PASS (63 tests; latest local run required)
 
 ### Coverage (Solidity)
 Command:
@@ -102,7 +102,7 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 129 warnings (missing NatSpec, import-path-check, and gas lint warnings).
+  - Result: 0 errors, 63 warnings (import-path-check + gas lint warnings; NatSpec warnings resolved).
 - Local slither run (venv):
   - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
   - Result: **0 findings** after addressing previous warnings.
@@ -111,4 +111,4 @@ Results (local):
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER`.
 - CI includes `forge test`, `solhint`, `slither`, coverage (90% minimum), and client secret scan gates.
-- `npm audit --json` reports 0 vulnerabilities after upgrading Vitest to v4.0.16.
+- CI runs `npm audit` at `--audit-level=high`.

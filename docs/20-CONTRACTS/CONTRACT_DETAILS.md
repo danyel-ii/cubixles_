@@ -1,6 +1,6 @@
 # cubeless Contract Details (IceCubeMinter)
 
-Last updated: 2025-12-26
+Last updated: 2025-12-31
 
 ## Review Status
 
@@ -11,7 +11,7 @@ Last updated: 2025-12-26
 ## Executive Summary
 
 IceCubeMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0015 ETH`, scaled by a 1.0–2.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps half the royalty via the v4 PoolManager; on successful swap, 50% of the ETH is forwarded to the owner, the remaining ETH is swapped to $LESS, 90% of $LESS goes to the owner and 10% to the burn address, and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubeless miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `animation_url`.
-Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. All ETH transfers revert on failure (`EthTransferFailed`), and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
+Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. ETH transfers use `Address.sendValue` and revert on failure, and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
 
 ## Contract Overview
 
@@ -44,9 +44,9 @@ Key steps:
    - `price` is rounded up to the nearest `0.0001 ETH`
 4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and a **canonical** `refsHash` (refs sorted by contract + tokenId).
 5. **Mint + metadata**: mint token and store `tokenURI`.
-6. **Mint payout**: transfers `currentMintPrice()` to `owner()` and refunds any excess to `msg.sender`.
+6. **Mint payout**: transfers `currentMintPrice()` to `resaleSplitter` and refunds any excess to `msg.sender`.
 
-Mint payment uses a direct ETH transfer. If the owner transfer fails, the mint reverts. Overpayment is always refunded.
+Mint payment uses a direct ETH transfer to the RoyaltySplitter. If the payout transfer fails, the mint reverts. Overpayment is always refunded.
 
 ## $LESS Supply Snapshots + Deltas
 
@@ -102,7 +102,7 @@ File: `contracts/test/IceCubeMinter.t.sol`
     - `ICECUBE_POOL_HOOKS` (optional)
     - `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, max 1000)
     - `ICECUBE_RESALE_BPS` (optional)
-  - Writes deployment to `contracts/deployments/sepolia.json`.
+  - Writes deployment JSON to `ICECUBE_DEPLOYMENT_PATH` (defaults to `contracts/deployments/sepolia.json`).
 
 - ABI export:
   - Run `node contracts/scripts/export-abi.mjs`.
@@ -116,7 +116,7 @@ Mint UI: `app/_client/src/features/mint/mint-ui.js`
 
 - Builds provenance bundle from selected NFTs.
 - Creates a JSON metadata object with `image` (GIF), `animation_url` (`/m/<tokenId>`), `gif` traits, and `provenance.refsFaces` + `provenance.refsCanonical`.
-- Pins metadata via `/api/pin/metadata` and calls `mint(salt, tokenURI, refs)` on Sepolia with the resulting `ipfs://` URI.
+- Pins metadata via `/api/pin/metadata` and calls `mint(salt, tokenURI, refs)` on mainnet with the resulting `ipfs://` URI.
 
 ## Known Placeholders / TODOs
 

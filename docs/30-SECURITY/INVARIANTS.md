@@ -15,7 +15,7 @@ Mint must revert if any referenced NFT is not owned by `msg.sender` or if `owner
 On success, refund equals `msg.value - currentMintPrice()` (if any).
 
 ## I-5: Mint payout exactness
-Owner receives exactly `currentMintPrice()` on each successful mint.
+RoyaltySplitter receives exactly `currentMintPrice()` on each successful mint.
 
 ## I-6: TokenId determinism
 TokenId is derived from `msg.sender`, `salt`, and `refsHash`, and mint must revert on replay collisions.
@@ -29,7 +29,7 @@ For the minting handler address, `balanceOf(handler) == mintCount`.
 ## I-8: RoyaltySplitter fallback
 - Router unset → forwards 100% ETH to owner.
 - Router reverts → forwards 100% ETH to owner.
-- Router succeeds → splits $LESS 50% to burn address and 50% to owner, then remaining ETH to owner.
+- Router succeeds → sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn.
 
 ## I-9: Reentrancy safety
 Reentrancy via owner/refund/PoolManager calls must not mint extra tokens or corrupt state.

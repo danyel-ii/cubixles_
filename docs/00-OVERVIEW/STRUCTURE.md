@@ -1,6 +1,6 @@
 # cubeless Code Structure
 
-Last updated: 2025-12-26
+Last updated: 2025-12-31
 
 ## Review Status
 
@@ -77,7 +77,7 @@ are split into smaller modules.
 - `app/_client/src/features/mint/token-uri-provider.js`
   - Token URI pinning helper.
 - `app/_client/src/data/chain/alchemy-client.ts`
-  - Alchemy NFT API wrapper via `/api/nfts` (mainnet + Sepolia).
+  - Alchemy NFT API wrapper via `/api/nfts` (mainnet; optional Sepolia via env).
 - `app/_client/src/data/chain/icecube-reader.js`
   - Reads tokenURI via `/api/nfts` JSON-RPC (no wallet required).
 - `app/_client/src/data/chain/less-supply.js`
@@ -108,7 +108,7 @@ are split into smaller modules.
 - `contracts/src/mocks/Counter.sol`
   - Foundry sample contract used by tests/scripts.
 - `contracts/script/DeployIceCube.s.sol`
-  - Deploys RoyaltySplitter + IceCubeMinter and writes Sepolia deployment JSON.
+  - Deploys RoyaltySplitter + IceCubeMinter and writes deployment JSON (path via `ICECUBE_DEPLOYMENT_PATH`).
 - `contracts/scripts/export-abi.mjs`
   - Exports IceCubeMinter ABI from the Foundry output directory.
 - `contracts/test/*.t.sol`

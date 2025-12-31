@@ -1,6 +1,6 @@
-# cubeless Deployment (IceCubeMinter, Sepolia)
+# cubeless Deployment (IceCubeMinter, Mainnet + Sepolia)
 
-Last updated: 2025-12-26
+Last updated: 2025-12-31
 
 ## Review Status
 
@@ -28,8 +28,8 @@ struct NftRef {
 - `mint` is payable.
 - Mint price is dynamic and derived from $LESS totalSupply (base `0.0015 ETH` with a 1.0–2.0 factor), rounded up to the nearest `0.0001 ETH`.
 - TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
-- Mint pays the owner directly and refunds any excess.
-- If the owner transfer fails, the mint reverts (no partial transfers).
+- Mint pays the RoyaltySplitter and refunds any excess.
+- If the payout transfer fails, the mint reverts (no partial transfers).
 
 ## Gating Rules
 
@@ -39,11 +39,11 @@ struct NftRef {
 
 ## Royalty Policy
 
-- Mint-time payout goes to `owner()`.
+- Mint-time payout goes to `RoyaltySplitter`.
 - Resale royalties use ERC-2981 with default 5% BPS, paid to `RoyaltySplitter`.
   - RoyaltySplitter swaps half the royalty via the v4 PoolManager when enabled; otherwise it forwards ETH to owner.
   - If the swap fails, the full amount is forwarded to owner.
-  - If the swap succeeds, any $LESS received is split 50% to burn address and 50% to owner before forwarding remaining ETH.
+  - If the swap succeeds, 50% of ETH is sent to owner, the remaining ETH is swapped to $LESS, then $LESS is split 90% owner / 10% burn.
   - If `ICECUBE_POOL_MANAGER` is unset, swap is disabled and all ETH is forwarded.
 
 ## Admin Controls
@@ -64,3 +64,5 @@ Environment variables read by `contracts/script/DeployIceCube.s.sol`:
 - `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `ICECUBE_RESALE_BPS` (optional, defaults to 500)
+- `ICECUBE_CHAIN_ID` (optional, defaults to `11155111`)
+- `ICECUBE_DEPLOYMENT_PATH` (optional, defaults to `contracts/deployments/sepolia.json`)

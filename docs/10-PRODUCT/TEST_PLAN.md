@@ -1,6 +1,6 @@
 # cubeless v0 — Test Plan
 
-Last updated: 2025-12-26
+Last updated: 2025-12-31
 
 ## Review Status
 
@@ -27,7 +27,7 @@ This plan defines the tests needed to trust the system end-to-end:
    - includes `gif` params + `attributes` traits for wallets/markets
 4. **Economics**:
    - mint requires `msg.value >= currentMintPrice()`
-   - mint pays `currentMintPrice()` to owner and refunds any overpayment
+   - mint pays `currentMintPrice()` to RoyaltySplitter and refunds any overpayment
    - `currentMintPrice()` is rounded up to the nearest `0.0001 ETH`
    - ERC-2981 resale royalties route to RoyaltySplitter (bps = 500)
 5. **Resale royalties (ERC-2981)**:
@@ -67,7 +67,7 @@ This plan defines the tests needed to trust the system end-to-end:
 **E. RoyaltySplitter behavior**
 - when swap disabled → forwards 100% ETH to owner
 - when swap reverts → forwards 100% ETH to owner (does not revert)
-- when swap succeeds → splits $LESS 50% to burn address and 50% to owner, then remaining ETH to owner
+- when swap succeeds → sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn
 
 **F. ERC-2981 resale royalty**
 - `royaltyInfo(ourTokenId, salePrice)` returns `(splitter, expectedAmount)`
@@ -76,8 +76,8 @@ This plan defines the tests needed to trust the system end-to-end:
 ### 1.2 Edge & adversarial tests (still deterministic)
 **G. Receiver failure behavior**
 - If a receiver is a contract that reverts on receive:
-  - mint reverts with `EthTransferFailed`
-  - RoyaltySplitter reverts with `EthTransferFailed` when forwarding ETH
+  - mint reverts because the RoyaltySplitter payout fails
+  - RoyaltySplitter reverts on failed ETH or token transfers
 
 **H. Rounding**
 - `currentMintPrice()` is rounded up to the nearest `0.0001 ETH`.
@@ -161,13 +161,13 @@ For `/api/identity`:
 - selection constrained to 1..6
 - mint button disabled until:
   - wallet connected
-  - on Sepolia
+  - on mainnet
   - provenance fetched
 - floor snapshot computed for current selection
   - pinning succeeded (if option B)
 - mint payment autofill matches `currentMintPrice()`
 - floor snapshot UI shows per-NFT and total floor values
-- floor snapshot defaults to `0` on Sepolia
+- floor snapshot defaults to `0` when unavailable
 - ΔLESS HUD shows delta when tokenId is known
 - Leaderboard ranks tokens by ΔLESS and returns to main UI
 
@@ -195,13 +195,13 @@ Because Warpcast hosting is hard to automate, we split E2E into:
   - `value` set to max payment
 - success state displayed
 
-### 4.2 Manual E2E (release gate) inside Warpcast on Sepolia
+### 4.2 Manual E2E (release gate) inside Warpcast on mainnet
 This is the “ship gate” checklist:
 
 1. Open miniapp in Warpcast
 2. Connect wallet
-3. Ensure network = Sepolia
-4. Select 1..6 NFTs (owned on Sepolia)
+3. Ensure network = mainnet
+4. Select 1..6 NFTs (owned on mainnet)
 5. Mint:
    - observe metadata pin returning an ipfs URI
    - wallet shows tx with correct `value`
@@ -232,4 +232,4 @@ Not tests, but they reduce time-to-fix:
 We do not ship unless:
 - Contract unit tests + fuzz tests pass
 - Pinning endpoints pass unit tests and one real Pinata smoke test
-- Manual Warpcast Sepolia E2E mint succeeds twice (two different selections)
+- Manual Warpcast mainnet E2E mint succeeds twice (two different selections)

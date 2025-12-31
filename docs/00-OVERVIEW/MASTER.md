@@ -1,6 +1,6 @@
 # cubeless — Master Index
 
-Last updated: 2025-12-26
+Last updated: 2025-12-31
 
 ## Executive Overview
 
@@ -15,7 +15,7 @@ This document is the single entry point for cubeless documentation. It explains 
 
 ### Contracts + Deployment
 - `docs/20-CONTRACTS/CONTRACT_DETAILS.md` — Contract architecture, mint flow, pricing, and royalty behavior.
-- `docs/20-CONTRACTS/DEPLOYMENT_SEPOLIA.md` — Sepolia deployment steps + environment variables.
+- `docs/20-CONTRACTS/DEPLOYMENT_SEPOLIA.md` — Deployment steps + environment variables (mainnet primary, Sepolia rehearsal).
 
 ### Next.js (App Router)
 - `app/api/nonce/route.js` — Nonce endpoint for client auth flows.
@@ -39,7 +39,7 @@ This document is the single entry point for cubeless documentation. It explains 
 - `docs/40-OPERATIONS/RELEASE.md` — Release process and versioning.
 - `docs/40-OPERATIONS/SECRETS_AND_CREDENTIALS.md` — Secrets handling policy.
 - `docs/40-OPERATIONS/DEPENDENCIES.md` — Dependency tracking policy.
-- `docs/40-OPERATIONS/FOR_PROD.md` — Sepolia deploy + mint test + mainnet launch checklist.
+- `docs/40-OPERATIONS/FOR_PROD.md` — Mainnet deploy + launch checklist (with optional Sepolia rehearsal).
 
 ### Project Status + Tasks
 - `docs/60-STATUS/STATE_OF_REVIEW.md` — Snapshot of repo alignment and current health.

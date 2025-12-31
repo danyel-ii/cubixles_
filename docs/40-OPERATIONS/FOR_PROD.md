@@ -1,6 +1,6 @@
-# cubeless — for_prod (Sepolia → Mainnet)
+# cubeless — for_prod (Mainnet primary)
 
-Last updated: 2025-12-27
+Last updated: 2025-12-31
 
 ## 0) Pre-flight (local)
 
@@ -38,7 +38,7 @@ export HTTPS_PROXY=""
 npm run fork-test
 ```
 
-## 1) Sepolia deploy (contracts)
+## 1) Contract deploy (mainnet primary, Sepolia rehearsal optional)
 
 ### Required env (local)
 - `ICECUBE_OWNER`
@@ -55,6 +55,15 @@ npm run fork-test
 ```sh
 cd contracts
 forge script script/DeployIceCube.s.sol \
+  --rpc-url "$MAINNET_RPC_URL" \
+  --private-key "$MAINNET_DEPLOYER_KEY" \
+  --broadcast
+```
+
+Optional Sepolia rehearsal:
+```sh
+cd contracts
+forge script script/DeployIceCube.s.sol \
   --rpc-url "$SEPOLIA_RPC_URL" \
   --private-key "$SEPOLIA_DEPLOYER_KEY" \
   --broadcast
@@ -66,17 +75,17 @@ node contracts/scripts/export-abi.mjs
 ```
 
 ### Update frontend contract config
-- Update `app/_client/src/config/contracts.ts` with Sepolia address if needed.
+- Update `app/_client/src/config/contracts.ts` with the deployed address if needed.
 - Confirm `ICECUBE_CONTRACT.address` matches deployment.
 
-## 2) Sepolia app setup
+## 2) App setup
 
 ### Server env (Vercel or local)
 - `PINATA_JWT`
 - `ALCHEMY_API_KEY`
 - `SERVER_AUTH_SALT`
 - `ICECUBE_CONTRACT_ADDRESS`
-- `ICECUBE_CHAIN_ID=11155111`
+- `ICECUBE_CHAIN_ID=1` (use `11155111` only for Sepolia rehearsal)
 
 ### Run dev + smoke
 ```sh
@@ -84,10 +93,10 @@ npm run dev
 npm run test:ui
 ```
 
-## 3) Sepolia mint flow (manual)
+## 3) Mainnet mint flow (manual)
 
 1) Open `http://127.0.0.1:3000`
-2) Connect wallet on Sepolia.
+2) Connect wallet on mainnet.
 3) Select 1–6 NFTs.
 4) Click Mint.
 5) Verify:
@@ -124,12 +133,12 @@ forge script script/DeployIceCube.s.sol \
 2) Export ABI + update frontend config with mainnet address.
 3) Record deployment:
    - `contracts/deployments/mainnet.json`
-   - IceCubeMinter: `0xdd81D5A0F7e82978cf9Da0DD29c7C6cA4187ffd6`
-   - RoyaltySplitter: `0x1BF35EC159fC3fD73D0EEc9BD52bBAA02FB76576`
+   - IceCubeMinter: `0x4130F69f396f5478CFD1e1792e2970da4299383a`
+   - RoyaltySplitter: `0xf7B96E93D7E4b5aBf80E703Bb358E4Cb8aa53043`
    - Deploy txs:
-     - `0xbb92ceb471132d2d29ed734e2a65a7ed290c15e2337b25d384c6989cc179f4b3`
-     - `0x5d1732a7333610ed33dd2c22c49b45ff40fb9814a753f9a544d4db060f27a21e`
-   - Ownership transfer (minter → splitter): completed (tx hash not recorded)
+     - `0xeda91b2834d1fab6b5ee931b1ca1c9a9cb26ab571d50477c62e13cccd2fa3c57`
+     - `0x0d89d39da96ed1ff7b681d7a8f4c23dc388403b220fb1f6298834e14e9a03c6d`
+   - Ownership transfer (minter → splitter): `0xf9c2f5a30edbadb28ae76564fd9c0ba2ee7eeafe7b775bfb474c910b44d59bba`
 
 ## 6) Mainnet launch validation
 

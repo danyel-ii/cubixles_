@@ -1,10 +1,10 @@
-# cubeless Miniapp v0 Spec — Provenance Shapes (Sepolia)
+# cubeless Miniapp v0 Spec — Provenance Shapes (Mainnet)
 
-Last updated: 2025-12-26
+Last updated: 2025-12-31
 
 ## Review Status
 
-- Last reviewed: 2025-12-26
+- Last reviewed: 2025-12-31
 - Review status: Needs confirmation
 - Owner: TBD
 
@@ -14,14 +14,14 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
 
 ## Scope
 
-- Chain: Sepolia only (`chainId: 11155111`).
+- Chain: Ethereum mainnet (`chainId: 1`).
 - Two types: `NftItem` (inventory UI), `ProvenanceBundle` (mint metadata).
 - No UI or contract logic in this doc.
 - Inventory and metadata reads are proxied through server routes (`/api/nfts`), not direct client keys.
 
 ## Core Rules (v0)
 
-1. **Chain gating**: only allow `chainId === 11155111`.
+1. **Chain gating**: only allow `chainId === 1`.
    - If anything else is supplied, return a clear error and block selection.
 2. **tokenId**: must be a decimal string derived from `BigInt`.
    - Parse raw IDs as `BigInt` first.
@@ -34,7 +34,7 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
    - `resolved` converts `ipfs://…` to an HTTPS gateway URL.
 6. **Raw metadata**: provenance stores full source metadata as received.
 7. **Floor snapshot (optional)**: store collection floor ETH + retrieval timestamp at mint time.
-   - Sepolia default: `0` when floor data is unavailable.
+   - Default: `0` when floor data is unavailable.
 
 ## Types
 
@@ -51,7 +51,7 @@ type ResolvedUri = {
 
 ```ts
 type NftItem = {
-  chainId: 11155111;
+  chainId: 1;
   contractAddress: string; // EIP-55 checksum
   tokenId: string; // base-10 string
   name: string | null;
@@ -72,7 +72,7 @@ Notes:
 
 ```ts
 type ProvenanceNft = {
-  chainId: 11155111;
+  chainId: 1;
   contractAddress: string; // EIP-55 checksum
   tokenId: string; // base-10 string
   tokenUri: ResolvedUri | null;
@@ -91,7 +91,7 @@ type ProvenanceNft = {
 
 ```ts
 type ProvenanceBundle = {
-  chainId: 11155111;
+  chainId: 1;
   selectedBy: string; // EIP-55 checksum wallet address
   retrievedAt: string; // ISO timestamp
   nfts: ProvenanceNft[]; // length 1..6
@@ -161,7 +161,7 @@ type MintMetadata = {
     refsCanonical?: Array<{ contractAddress: string; tokenId: string }>;
   };
   references: Array<{
-    chainId: 11155111;
+    chainId: 1;
     contractAddress: string;
     tokenId: string;
     tokenIdNumber: number | null; // null if > MAX_SAFE_INTEGER
@@ -182,7 +182,8 @@ type MintMetadata = {
   - factor `1 + (1B - supply) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Mint accepts `msg.value >= currentMintPrice()` and refunds overpayment.
-- Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (splits $LESS 50% burn / 50% owner on successful swap).
+- Mint fee is forwarded to RoyaltySplitter (same split logic as royalties).
+- Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn).
 
 ## Deterministic TokenId
 
@@ -194,7 +195,7 @@ type MintMetadata = {
 
 - The contract snapshots $LESS totalSupply at mint and on transfer (totalSupply is treated as remaining supply).
 - The canonical UI/leaderboard metric is `deltaFromLast(tokenId)` (snapshot minus current supply, clamped to 0).
- - The UI “$LESS supply” HUD displays remaining supply as `totalSupply - balanceOf(BURN_ADDRESS)` using the server-side RPC proxy.
+- The UI “$LESS supply” HUD displays remaining supply as `totalSupply - balanceOf(BURN_ADDRESS)` using the server-side RPC proxy.
 
 ## Token Viewer Route
 

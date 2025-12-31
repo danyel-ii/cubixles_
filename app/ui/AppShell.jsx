@@ -211,8 +211,8 @@ export default function AppShell() {
           <div className="ui-section-title">How the leaderboard works</div>
           <p className="ui-text">
             Each mint snapshots total $LESS supply. The leaderboard ranks tokens by ΔLESS — the
-            drop in total supply since the token’s last transfer. Bigger burns → bigger ΔLESS →
-            higher rank.
+            drop in total supply since the token’s last transfer. Earlier mint and longer holds
+            contribute to bigger ΔLESS.
           </p>
         </div>
         <div className="ui-section">
