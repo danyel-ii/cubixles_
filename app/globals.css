@@ -555,6 +555,10 @@ body.is-minted .preview-bar {
   color: rgba(168, 220, 190, 0.9);
 }
 
+.ui-hint.is-accent {
+  color: rgba(140, 220, 255, 0.9);
+}
+
 .ui-section {
   margin-top: 12px;
   padding-top: 12px;
