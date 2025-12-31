@@ -1,10 +1,10 @@
-# cubeless v0 — State of Review (2025-12-31)
+# cubixles_ v0 — State of Review (2025-12-31)
 
 Last updated: 2025-12-31
 
 ## Summary
 
-The repo is aligned on the "cubeless" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `animation_url` + `external_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs). Contracts route mint fees and resale royalties to the RoyaltySplitter (50% ETH to owner + 50% swap to $LESS with a 90% owner / 10% burn split), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The Next.js app router serves the UI, with hardened `/api/*` routes handling Alchemy and Pinata server-side. Coverage gate is enforced at 90% (see `docs/30-SECURITY/SECURITY_AUDIT.md` for latest run).
+The repo is aligned on the "cubixles_" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `animation_url` + `external_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs). Contracts route mint fees and resale royalties to the RoyaltySplitter (50% ETH to owner + 50% swap to $LESS with a 90% owner / 10% burn split), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The Next.js app router serves the UI, with hardened `/api/*` routes handling Alchemy and Pinata server-side. Coverage gate is enforced at 90% (see `docs/30-SECURITY/SECURITY_AUDIT.md` for latest run).
 
 ## What’s working
 
@@ -17,7 +17,7 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` when unavailable) + Leaderboard ranking by ΔLESS are live.
 - **$LESS metrics**: $LESS supply HUD + ΔLESS HUD and leaderboard ranking by `deltaFromLast` are wired.
 - **Server routes**: `/api/nfts`, `/api/pin/metadata`, `/api/nonce`, `/api/identity` are available under Next app router with rate limits, schema validation, and safe logging.
-- **Branding**: UI titles, metadata name, and docs are aligned to "cubeless".
+- **Branding**: UI titles, metadata name, and docs are aligned to "cubixles_".
 
 ## Current manifest status
 
@@ -60,6 +60,6 @@ The repo is aligned on the "cubeless" name, the Farcaster manifest includes both
 
 ## Next recommended actions (short list)
 
-1. Confirm Vercel build is using `main` from `cubeless_` and redeploy with cache cleared.
+1. Confirm Vercel build is using `main` from `cubixles__` and redeploy with cache cleared.
 2. Re-validate the Farcaster manifest after redeploy.
 3. Run `npm run fork-test` before any contract change in production.

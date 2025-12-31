@@ -1,4 +1,4 @@
-# cubeless Deployment (IceCubeMinter, Mainnet + Sepolia)
+# cubixles_ Deployment (IceCubeMinter, Mainnet + Sepolia)
 
 Last updated: 2025-12-31
 

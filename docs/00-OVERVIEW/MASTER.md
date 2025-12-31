@@ -1,10 +1,10 @@
-# cubeless — Master Index
+# cubixles_ — Master Index
 
 Last updated: 2025-12-31
 
 ## Executive Overview
 
-This document is the single entry point for cubeless documentation. It explains what each document does, where to find it, and how to use it in a workflow (spec → build → test → deploy → monitor).
+This document is the single entry point for cubixles_ documentation. It explains what each document does, where to find it, and how to use it in a workflow (spec → build → test → deploy → monitor).
 
 ## System Map (Docs by Purpose)
 
@@ -74,7 +74,7 @@ This document is the single entry point for cubeless documentation. It explains 
 
 ## Glossary
 
-- **cubeLess**: The miniapp + contract system that mints an ERC-721 cube composed of user-selected NFT references.
+- **cubixles_**: The miniapp + contract system that mints an ERC-721 cube composed of user-selected NFT references.
 - **refs / NftRef**: A list of NFT references (contractAddress + tokenId) used to texture the cube.
 - **provenance**: Metadata field recording refs and mint context for auditability.
 - **animation_url**: Token metadata field that points to the interactive token viewer `/m/<tokenId>`.

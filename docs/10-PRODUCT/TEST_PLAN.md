@@ -1,4 +1,4 @@
-# cubeless v0 — Test Plan
+# cubixles_ v0 — Test Plan
 
 Last updated: 2025-12-31
 

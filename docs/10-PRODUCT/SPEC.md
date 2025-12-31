@@ -1,4 +1,4 @@
-# cubeless Miniapp v0 Spec — Provenance Shapes (Mainnet)
+# cubixles_ Miniapp v0 Spec — Provenance Shapes (Mainnet)
 
 Last updated: 2025-12-31
 
@@ -188,7 +188,7 @@ type MintMetadata = {
 
 ## Deterministic TokenId
 
-- `tokenId = keccak256("cubeless:tokenid:v1", minter, salt, refsHash)`
+- `tokenId = keccak256("cubixles_:tokenid:v1", minter, salt, refsHash)`
 - `refsHash` is computed from a canonical sort of refs (by contract + tokenId).
 - Clients call `previewTokenId(salt, refs)` to build metadata before mint.
 

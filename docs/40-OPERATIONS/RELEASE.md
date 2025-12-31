@@ -1,6 +1,6 @@
 # Release Process
 
-Last updated: 2025-12-26
+Last updated: 2025-12-31
 
 ## Versioning
 - Use Semantic Versioning: MAJOR.MINOR.PATCH

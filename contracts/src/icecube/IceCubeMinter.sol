@@ -12,9 +12,9 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
 
 /// @title IceCubeMinter
-/// @notice Mints cubeLess NFTs with provenance-bound refs and ERC-2981 royalties.
+/// @notice Mints cubixles_ NFTs with provenance-bound refs and ERC-2981 royalties.
 /// @dev Token IDs are derived from minter + salt + canonical refs hash.
-/// @author cubeless
+/// @author cubixles_
 contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Reference to an ERC-721 token used for provenance.
     struct NftRef {
@@ -305,7 +305,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         bytes32 salt,
         bytes32 refsHash
     ) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encodePacked("cubeless:tokenid:v1", minter, salt, refsHash)));
+        return uint256(keccak256(abi.encodePacked("cubixles_:tokenid:v1", minter, salt, refsHash)));
     }
 
     /// @dev Round up to the nearest step.

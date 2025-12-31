@@ -54,7 +54,7 @@ test("token viewer loads metadata and refs without crashing", async ({ page }) =
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        name: "cubeLess #123",
+        name: "cubixles_ #123",
         provenance: {
           refs: [
             {

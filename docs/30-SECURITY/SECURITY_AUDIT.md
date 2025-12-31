@@ -1,7 +1,7 @@
-# cubeLess — Security & Edge-Case Coverage Implementation Results
+# cubixles_ — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2025-12-29
-Date: 2025-12-29
+Last updated: 2025-12-31
+Date: 2025-12-31
 
 ## Scope
 - Contracts: `IceCubeMinter`, `RoyaltySplitter`

@@ -1,6 +1,6 @@
 # Secrets and Credentials Policy
 
-Last updated: 2025-12-26
+Last updated: 2025-12-31
 
 ## Scope
 Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.

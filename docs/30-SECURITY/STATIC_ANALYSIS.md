@@ -1,6 +1,6 @@
-# cubeless — Static Analysis
+# cubixles_ — Static Analysis
 
-Last updated: 2025-12-29
+Last updated: 2025-12-31
 
 ## Tools
 - Slither (static analyzer)

@@ -5,7 +5,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /// @title DummyERC20
 /// @notice Simple ERC20 used for tests.
-/// @author cubeless
+/// @author cubixles_
 contract DummyERC20 is ERC20 {
     constructor(
         string memory name_,

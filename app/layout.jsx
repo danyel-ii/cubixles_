@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "cubeless",
+  title: "cubixles_",
   description:
     "Mint interactive p5.js artworks whose provenance is tethered to NFTs you already own.",
 };
@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
         version: "next",
         imageUrl: `${baseUrl}/ogImage.png`,
         button: {
-          title: "Launch cubeless",
+          title: "Launch cubixles_",
           action: {
             type: "launch_frame",
             url: baseUrl,
@@ -39,7 +39,7 @@ export default function RootLayout({ children }) {
   const miniappDefinition = baseUrl
     ? {
         version: "1",
-        name: "cubeless",
+        name: "cubixles_",
         iconUrl: `${baseUrl}/icon.png`,
         homeUrl: baseUrl,
         imageUrl: `${baseUrl}/image.png`,

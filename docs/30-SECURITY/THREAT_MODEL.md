@@ -1,6 +1,6 @@
-# cubeless — Threat Model
+# cubixles_ — Threat Model
 
-Last updated: 2025-12-26
+Last updated: 2025-12-31
 
 ## Scope
 - Contracts: `IceCubeMinter`, `RoyaltySplitter`

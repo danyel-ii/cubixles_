@@ -11,7 +11,7 @@ export default function AppShell() {
     <>
       <div id="overlay" className="overlay">
         <div className="overlay-card">
-          <div className="overlay-title">cubeLess</div>
+          <div className="overlay-title">cubixles_</div>
           <div className="overlay-sub">
             Mint interactive p5.js artworks whose provenance is tethered to NFTs you already own.
           </div>
@@ -48,7 +48,7 @@ export default function AppShell() {
           <div className="overlay-section">
             <div className="overlay-section-title">Mint price</div>
             <p className="overlay-text">
-              Mint cost scales up as{" "}
+              Mint cost is calculated as a function of current{" "}
               <a
                 className="ui-link"
                 href="https://www.nftstrategy.fun/strategies/0x9c2ca573009f181eac634c4d6e44a0977c24f335"
@@ -57,7 +57,7 @@ export default function AppShell() {
               >
                 $LESS
               </a>{" "}
-              supply falls, so bigger burns mean higher prices.
+              supply.
             </p>
           </div>
           <div className="overlay-actions">
@@ -74,7 +74,7 @@ export default function AppShell() {
           <div id="overlay-about-panel" className="overlay-about">
             <div className="overlay-section-title">About</div>
             <p className="overlay-text">
-              cubeLess reads your wallet address and NFT metadata to build provenance snapshots. No
+              cubixles_ reads your wallet address and NFT metadata to build provenance snapshots. No
               private keys are accessed; minting is a direct onchain transaction you sign.
             </p>
           </div>
@@ -118,7 +118,7 @@ export default function AppShell() {
         Loading token...
       </div>
       <div id="ui" className="ui-panel">
-        <div className="ui-title">cubeless</div>
+        <div className="ui-title">cubixles_</div>
         <div className="ui-sub">Choose 1 to 6 Ethereum Mainnet NFTs to wrap the cube.</div>
         <div className="ui-row">
           <button id="wallet-connect" className="ui-button" type="button">
@@ -209,7 +209,7 @@ export default function AppShell() {
           target="_blank"
           rel="noreferrer"
         >
-          deepwiki cubeless
+          deepwiki cubixles_
         </a>
       </div>
       <div id="preview-bar" className="preview-bar is-hidden">
