@@ -67,7 +67,7 @@ export default function AppShell() {
       </div>
       <div id="toast-root" className="toast-root" aria-live="polite" aria-atomic="true"></div>
       <div id="minted-banner" className="minted-banner is-hidden">
-        <span>your cube lives : </span>
+        <span>link to your cube from: </span>
         <button id="minted-link" className="minted-link" type="button">
           here
         </button>
@@ -179,12 +179,6 @@ export default function AppShell() {
             </a>{" "}
             supply drops (more burns = higher cost).
           </div>
-          <div className="ui-row">
-            <button id="mint-share-copy" className="ui-button is-ghost is-hidden" type="button">
-              Copy share link
-            </button>
-          </div>
-          <div id="mint-share-link" className="ui-hint"></div>
         </div>
         <div className="ui-row">
           <button id="ui-preview" className="ui-button is-ghost ui-preview-btn" type="button">

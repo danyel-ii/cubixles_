@@ -77,8 +77,6 @@ export function initMintUi() {
   const mintButton = document.getElementById("mint-submit");
   const amountInput = document.getElementById("mint-payment");
   const mintPriceEl = document.getElementById("mint-price");
-  const shareButton = document.getElementById("mint-share-copy");
-  const shareLinkEl = document.getElementById("mint-share-link");
   const floorSummaryEl = document.getElementById("mint-floor-summary");
   const floorListEl = document.getElementById("mint-floor-list");
 
@@ -91,9 +89,6 @@ export function initMintUi() {
   const floorCache = new Map();
   let currentMintPriceWei = null;
 
-  if (shareLinkEl) {
-    shareLinkEl.textContent = "";
-  }
   amountInput.readOnly = true;
 
   function setStatus(message, tone = "neutral") {
@@ -179,36 +174,6 @@ export function initMintUi() {
     amountInput.disabled = disabled;
   }
 
-  function showShareLink(url) {
-    if (!shareLinkEl || !shareButton) {
-      return;
-    }
-    shareLinkEl.textContent = url;
-    shareLinkEl.dataset.url = url;
-    shareButton.classList.remove("is-hidden");
-  }
-
-  async function copyShareLink() {
-    if (!shareLinkEl) {
-      return;
-    }
-    const url = shareLinkEl.dataset.url;
-    if (!url) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      setStatus("Share link copied.", "success");
-    } catch (error) {
-      setStatus("Copy failed. Select the URL manually.", "error");
-    }
-  }
-
-  if (shareButton) {
-    shareButton.addEventListener("click", () => {
-      copyShareLink();
-    });
-  }
 
   function formatEth(value) {
     if (typeof value !== "number" || Number.isNaN(value)) {
@@ -428,10 +393,6 @@ export function initMintUi() {
     if (shareButton) {
       shareButton.classList.add("is-hidden");
     }
-    if (shareLinkEl) {
-      shareLinkEl.textContent = "";
-      shareLinkEl.dataset.url = "";
-    }
     setStatus("Building provenance bundle...");
     try {
       await refreshFloorSnapshot(true);
@@ -533,10 +494,6 @@ export function initMintUi() {
       if (mintedTokenId !== null && mintedTokenId !== undefined) {
         state.currentCubeTokenId = BigInt(mintedTokenId);
         document.dispatchEvent(new CustomEvent("cube-token-change"));
-        const shareUrl = buildTokenViewUrl(mintedTokenId.toString());
-        if (shareUrl) {
-          showShareLink(shareUrl);
-        }
       }
       setStatus("Mint confirmed.", "success");
       const tokenUrl = mintedTokenId ? buildTokenViewUrl(mintedTokenId.toString()) : "";

@@ -543,10 +543,6 @@ body.is-minted .preview-bar {
   line-height: 1.4;
 }
 
-#mint-share-link {
-  word-break: break-all;
-}
-
 .ui-hint.is-error {
   color: rgba(255, 170, 170, 0.9);
 }
