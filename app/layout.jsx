@@ -36,6 +36,18 @@ export default function RootLayout({ children }) {
         splashBackgroundColor: "#000000",
       }
     : null;
+  const miniappDefinition = baseUrl
+    ? {
+        version: "1",
+        name: "cubeless",
+        iconUrl: `${baseUrl}/icon.png`,
+        homeUrl: baseUrl,
+        imageUrl: `${baseUrl}/image.png`,
+        buttonTitle: "mint cube(less)",
+        splashImageUrl: `${baseUrl}/splash.png`,
+        splashBackgroundColor: "#000000",
+      }
+    : null;
 
   return (
     <html lang="en">
@@ -44,6 +56,12 @@ export default function RootLayout({ children }) {
           <meta
             property="fc:frame"
             content={JSON.stringify(frameDefinition)}
+          />
+        ) : null}
+        {miniappDefinition ? (
+          <meta
+            property="fc:miniapp"
+            content={JSON.stringify(miniappDefinition)}
           />
         ) : null}
       </head>

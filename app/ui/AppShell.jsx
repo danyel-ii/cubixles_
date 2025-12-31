@@ -167,6 +167,10 @@ export default function AppShell() {
           <div id="mint-price" className="ui-hint">
             Mint price: —
           </div>
+          <div className="ui-hint">
+            Price is dynamic: base 0.0015 ETH scales up as $LESS supply drops—more burns mean higher
+            mint cost.
+          </div>
           <div className="ui-row">
             <button id="mint-share-copy" className="ui-button is-ghost is-hidden" type="button">
               Copy share link
