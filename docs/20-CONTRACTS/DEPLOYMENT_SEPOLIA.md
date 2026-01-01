@@ -62,6 +62,7 @@ struct NftRef {
 
 Environment variables read by `contracts/script/DeployIceCube.s.sol`:
 
+- Note: env var names remain `ICECUBE_*` for compatibility with existing deploy tooling.
 - `ICECUBE_OWNER`
 - `ICECUBE_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
 - `ICECUBE_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)

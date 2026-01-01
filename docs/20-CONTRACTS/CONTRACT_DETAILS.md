@@ -97,6 +97,7 @@ File: `contracts/test/IceCubeMinter.t.sol`
 
 - Deploy script: `contracts/script/DeployIceCube.s.sol`
   - Reads:
+    - Note: env var names remain `ICECUBE_*` for compatibility with existing deploy tooling.
     - `ICECUBE_OWNER`
     - `ICECUBE_LESS_TOKEN` (optional; defaults to mainnet $LESS address)
     - `ICECUBE_POOL_MANAGER` (optional)

@@ -41,6 +41,7 @@ npm run fork-test
 ## 1) Contract deploy (mainnet primary, Sepolia rehearsal optional)
 
 ### Required env (local)
+- Environment variable names remain `ICECUBE_*` for contract/deploy compatibility.
 - `ICECUBE_OWNER`
 - `ICECUBE_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
 - `ICECUBE_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
