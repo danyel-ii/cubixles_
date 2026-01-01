@@ -1,57 +1,57 @@
 {
   "accountAssociation": {
     "header": "eyJmaWQiOjEwNzgyNDgsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg1RDA5NTVGNjQ0MzZBNjg0MTNhOTQ3MTI1Y2Q1NzM3ZTk1NGZFNWI3In0",
-    "payload": "eyJkb21haW4iOiJjdWJlbGVzcy1yZWQudmVyY2VsLmFwcCJ9",
-    "signature": "nlQp0hWsi2L6kytZt7jkypWXBwGb79H41lJJOKJleuB9dGw3eGsb3GN0EvF/sr1fS4XQavbiG8DE6g32G07Q/hw="
+    "payload": "eyJkb21haW4iOiJjdWJpeGxlcy1yZWQudmVyY2VsLmFwcCJ9",
+    "signature": "B1rY8LJvGQirsla1mHGXG6t1oIlREEADfnjdGBV97RhMdFQOCTYv87AE4GsT849coAviM/6V4Eq2dbFowK6UPhs="
   },
   "miniapp": {
     "version": "1",
     "name": "cubixles_",
-    "iconUrl": "https://cubeless-red.vercel.app/icon.png",
-    "homeUrl": "https://cubeless-red.vercel.app",
-    "splashImageUrl": "https://cubeless-red.vercel.app/splash.png",
+    "iconUrl": "https://cubixles-red.vercel.app/icon.png",
+    "homeUrl": "https://cubixles-red.vercel.app",
+    "splashImageUrl": "https://cubixles-red.vercel.app/splash.png",
     "splashBackgroundColor": "#000000",
     "buttonTitle": "mint cube(less)",
-    "imageUrl": "https://cubeless-red.vercel.app/image.png",
-    "webhookUrl": "https://cubeless-red.vercel.app/api/webhook",
+    "imageUrl": "https://cubixles-red.vercel.app/image.png",
+    "webhookUrl": "https://cubixles-red.vercel.app/api/webhook",
     "subtitle": "realm of provenance",
     "description": "cubixles_ is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
     "screenshotUrls": [
-      "https://cubeless-red.vercel.app/image.png",
-      "https://cubeless-red.vercel.app/hero.png"
+      "https://cubixles-red.vercel.app/image.png",
+      "https://cubixles-red.vercel.app/hero.png"
     ],
     "primaryCategory": "art-creativity",
     "tags": ["nft", "art", "remix", "community", "token"],
-    "heroImageUrl": "https://cubeless-red.vercel.app/hero.png",
+    "heroImageUrl": "https://cubixles-red.vercel.app/hero.png",
     "tagline": "quick, shareable, remixable",
     "ogTitle": "cubixles_",
     "ogDescription": "mint the cube, cube your ownership",
-    "ogImageUrl": "https://cubeless-red.vercel.app/ogImage.png",
-    "castShareUrl": "https://cubeless-red.vercel.app"
+    "ogImageUrl": "https://cubixles-red.vercel.app/ogImage.png",
+    "castShareUrl": "https://cubixles-red.vercel.app"
   },
   "frame": {
     "version": "1",
     "name": "cubixles_",
-    "iconUrl": "https://cubeless-red.vercel.app/icon.png",
-    "homeUrl": "https://cubeless-red.vercel.app",
-    "splashImageUrl": "https://cubeless-red.vercel.app/splash.png",
+    "iconUrl": "https://cubixles-red.vercel.app/icon.png",
+    "homeUrl": "https://cubixles-red.vercel.app",
+    "splashImageUrl": "https://cubixles-red.vercel.app/splash.png",
     "splashBackgroundColor": "#000000",
     "buttonTitle": "mint cube(less)",
-    "imageUrl": "https://cubeless-red.vercel.app/image.png",
-    "webhookUrl": "https://cubeless-red.vercel.app/api/webhook",
+    "imageUrl": "https://cubixles-red.vercel.app/image.png",
+    "webhookUrl": "https://cubixles-red.vercel.app/api/webhook",
     "subtitle": "realm of provenance",
     "description": "cubixles_ is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
     "screenshotUrls": [
-      "https://cubeless-red.vercel.app/image.png",
-      "https://cubeless-red.vercel.app/hero.png"
+      "https://cubixles-red.vercel.app/image.png",
+      "https://cubixles-red.vercel.app/hero.png"
     ],
     "primaryCategory": "art-creativity",
     "tags": ["nft", "art", "remix", "community", "token"],
-    "heroImageUrl": "https://cubeless-red.vercel.app/hero.png",
+    "heroImageUrl": "https://cubixles-red.vercel.app/hero.png",
     "tagline": "quick, shareable, remixable",
     "ogTitle": "cubixles_",
     "ogDescription": "mint the cube, cube your ownership",
-    "ogImageUrl": "https://cubeless-red.vercel.app/ogImage.png",
-    "castShareUrl": "https://cubeless-red.vercel.app"
+    "ogImageUrl": "https://cubixles-red.vercel.app/ogImage.png",
+    "castShareUrl": "https://cubixles-red.vercel.app"
   }
 }
