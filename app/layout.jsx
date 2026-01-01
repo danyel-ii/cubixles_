@@ -1,5 +1,4 @@
 import "./globals.css";
-import Script from "next/script";
 
 export const metadata = {
   title: "cubixles_",
@@ -65,10 +64,6 @@ export default function RootLayout({ children }) {
             content={JSON.stringify(miniappDefinition)}
           />
         ) : null}
-        <Script
-          src="https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.min.js"
-          strategy="beforeInteractive"
-        />
       </head>
       <body>
         {children}
