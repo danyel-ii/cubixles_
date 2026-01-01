@@ -1,8 +1,9 @@
 const GATEWAYS = [
-  "https://ipfs.io/ipfs/",
+  "https://ipfs.runfission.com/ipfs/",
   "https://w3s.link/ipfs/",
   "https://dweb.link/ipfs/",
   "https://gateway.pinata.cloud/ipfs/",
+  "https://ipfs.io/ipfs/",
 ];
 
 export function buildGatewayUrls(ipfsUrl) {

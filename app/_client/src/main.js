@@ -78,17 +78,30 @@ function ensureP5Instance() {
   if (typeof window === "undefined") {
     return;
   }
-  if (window.__CUBELESS_P5__) {
+  if (window.__CUBIXLES_P5_INSTANCE__ || window.__CUBELESS_P5__) {
     return;
   }
+  if (window.__CUBIXLES_P5_INIT__) {
+    return;
+  }
+  window.__CUBIXLES_P5_INIT__ = true;
   loadP5Library()
     .then(() => {
-      if (window.__CUBELESS_P5__ || typeof window.p5 !== "function") {
+      if (
+        window.__CUBIXLES_P5_INSTANCE__ ||
+        window.__CUBELESS_P5__ ||
+        typeof window.p5 !== "function"
+      ) {
+        window.__CUBIXLES_P5_INIT__ = false;
         return;
       }
-      window.__CUBELESS_P5__ = new window.p5();
+      const instance = new window.p5();
+      window.__CUBIXLES_P5_INSTANCE__ = instance;
+      window.__CUBELESS_P5__ = instance;
+      window.__CUBIXLES_P5_INIT__ = false;
     })
     .catch((error) => {
+      window.__CUBIXLES_P5_INIT__ = false;
       console.warn("p5.js failed to load:", error);
     });
 }
