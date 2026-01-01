@@ -23,6 +23,7 @@ export async function GET(request) {
       headers: { "content-type": "application/json" },
     });
   }
+  const expectsJson = url.endsWith(".json");
   const gatewayUrls = buildGatewayUrls(url);
   for (const gatewayUrl of gatewayUrls) {
     const controller = new AbortController();
@@ -31,9 +32,16 @@ export async function GET(request) {
       const response = await fetch(gatewayUrl, {
         signal: controller.signal,
         cache: "no-store",
+        headers: expectsJson ? { Accept: "application/json" } : undefined,
       });
       if (!response.ok) {
         continue;
+      }
+      if (expectsJson) {
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("text/html")) {
+          continue;
+        }
       }
       const headers = new Headers(response.headers);
       headers.set("Access-Control-Allow-Origin", "*");
