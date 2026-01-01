@@ -30,7 +30,9 @@ function loadP5Library() {
     return p5LoadPromise;
   }
   p5LoadPromise = new Promise((resolve, reject) => {
-    const existing = document.getElementById("p5-lib");
+    const existing =
+      document.getElementById("p5-lib") ||
+      document.querySelector('script[src*="p5.min.js"]');
     if (existing) {
       const poll = () => {
         if (typeof window.p5 === "function") {

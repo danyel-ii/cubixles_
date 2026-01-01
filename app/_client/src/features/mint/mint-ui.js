@@ -377,9 +377,6 @@ export function initMintUi() {
       return;
     }
     setDisabled(true);
-    if (shareButton) {
-      shareButton.classList.add("is-hidden");
-    }
     setStatus("Preparing mint steps...");
     try {
       await refreshFloorSnapshot(true);
