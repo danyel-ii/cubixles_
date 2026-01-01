@@ -4,6 +4,12 @@ import { useEffect } from "react";
 
 export default function AppShell() {
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (window.__CUBIXLES_MAIN_IMPORTED__) {
+        return;
+      }
+      window.__CUBIXLES_MAIN_IMPORTED__ = true;
+    }
     import("../_client/src/main.js");
   }, []);
 

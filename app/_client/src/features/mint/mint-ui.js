@@ -413,10 +413,17 @@ export function initMintUi() {
       const refsCanonical = sortRefsCanonically(refsForContract);
       const refsHash = computeRefsHash(refsCanonical);
       const latestBlock = BigInt(await provider.getBlockNumber());
-      const existingCommit = await contract.mintCommitByMinter(walletState.address);
-      const existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
+      let supportsCommitReveal = true;
+      let existingCommit = null;
+      let existingBlock = 0n;
+      try {
+        existingCommit = await contract.mintCommitByMinter(walletState.address);
+        existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
+      } catch (error) {
+        supportsCommitReveal = false;
+      }
       let commitBlockNumber = null;
-      if (existingBlock > 0n) {
+      if (supportsCommitReveal && existingBlock > 0n) {
         const expiryBlock = existingBlock + 256n;
         if (latestBlock <= expiryBlock) {
           if (existingCommit.refsHash !== refsHash) {
@@ -446,7 +453,7 @@ export function initMintUi() {
         minter: walletState.address,
       });
       let commitBlockHash = null;
-      if (commitBlockNumber === null) {
+      if (supportsCommitReveal && commitBlockNumber === null) {
         showToast({
           title: "Two-step mint",
           message: "You will confirm two wallet prompts: commit, then mint.",
@@ -466,8 +473,17 @@ export function initMintUi() {
         if (!commitBlockNumber) {
           throw new Error("Commit block unavailable.");
         }
-      } else {
+      } else if (supportsCommitReveal) {
         setStatus("Using existing commit. Preparing mint...");
+      } else {
+        showToast({
+          title: "Legacy mint flow",
+          message:
+            "This contract does not use commit-reveal. You will confirm a single mint prompt.",
+          tone: "neutral",
+        });
+        setStatus("Preparing mint...");
+        commitBlockNumber = Number(latestBlock);
       }
       const commitBlock = await provider.getBlock(commitBlockNumber);
       commitBlockHash = commitBlock?.hash;

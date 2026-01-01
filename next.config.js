@@ -15,6 +15,8 @@ const nextConfig = {
           "form-action 'self'",
           `frame-ancestors ${frameAncestors}`,
           "object-src 'none'",
+          "frame-src 'self' https://vercel.live",
+          "frame-src-elem 'self' https://vercel.live",
           "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live",
           "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live",
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
