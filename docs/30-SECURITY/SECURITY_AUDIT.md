@@ -102,8 +102,8 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: not rerun in this environment (requires network access to install `solhint`).
-  - Last known run: 0 errors, 25 warnings (import-path-check disabled; NatSpec warnings resolved).
+  - Result: 0 errors, 0 warnings (latest local run 2026-01-01).
+  - Note: update check failed (`registry.npmjs.org` not reachable), but lint executed successfully.
 - Local slither run (venv):
   - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
   - Result: **1 finding** (weak PRNG) for commit-reveal palette index selection.

@@ -26,6 +26,7 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
   - `version` set to `"1"`
   - Hosted image assets under `/public` (icon, hero, splash, ogImage)
   - `buttonTitle` + `imageUrl` set for share cards
+  - `screenshotUrls` includes the primary share image and hero
 - accountAssociation set in `public/.well-known/farcaster.json`.
 - `miniapp.castShareUrl` set to the Vercel domain.
 - The home page includes `fc:frame` and `fc:miniapp` meta tags.

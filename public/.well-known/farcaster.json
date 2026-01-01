@@ -16,7 +16,10 @@
     "webhookUrl": "https://cubeless-red.vercel.app/api/webhook",
     "subtitle": "realm of provenance",
     "description": "cubixles_ is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
-    "screenshotUrls": ["https://cubeless-red.vercel.app/image.png"],
+    "screenshotUrls": [
+      "https://cubeless-red.vercel.app/image.png",
+      "https://cubeless-red.vercel.app/hero.png"
+    ],
     "primaryCategory": "art-creativity",
     "tags": ["nft", "art", "remix", "community", "token"],
     "heroImageUrl": "https://cubeless-red.vercel.app/hero.png",
@@ -38,7 +41,10 @@
     "webhookUrl": "https://cubeless-red.vercel.app/api/webhook",
     "subtitle": "realm of provenance",
     "description": "cubixles_ is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
-    "screenshotUrls": ["https://cubeless-red.vercel.app/image.png"],
+    "screenshotUrls": [
+      "https://cubeless-red.vercel.app/image.png",
+      "https://cubeless-red.vercel.app/hero.png"
+    ],
     "primaryCategory": "art-creativity",
     "tags": ["nft", "art", "remix", "community", "token"],
     "heroImageUrl": "https://cubeless-red.vercel.app/hero.png",

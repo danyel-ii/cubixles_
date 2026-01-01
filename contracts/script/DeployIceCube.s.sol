@@ -26,6 +26,9 @@ contract DeployIceCube is Script {
         address hooks = vm.envOr("ICECUBE_POOL_HOOKS", address(0));
         uint96 resaleRoyaltyBps = uint96(vm.envOr("ICECUBE_RESALE_BPS", uint256(500)));
         uint16 swapMaxSlippageBps = uint16(vm.envOr("ICECUBE_SWAP_MAX_SLIPPAGE_BPS", uint256(0)));
+        if (poolManager != address(0)) {
+            require(tickSpacing != 0, "ICECUBE_POOL_TICK_SPACING required");
+        }
         PoolKey memory poolKey = PoolKey({
             currency0: Currency.wrap(address(0)),
             currency1: Currency.wrap(lessToken),

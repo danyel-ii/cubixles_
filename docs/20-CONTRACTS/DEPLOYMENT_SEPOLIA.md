@@ -14,6 +14,12 @@ Last updated: 2025-12-31
 mint(bytes32 salt, string calldata tokenURI, NftRef[] calldata refs) external payable returns (uint256 tokenId)
 ```
 
+Commit signature (required before mint):
+
+```solidity
+commitMint(bytes32 salt, bytes32 refsHash) external
+```
+
 `NftRef` shape:
 
 ```solidity
@@ -26,6 +32,7 @@ struct NftRef {
 ## Payable Semantics
 
 - `mint` is payable.
+- `commitMint` must be called first; reveal must occur within 256 blocks.
 - Mint price is dynamic and derived from $LESS totalSupply (base `0.0015 ETH` with a 1.0–2.0 factor), rounded up to the nearest `0.0001 ETH`.
 - TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
 - Mint pays the RoyaltySplitter and refunds any excess.
@@ -64,5 +71,5 @@ Environment variables read by `contracts/script/DeployIceCube.s.sol`:
 - `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `ICECUBE_RESALE_BPS` (optional, defaults to 500)
-- `ICECUBE_CHAIN_ID` (optional, defaults to `11155111`)
-- `ICECUBE_DEPLOYMENT_PATH` (optional, defaults to `contracts/deployments/sepolia.json`)
+- `ICECUBE_CHAIN_ID` (optional, defaults to `block.chainid`)
+- `ICECUBE_DEPLOYMENT_PATH` (optional, defaults to `contracts/deployments/mainnet.json` on chainId 1, otherwise `contracts/deployments/sepolia.json`)

@@ -35,6 +35,7 @@ mint(bytes32 salt, string calldata tokenURI, NftRef[] calldata refs) external pa
 
 Key steps:
 
+0. **Commit required**: `commitMint(salt, refsHash)` must be called first (commit window is 256 blocks).
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
 3. **Pricing**: requires `currentMintPrice()` (dynamic price based on $LESS totalSupply).
@@ -44,8 +45,9 @@ Key steps:
    - `price` is rounded up to the nearest `0.0001 ETH`
 4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and a **canonical** `refsHash` (refs sorted by contract + tokenId).
 4.5 **Supply cap**: mint reverts once `totalMinted` reaches 32,768.
-5. **Mint + metadata**: mint token and store `tokenURI`.
-6. **Mint payout**: transfers `currentMintPrice()` to `resaleSplitter` and refunds any excess to `msg.sender`.
+5. **Random palette index**: derived from commit blockhash + `refsHash` + `salt` + minter.
+6. **Mint + metadata**: mint token and store `tokenURI`.
+7. **Mint payout**: transfers `currentMintPrice()` to `resaleSplitter` and refunds any excess to `msg.sender`.
 
 Mint payment uses a direct ETH transfer to the RoyaltySplitter. If the payout transfer fails, the mint reverts. Overpayment is always refunded.
 
@@ -103,7 +105,7 @@ File: `contracts/test/IceCubeMinter.t.sol`
     - `ICECUBE_POOL_HOOKS` (optional)
     - `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, max 1000)
     - `ICECUBE_RESALE_BPS` (optional)
-  - Writes deployment JSON to `ICECUBE_DEPLOYMENT_PATH` (defaults to `contracts/deployments/sepolia.json`).
+  - Writes deployment JSON to `ICECUBE_DEPLOYMENT_PATH` (defaults to `contracts/deployments/mainnet.json` on chainId 1, otherwise `contracts/deployments/sepolia.json`).
 
 - ABI export:
   - Run `node contracts/scripts/export-abi.mjs`.
