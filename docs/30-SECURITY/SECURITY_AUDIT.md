@@ -33,7 +33,7 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (89 tests via coverage run 2026-01-01; use `forge test -vvv` to reproduce the same suite)
+Result: PASS (89 tests; fork tests skipped in this run because `MAINNET_RPC_URL` was not set).
 
 ### Coverage (Solidity)
 Command:
@@ -44,6 +44,10 @@ Result: PASS (98.56% line coverage; minimum is 90%).
 - Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
 - Action: keep coverage at or above 90% before mainnet release.
+Warnings during coverage:
+- Low-level call return values ignored in test helpers (`RoyaltySplitter.t.sol`).
+- Some test functions could be marked `view` (test-only warnings).
+- Foundry coverage anchors missing for a few lines in test/mocks (informational).
 
 ### Invariants (standalone run)
 Command:
@@ -63,7 +67,7 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (2 tests; latest local run 2026-01-01)
+Result: PASS (2 tests; latest local run 2026-01-01 with `MAINNET_RPC_URL` set)
 - `ownerOf` reverted (non-standard or restricted), logged and allowed.
 - `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
 
@@ -89,6 +93,13 @@ npm run check:no-client-secrets
 ```
 Result: PASS (no forbidden strings in the client bundle).
 
+### npm audit
+Command:
+```sh
+npm audit --audit-level=high
+```
+Result: PASS (0 vulnerabilities).
+
 ### Abuse checks (pin endpoint)
 Command:
 ```sh
@@ -106,8 +117,12 @@ Results (local):
   - Note: update check failed (`registry.npmjs.org` not reachable), but lint executed successfully.
 - Local slither run (venv):
   - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
-  - Result: **1 finding** (weak PRNG) for commit-reveal palette index selection.
-  - Note: This is an art randomization signal (not a financial outcome) and is documented as blockhash-derived.
+  - Result: **8 findings**:
+    - Weak PRNG in palette index selection (blockhash-derived).
+    - Strict equality check in `RoyaltySplitter._send` (amount == 0).
+    - Unused return values from `POOL_MANAGER.getSlot0` in `_sqrtPriceLimit` and `_poolInitialized`.
+    - Naming convention warnings for immutable constants (LESS_TOKEN, BURN_ADDRESS, POOL_MANAGER).
+  - Note: The PRNG is used for art variation; the strict equality and unused-return warnings are intentional for control flow checks.
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.
