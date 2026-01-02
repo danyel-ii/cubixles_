@@ -1,3 +1,4 @@
+import { buildTokenViewUrl } from "../../config/links.js";
 import { state } from "../../app/app-state.js";
 
 const WAD = 1_000_000_000_000_000_000n;
@@ -5,6 +6,9 @@ const WAD = 1_000_000_000_000_000_000n;
 export function formatLess(value) {
   if (value === null || value === undefined) {
     return "—";
+  }
+  if (value > 0n && value < 100_000_000_000_000n) {
+    return "<0.0001";
   }
   const whole = value / WAD;
   const decimals = value % WAD;
@@ -23,9 +27,23 @@ export function initEthHud() {
   function render() {
     valueEl.textContent = `ΔLESS ${formatLess(state.lessDeltaLast)}`;
     if (timeEl) {
-      timeEl.textContent = state.currentCubeTokenId
-        ? `token #${state.currentCubeTokenId.toString()}`
-        : "token: —";
+      timeEl.textContent = "";
+      if (state.currentCubeTokenId) {
+        const url = buildTokenViewUrl(state.currentCubeTokenId.toString());
+        if (!url) {
+          timeEl.textContent = "token: —";
+          return;
+        }
+        const link = document.createElement("a");
+        link.className = "eth-hud-link";
+        link.textContent = "share link";
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        timeEl.append(link);
+      } else {
+        timeEl.textContent = "token: —";
+      }
     }
   }
 

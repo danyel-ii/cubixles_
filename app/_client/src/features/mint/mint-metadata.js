@@ -104,6 +104,7 @@ export function buildMintMetadata({
   refsCanonical,
   salt,
   animationUrl,
+  externalUrl,
   imageUrl,
   paletteEntry,
   paletteIndex,
@@ -132,11 +133,6 @@ export function buildMintMetadata({
     attributes.push(
       { trait_type: "Palette Index", value: paletteIndex ?? 0 },
       { trait_type: "Palette ID", value: paletteEntry.palette_id },
-      {
-        trait_type: "Palette URL",
-        value: paletteEntry.palette_url,
-        display_type: "url",
-      },
       {
         trait_type: "Palette Hex Colors",
         value: Array.isArray(paletteEntry.hex_colors)
@@ -171,10 +167,10 @@ export function buildMintMetadata({
     description: [
       "cubixles_ mints interactive p5.js cubes whose provenance is tied to NFTs you already own.",
       "Interactive cube:",
-      animationUrl,
+      externalUrl || animationUrl,
     ].join("\n"),
     image: imageUrl,
-    external_url: animationUrl,
+    external_url: externalUrl || animationUrl,
     animation_url: animationUrl,
     palette: paletteEntry
       ? {

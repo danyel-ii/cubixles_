@@ -505,9 +505,10 @@ export function initMintUi() {
       const variantIndex = computeVariantIndex(selectionSeed);
       const params = decodeVariantIndex(variantIndex);
       const paletteImageUrl = buildPaletteImageUrl(paletteEntry);
-      const imageUrl = buildPalettePreviewGifUrl();
-      const animationUrl = buildTokenViewUrl(tokenId.toString());
-      if (!animationUrl) {
+      const imageUrl = paletteImageUrl || buildPalettePreviewGifUrl();
+      const animationUrl = buildPalettePreviewGifUrl();
+      const externalUrl = buildTokenViewUrl(tokenId.toString());
+      if (!externalUrl) {
         throw new Error("Token viewer URL is not configured.");
       }
       const metadata = buildMintMetadata({
@@ -520,6 +521,7 @@ export function initMintUi() {
         refsCanonical: refsCanonicalMeta,
         salt,
         animationUrl,
+        externalUrl,
         imageUrl,
         paletteEntry,
         paletteIndex,
