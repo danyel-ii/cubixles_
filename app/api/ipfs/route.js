@@ -14,6 +14,11 @@ function buildGatewayUrls(ipfsUrl) {
   return GATEWAYS.map((base) => `${base}${path}`);
 }
 
+function looksLikeJson(text) {
+  const trimmed = text.trimStart();
+  return trimmed.startsWith("{") || trimmed.startsWith("[");
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get("url");
@@ -37,12 +42,6 @@ export async function GET(request) {
       if (!response.ok) {
         continue;
       }
-      if (expectsJson) {
-        const contentType = response.headers.get("content-type") || "";
-        if (contentType.includes("text/html")) {
-          continue;
-        }
-      }
       const headers = new Headers(response.headers);
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Cache-Control", "public, max-age=300");
@@ -50,6 +49,16 @@ export async function GET(request) {
       headers.delete("content-length");
       headers.delete("transfer-encoding");
       const body = await response.arrayBuffer();
+      if (expectsJson) {
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("text/html")) {
+          continue;
+        }
+        const text = new TextDecoder().decode(body);
+        if (!looksLikeJson(text)) {
+          continue;
+        }
+      }
       return new Response(body, {
         status: response.status,
         headers,

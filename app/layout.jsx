@@ -29,6 +29,7 @@ export default function RootLayout({ children }) {
           title: "Launch cubixles_",
           action: {
             type: "launch_frame",
+            name: "mint a cubixle__",
             url: baseUrl,
           },
         },

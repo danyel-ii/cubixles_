@@ -14,6 +14,27 @@ export function buildGatewayUrls(ipfsUrl) {
   return GATEWAYS.map((base) => `${base}${path}`);
 }
 
+function looksLikeJson(text) {
+  const trimmed = text.trimStart();
+  return trimmed.startsWith("{") || trimmed.startsWith("[");
+}
+
+async function isJsonResponse(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return true;
+  }
+  if (contentType.includes("text/html")) {
+    return false;
+  }
+  try {
+    const text = await response.clone().text();
+    return looksLikeJson(text) && !text.trimStart().startsWith("<");
+  } catch (error) {
+    return false;
+  }
+}
+
 export async function fetchWithGateways(ipfsUrl, { timeoutMs = 8000 } = {}) {
   const expectsJson =
     ipfsUrl.endsWith(".json") || ipfsUrl.includes("manifest.json");
@@ -26,11 +47,8 @@ export async function fetchWithGateways(ipfsUrl, { timeoutMs = 8000 } = {}) {
         { signal: controller.signal }
       );
       if (response.ok) {
-        if (expectsJson) {
-          const contentType = response.headers.get("content-type") || "";
-          if (contentType.includes("text/html")) {
-            throw new Error("IPFS proxy returned HTML.");
-          }
+        if (expectsJson && !(await isJsonResponse(response))) {
+          throw new Error("IPFS proxy returned non-JSON.");
         }
         clearTimeout(timeout);
         return { response, url: response.url };
@@ -48,11 +66,8 @@ export async function fetchWithGateways(ipfsUrl, { timeoutMs = 8000 } = {}) {
     try {
       const response = await fetch(url, { signal: controller.signal });
       if (response.ok) {
-        if (expectsJson) {
-          const contentType = response.headers.get("content-type") || "";
-          if (contentType.includes("text/html")) {
-            continue;
-          }
+        if (expectsJson && !(await isJsonResponse(response))) {
+          continue;
         }
         clearTimeout(timeout);
         return { response, url };

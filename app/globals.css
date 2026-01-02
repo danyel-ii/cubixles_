@@ -454,38 +454,11 @@ button.ui-button {
 }
 
 .minted-banner {
-  position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 14;
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(14, 20, 32, 0.9);
-  border: 1px solid rgba(120, 180, 255, 0.6);
-  color: #eaf0ff;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  box-shadow: 0 6px 18px rgba(5, 10, 20, 0.35);
 }
 
 .minted-link {
-  border: none;
-  background: rgba(120, 180, 255, 0.2);
-  color: #cfe3ff;
-  padding: 2px 8px;
-  border-radius: 999px;
-  cursor: pointer;
-  text-transform: lowercase;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-}
-
-.minted-link:hover {
-  background: rgba(120, 180, 255, 0.35);
+  text-transform: none;
 }
 
 .minted-copied {
