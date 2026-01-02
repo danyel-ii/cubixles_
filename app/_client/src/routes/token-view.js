@@ -75,17 +75,14 @@ function initTokenShareDialog() {
   modal.setAttribute("aria-modal", "true");
   modal.innerHTML = `
     <div id="share-backdrop" class="share-backdrop" aria-hidden="true"></div>
-    <div class="share-card">
-      <div class="share-title">Share this cube</div>
-      <div class="share-actions">
-        <a id="share-farcaster" class="share-button" target="_blank" rel="noreferrer">Farcaster</a>
+      <div class="share-card">
+        <div class="share-title">Share this cube</div>
+        <div class="share-actions">
         <a id="share-x" class="share-button" target="_blank" rel="noreferrer">X</a>
-        <a id="share-base" class="share-button" target="_blank" rel="noreferrer">Base</a>
-        <a id="share-signal" class="share-button" target="_blank" rel="noreferrer">Signal</a>
         <button id="share-copy" class="share-button is-ghost" type="button">Copy link</button>
+        </div>
+        <button id="share-close" class="share-close" type="button">Close</button>
       </div>
-      <button id="share-close" class="share-close" type="button">Close</button>
-    </div>
   `;
   document.body.appendChild(modal);
   modal.classList.add("is-hidden");
@@ -93,10 +90,7 @@ function initTokenShareDialog() {
   const backdrop = modal.querySelector("#share-backdrop");
   const closeButton = modal.querySelector("#share-close");
   const copyButton = modal.querySelector("#share-copy");
-  const farcasterLink = modal.querySelector("#share-farcaster");
   const xLink = modal.querySelector("#share-x");
-  const baseLink = modal.querySelector("#share-base");
-  const signalLink = modal.querySelector("#share-signal");
 
   let currentUrl = "";
 
@@ -123,10 +117,7 @@ function initTokenShareDialog() {
     currentUrl = url;
     const encoded = encodeURIComponent(url);
     const text = encodeURIComponent("Check out this cubixles_ cube");
-    farcasterLink.href = `https://warpcast.com/~/compose?text=${text}&embeds[]=${encoded}`;
     xLink.href = `https://twitter.com/intent/tweet?text=${text}&url=${encoded}`;
-    baseLink.href = `https://www.base.app/?link=${encoded}`;
-    signalLink.href = `signal://send?text=${text}%20${encoded}`;
     modal.classList.remove("is-hidden");
   }
 
