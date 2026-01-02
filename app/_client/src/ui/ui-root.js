@@ -289,7 +289,9 @@ function initShareDialog() {
 
   document.addEventListener("share-link-open", (event) => {
     const url = event?.detail?.url;
-    if (!url) {
+    const overlay = document.getElementById("overlay");
+    const overlayHidden = overlay ? overlay.classList.contains("is-hidden") : true;
+    if (!url || !document.body.classList.contains("is-token-view") || !overlayHidden) {
       return;
     }
     if (navigator.share) {
