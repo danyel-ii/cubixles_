@@ -106,6 +106,7 @@ export function buildMintMetadata({
   animationUrl,
   externalUrl,
   imageUrl,
+  imageIpfsUrl,
   paletteEntry,
   paletteIndex,
   paletteImageUrl,
@@ -169,6 +170,7 @@ export function buildMintMetadata({
       externalUrl || animationUrl,
     ].join("\n"),
     image: imageUrl,
+    image_ipfs: imageIpfsUrl?.startsWith("ipfs://") ? imageIpfsUrl : undefined,
     external_url: externalUrl || animationUrl,
     palette: paletteEntry
       ? {

@@ -539,8 +539,11 @@ export function initMintUi() {
       const variantIndex = computeVariantIndex(selectionSeed);
       const params = decodeVariantIndex(variantIndex);
       const paletteImageUrl = buildPaletteImageUrl(paletteEntry);
-      const imageUrl = paletteImageUrl || buildPalettePreviewGifUrl();
-      const animationUrl = paletteImageUrl || imageUrl;
+      const imageIpfsUrl = paletteImageUrl || buildPalettePreviewGifUrl();
+      const imageUrl = imageIpfsUrl.startsWith("ipfs://")
+        ? `https://gateway.pinata.cloud/ipfs/${imageIpfsUrl.replace("ipfs://", "")}`
+        : imageIpfsUrl;
+      const animationUrl = imageIpfsUrl;
       const externalUrl = buildTokenViewUrl(tokenId.toString());
       if (!externalUrl) {
         throw new Error("Token viewer URL is not configured.");
@@ -557,6 +560,7 @@ export function initMintUi() {
         animationUrl,
         externalUrl,
         imageUrl,
+        imageIpfsUrl,
         paletteEntry,
         paletteIndex,
         paletteImageUrl,

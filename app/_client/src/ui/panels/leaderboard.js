@@ -1,4 +1,4 @@
-import { BrowserProvider, Contract } from "ethers";
+import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
 import { ICECUBE_CONTRACT } from "../../config/contracts";
 import { subscribeWallet } from "../../features/wallet/wallet.js";
 
@@ -86,13 +86,22 @@ export function initLeaderboardUi() {
     listEl.innerHTML = "";
   }
 
+  function getReadProvider(provider) {
+    if (provider) {
+      return new BrowserProvider(provider);
+    }
+    if (ICECUBE_CONTRACT.chainId === 1) {
+      return new JsonRpcProvider("https://cloudflare-eth.com");
+    }
+    return null;
+  }
+
   async function fetchMintedTokenIds(provider) {
-    const browserProvider = new BrowserProvider(provider);
-    const contract = new Contract(
-      ICECUBE_CONTRACT.address,
-      ICECUBE_CONTRACT.abi,
-      browserProvider
-    );
+    const readProvider = getReadProvider(provider);
+    if (!readProvider) {
+      return [];
+    }
+    const contract = new Contract(ICECUBE_CONTRACT.address, ICECUBE_CONTRACT.abi, readProvider);
     const totalMinted = await contract.totalMinted();
     const count = Number(totalMinted);
     if (!count) {
@@ -105,18 +114,15 @@ export function initLeaderboardUi() {
   }
 
   async function fetchLeaderboard(provider) {
-    const browserProvider = new BrowserProvider(provider);
-    const network = await browserProvider.getNetwork();
-    if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
-      throw new Error(
-        `Switch wallet to ${formatChain(ICECUBE_CONTRACT.chainId)} to view leaderboard.`
-      );
+    const readProvider = getReadProvider(provider);
+    if (!readProvider) {
+      return { entries: [], supplyNow: null };
     }
-    const contract = new Contract(
-      ICECUBE_CONTRACT.address,
-      ICECUBE_CONTRACT.abi,
-      browserProvider
-    );
+    const network = await readProvider.getNetwork();
+    if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
+      throw new Error(`Wrong network for leaderboard.`);
+    }
+    const contract = new Contract(ICECUBE_CONTRACT.address, ICECUBE_CONTRACT.abi, readProvider);
     const tokenIds = await fetchMintedTokenIds(provider);
     if (!tokenIds.length) {
       return { entries: [], supplyNow: null };
@@ -197,11 +203,6 @@ export function initLeaderboardUi() {
 
   async function refreshLeaderboard() {
     updateLeaderboardDetails();
-    if (!walletState || walletState.status !== "connected") {
-      resetList("Connect your wallet to load the leaderboard.");
-      supplyEl.textContent = "Supply now: —";
-      return;
-    }
     if (isZeroAddress(ICECUBE_CONTRACT.address) || !ICECUBE_CONTRACT.abi?.length) {
       resetList("Contract not configured.");
       supplyEl.textContent = "Supply now: —";
@@ -209,7 +210,8 @@ export function initLeaderboardUi() {
     }
     statusEl.textContent = "Loading leaderboard...";
     try {
-      const { entries, supplyNow } = await fetchLeaderboard(walletState.provider);
+      const provider = walletState?.status === "connected" ? walletState.provider : null;
+      const { entries, supplyNow } = await fetchLeaderboard(provider);
       supplyEl.textContent = supplyNow
         ? `Supply now: ${formatDelta(supplyNow)}`
         : "Supply now: —";
