@@ -1,12 +1,12 @@
 # Decision Log
 
-Last updated: 2026-01-01
+Last updated: 2026-01-02
 
 ## Review Status
 
-- Last reviewed: 2025-12-26
+- Last reviewed: 2026-01-02
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 ## 2025-12-22 — T5 Spec Shapes
 

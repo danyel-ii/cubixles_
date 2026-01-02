@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2026-01-01
+Last updated: 2026-01-02
 
 ## 0) Pre-flight (local)
 
@@ -52,7 +52,7 @@ npm run fork-test
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid` in the deploy script)
-- `CUBIXLES_DEPLOYMENT_PATH` (optional, defaults to `contracts/deployments/mainnet.json` on chainId 1, otherwise `contracts/deployments/sepolia.json`)
+- `CUBIXLES_DEPLOYMENT_PATH` (optional; recommended: `deployments/mainnet.json` when running from `contracts/`)
 
 ### Deploy
 ```sh
@@ -136,12 +136,12 @@ forge script script/DeployCubixles.s.sol \
 2) Export ABI + update frontend config with mainnet address.
 3) Record deployment:
    - `contracts/deployments/mainnet.json`
-   - CubixlesMinter: `0x4130F69f396f5478CFD1e1792e2970da4299383a`
-   - RoyaltySplitter: `0xf7B96E93D7E4b5aBf80E703Bb358E4Cb8aa53043`
+   - CubixlesMinter: `0x2FCC29B8Db193D8c5F1647Cbf1e5eCC03920D62B`
+   - RoyaltySplitter: `0x127AB77A7aB14d2Efb4D58249Ecc373f6e6d8dFF`
    - Deploy txs:
-     - `0xeda91b2834d1fab6b5ee931b1ca1c9a9cb26ab571d50477c62e13cccd2fa3c57`
-     - `0x0d89d39da96ed1ff7b681d7a8f4c23dc388403b220fb1f6298834e14e9a03c6d`
-   - Ownership transfer (minter → splitter): `0xf9c2f5a30edbadb28ae76564fd9c0ba2ee7eeafe7b775bfb474c910b44d59bba`
+     - RoyaltySplitter CREATE: `0xcf880be2f5adf318f328bd5a9702e2536be8372920e929db30e2bc11b2a49777`
+     - CubixlesMinter CREATE: `0xf1f1f1eb160bdc9d79ec2d274b0906235c191984a758246788d74a01055e7f50`
+   - Ownership transfer (minter → owner): `0x9cef0a4e1a8eb15f8cc29dfbc3d28cc541b5ab3b0ef07abc5941bd41e0f8f42c`
 
 ## 6) Mainnet launch validation
 

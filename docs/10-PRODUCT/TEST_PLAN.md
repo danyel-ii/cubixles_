@@ -1,12 +1,12 @@
 # cubixles_ v0 — Test Plan
 
-Last updated: 2026-01-01
+Last updated: 2026-01-02
 
 ## Review Status
 
-- Last reviewed: 2025-12-26
+- Last reviewed: 2026-01-02
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 This plan defines the tests needed to trust the system end-to-end:
 - Interactive p5-based NFT (`external_url`)

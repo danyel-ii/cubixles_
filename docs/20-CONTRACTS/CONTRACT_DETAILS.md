@@ -1,12 +1,12 @@
 # cubixles_ Contract Details (CubixlesMinter)
 
-Last updated: 2026-01-01
+Last updated: 2026-01-02
 
 ## Review Status
 
-- Last reviewed: 2025-12-26
+- Last reviewed: 2026-01-02
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 ## Executive Summary
 
@@ -106,7 +106,7 @@ File: `contracts/test/CubixlesMinter.t.sol`
     - `CUBIXLES_POOL_HOOKS` (optional)
     - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, max 1000)
     - `CUBIXLES_RESALE_BPS` (optional)
-  - Writes deployment JSON to `CUBIXLES_DEPLOYMENT_PATH` (defaults to `contracts/deployments/mainnet.json` on chainId 1, otherwise `contracts/deployments/sepolia.json`).
+  - Writes deployment JSON to `CUBIXLES_DEPLOYMENT_PATH` (recommended: `deployments/mainnet.json` when running from `contracts/`).
 
 - ABI export:
   - Run `node contracts/scripts/export-abi.mjs`.

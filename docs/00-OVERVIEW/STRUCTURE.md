@@ -1,11 +1,11 @@
 # cubixles_ Code Structure
 
-Last updated: 2026-01-01
+Last updated: 2026-01-02
 
 ## Review Status
 
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 Frontend code now lives under the Next.js `app/` directory (app router), with
 client-side modules in `app/_client/`. Contracts live under `contracts/`. The

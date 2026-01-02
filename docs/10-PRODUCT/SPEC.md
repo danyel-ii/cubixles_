@@ -1,12 +1,12 @@
 # cubixles_ Miniapp v0 Spec — Provenance Shapes (Mainnet)
 
-Last updated: 2026-01-01
+Last updated: 2026-01-02
 
 ## Review Status
 
-- Last reviewed: 2026-01-01
+- Last reviewed: 2026-01-02
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 This document defines the required data shapes and normalization rules for
 wallet inventory and provenance objects in v0. These rules are mandatory for

@@ -1,12 +1,12 @@
 # cubixles_ Deployment (CubixlesMinter, Mainnet + Sepolia)
 
-Last updated: 2026-01-01
+Last updated: 2026-01-02
 
 ## Review Status
 
-- Last reviewed: 2025-12-26
+- Last reviewed: 2026-01-02
 - Review status: Needs confirmation
-- Owner: TBD
+- Owner: danyel-ii
 
 ## Mint Signature
 
@@ -73,4 +73,4 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
-- `CUBIXLES_DEPLOYMENT_PATH` (optional, defaults to `contracts/deployments/mainnet.json` on chainId 1, otherwise `contracts/deployments/sepolia.json`)
+- `CUBIXLES_DEPLOYMENT_PATH` (optional; recommended: `deployments/mainnet.json` when running from `contracts/`)
