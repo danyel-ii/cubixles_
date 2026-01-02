@@ -82,6 +82,10 @@ export function initMintUi() {
     statusEl.textContent = message;
     statusEl.classList.toggle("is-error", tone === "error");
     statusEl.classList.toggle("is-success", tone === "success");
+    const isStay =
+      typeof message === "string" &&
+      message.toLowerCase().includes("please stay on this page");
+    statusEl.classList.toggle("is-stay", isStay);
   }
 
   function getToastRoot() {
@@ -154,6 +158,34 @@ export function initMintUi() {
       setTimeout(() => toast.remove(), 200);
     };
     setTimeout(remove, 7000);
+  }
+
+  function triggerConfetti() {
+    const root = document.getElementById("confetti-root");
+    if (!root) {
+      return;
+    }
+    const burst = document.createElement("div");
+    burst.className = "eth-confetti";
+    const pieces = 18;
+    for (let i = 0; i < pieces; i += 1) {
+      const piece = document.createElement("div");
+      piece.className = "eth-confetti-piece";
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 140 + Math.random() * 120;
+      const offsetX = Math.cos(angle) * distance;
+      const offsetY = 80 + Math.random() * 180;
+      const rotation = Math.random() * 360;
+      piece.style.setProperty("--confetti-x", `${offsetX.toFixed(1)}px`);
+      piece.style.setProperty("--confetti-y", `${offsetY.toFixed(1)}px`);
+      piece.style.setProperty("--confetti-rot", `${rotation.toFixed(1)}deg`);
+      piece.style.animationDelay = `${(Math.random() * 0.15).toFixed(2)}s`;
+      burst.appendChild(piece);
+    }
+    root.appendChild(burst);
+    window.setTimeout(() => {
+      burst.remove();
+    }, 1600);
   }
 
   function setDisabled(disabled) {
@@ -570,6 +602,7 @@ export function initMintUi() {
         document.dispatchEvent(new CustomEvent("cube-token-change"));
       }
       setStatus("Mint confirmed.", "success");
+      triggerConfetti();
       const tokenUrl = mintedTokenId ? buildTokenViewUrl(mintedTokenId.toString()) : "";
       showToast({
         title: "Mint confirmed",

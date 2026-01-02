@@ -1,4 +1,3 @@
-import { buildTokenViewUrl } from "../../config/links.js";
 import { state } from "../../app/app-state.js";
 
 const WAD = 1_000_000_000_000_000_000n;
@@ -27,37 +26,12 @@ export function initEthHud() {
   function render() {
     valueEl.textContent = `ΔLESS ${formatLess(state.lessDeltaLast)}`;
     if (timeEl) {
-      timeEl.textContent = "";
-      const isTokenView =
-        document.body.classList.contains("is-token-view") &&
-        window.location.pathname.startsWith("/m/");
-      const overlay = document.getElementById("overlay");
-      const overlayHidden = overlay ? overlay.classList.contains("is-hidden") : true;
-      if (isTokenView && overlayHidden && state.currentCubeTokenId) {
-        const url = buildTokenViewUrl(state.currentCubeTokenId.toString());
-        if (!url) {
-          timeEl.textContent = "token: —";
-          return;
-        }
-        const link = document.createElement("a");
-        link.className = "eth-hud-link";
-        link.textContent = "share link";
-        link.href = url;
-        link.target = "_blank";
-        link.rel = "noreferrer";
-        link.addEventListener("click", (event) => {
-          event.preventDefault();
-          document.dispatchEvent(new CustomEvent("share-link-open", { detail: { url } }));
-        });
-        timeEl.append(link);
-      } else {
-        timeEl.textContent = "token: —";
-      }
+      timeEl.textContent = document.body.classList.contains("is-token-view")
+        ? "token view"
+        : "token: —";
     }
   }
 
   render();
   document.addEventListener("less-delta-change", render);
-  document.addEventListener("overlay-opened", render);
-  document.addEventListener("overlay-closed", render);
 }

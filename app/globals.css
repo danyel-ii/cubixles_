@@ -359,6 +359,28 @@ body.is-token-view #leaderboard {
   text-decoration: underline;
 }
 
+.share-cube-button {
+  position: fixed;
+  left: 18px;
+  bottom: 96px;
+  z-index: 12;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(16, 22, 32, 0.8);
+  color: rgba(230, 233, 239, 0.85);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.share-cube-button:hover {
+  border-color: rgba(120, 180, 255, 0.6);
+  color: rgba(230, 233, 239, 0.95);
+}
+
 @keyframes eth-hud-drift {
   0% {
     transform: translate(0, 0);
@@ -618,8 +640,60 @@ body.is-minted .preview-bar {
   color: rgba(168, 220, 190, 0.9);
 }
 
+.ui-hint.is-stay {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(35, 60, 90, 0.45);
+  border: 1px solid rgba(120, 180, 255, 0.55);
+  color: rgba(220, 235, 255, 0.95);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 .ui-hint.is-accent {
   color: rgba(140, 220, 255, 0.9);
+}
+
+.confetti-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.eth-confetti {
+  position: absolute;
+  left: 50%;
+  top: 25%;
+  width: 1px;
+  height: 1px;
+}
+
+.eth-confetti-piece {
+  position: absolute;
+  width: 12px;
+  height: 16px;
+  background: rgba(130, 190, 255, 0.9);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  opacity: 0;
+  animation: eth-confetti-fall 1.2s ease-out forwards;
+}
+
+@keyframes eth-confetti-fall {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--confetti-x, 0px), var(--confetti-y, 220px))
+      rotate(var(--confetti-rot, 180deg))
+      scale(0.8);
+    opacity: 0;
+  }
 }
 
 .ui-section {

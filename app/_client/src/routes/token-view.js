@@ -133,13 +133,47 @@ function initTokenShareDialog() {
   closeButton?.addEventListener("click", closeModal);
   copyButton?.addEventListener("click", copyLink);
 
-  document.addEventListener("share-link-open", (event) => {
-    const url = event?.detail?.url;
+  const shareButton = document.createElement("button");
+  shareButton.id = "share-cube";
+  shareButton.className = "share-cube-button";
+  shareButton.type = "button";
+  shareButton.textContent = "share cube";
+  document.body.appendChild(shareButton);
+
+  shareButton.addEventListener("click", () => {
+    if (!currentUrl) {
+      return;
+    }
+    openModal(currentUrl);
+  });
+
+  function openShare(url) {
     if (!url) {
       return;
     }
-    openModal(url);
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  farcasterLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openShare(farcasterLink.href);
   });
+  xLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openShare(xLink.href);
+  });
+  baseLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openShare(baseLink.href);
+  });
+  signalLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    openShare(signalLink.href);
+  });
+
+  return (url) => {
+    currentUrl = url;
+  };
 }
 
 export async function initTokenViewRoute() {
@@ -152,7 +186,7 @@ export async function initTokenViewRoute() {
   }
   document.body.classList.add("is-token-view");
   setStatus("Loading token metadata...");
-  initTokenShareDialog();
+  const setShareUrl = initTokenShareDialog();
 
   let tokenId;
   try {
@@ -167,6 +201,9 @@ export async function initTokenViewRoute() {
 
   try {
     const tokenUri = await fetchTokenUri(tokenId);
+    if (typeof setShareUrl === "function") {
+      setShareUrl(`${window.location.origin}/m/${tokenId.toString()}`);
+    }
     const resolved = resolveUri(tokenUri);
     if (!resolved?.resolved) {
       throw new Error("Token URI could not be resolved.");
