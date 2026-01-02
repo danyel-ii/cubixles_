@@ -4,7 +4,7 @@ Last updated: 2026-01-01
 Date: 2026-01-01
 
 ## Scope
-- Contracts: `IceCubeMinter`, `RoyaltySplitter`
+- Contracts: `CubixlesMinter`, `RoyaltySplitter`
 - Tests: unit, fuzz, invariants, edge cases, fork harness
 - Tooling: Slither + Solhint configs, CI workflow, client secret scan
 
@@ -13,9 +13,9 @@ Date: 2026-01-01
 - CI: `.github/workflows/ci.yml`
 - Static analysis config: `contracts/.solhint.json`, `contracts/slither.config.json`
 - Mocks: `contracts/test/mocks/MockERC721s.sol`, `contracts/test/mocks/Receivers.sol`
-- Edge tests: `contracts/test/IceCubeMinterEdge.t.sol`, updates to `contracts/test/RoyaltySplitter.t.sol`
-- Fuzz tests: `contracts/test/fuzz/IceCubeMinterFuzz.t.sol`
-- Invariants: `contracts/test/invariants/IceCubeMinterInvariants.t.sol`
+- Edge tests: `contracts/test/CubixlesMinterEdge.t.sol`, updates to `contracts/test/RoyaltySplitter.t.sol`
+- Fuzz tests: `contracts/test/fuzz/CubixlesMinterFuzz.t.sol`
+- Invariants: `contracts/test/invariants/CubixlesMinterInvariants.t.sol`
 - Fork tests: `contracts/test/fork/MainnetFork.t.sol`
 - Endpoint hardening: nonce + signature auth, rate limits, Zod validation, size caps, safe logging
 - Client secret scan: `scripts/check-client-secrets.mjs`

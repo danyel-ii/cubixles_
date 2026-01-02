@@ -41,23 +41,23 @@ npm run fork-test
 ## 1) Contract deploy (mainnet primary, Sepolia rehearsal optional)
 
 ### Required env (local)
-- Environment variable names remain `ICECUBE_*` for contract/deploy compatibility.
-- `ICECUBE_OWNER`
-- `ICECUBE_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
-- `ICECUBE_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
-- `ICECUBE_POOL_MANAGER` (optional, leave unset for no-swap mode)
-- `ICECUBE_POOL_FEE` (optional, defaults to 0)
-- `ICECUBE_POOL_TICK_SPACING` (required if pool manager is set)
-- `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
-- `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
-- `ICECUBE_RESALE_BPS` (optional, defaults to 500)
-- `ICECUBE_CHAIN_ID` (optional, defaults to `block.chainid` in the deploy script)
-- `ICECUBE_DEPLOYMENT_PATH` (optional, defaults to `deployments/mainnet.json` on chainId 1, otherwise `deployments/sepolia.json`)
+- Environment variable names use `CUBIXLES_*` for contract/deploy compatibility.
+- `CUBIXLES_OWNER`
+- `CUBIXLES_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
+- `CUBIXLES_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
+- `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
+- `CUBIXLES_POOL_FEE` (optional, defaults to 0)
+- `CUBIXLES_POOL_TICK_SPACING` (required if pool manager is set)
+- `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
+- `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
+- `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
+- `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid` in the deploy script)
+- `CUBIXLES_DEPLOYMENT_PATH` (optional, defaults to `contracts/deployments/mainnet.json` on chainId 1, otherwise `contracts/deployments/sepolia.json`)
 
 ### Deploy
 ```sh
 cd contracts
-forge script script/DeployIceCube.s.sol \
+forge script script/DeployCubixles.s.sol \
   --rpc-url "$MAINNET_RPC_URL" \
   --private-key "$MAINNET_DEPLOYER_KEY" \
   --broadcast
@@ -66,7 +66,7 @@ forge script script/DeployIceCube.s.sol \
 Optional Sepolia rehearsal:
 ```sh
 cd contracts
-forge script script/DeployIceCube.s.sol \
+forge script script/DeployCubixles.s.sol \
   --rpc-url "$SEPOLIA_RPC_URL" \
   --private-key "$SEPOLIA_DEPLOYER_KEY" \
   --broadcast
@@ -79,7 +79,7 @@ node contracts/scripts/export-abi.mjs
 
 ### Update frontend contract config
 - Update `app/_client/src/config/contracts.ts` with the deployed address if needed.
-- Confirm `ICECUBE_CONTRACT.address` matches deployment.
+- Confirm `CUBIXLES_CONTRACT.address` matches deployment.
 
 ## 2) App setup
 
@@ -87,8 +87,8 @@ node contracts/scripts/export-abi.mjs
 - `PINATA_JWT`
 - `ALCHEMY_API_KEY`
 - `SERVER_AUTH_SALT`
-- `ICECUBE_CONTRACT_ADDRESS`
-- `ICECUBE_CHAIN_ID=1` (use `11155111` only for Sepolia rehearsal)
+- `CUBIXLES_CONTRACT_ADDRESS`
+- `CUBIXLES_CHAIN_ID=1` (use `11155111` only for Sepolia rehearsal)
 
 ### Run dev + smoke
 ```sh
@@ -104,7 +104,7 @@ npm run test:ui
 4) Click Mint.
 5) Verify:
    - `tokenURI` resolves to `ipfs://<CID>`
-   - metadata includes `animation_url` and `image`
+   - metadata includes `external_url` and `image`
    - `/m/<tokenId>` loads the correct cube
    - `royaltyInfo` returns splitter + 5% amount
 
@@ -120,14 +120,14 @@ npm run check:no-client-secrets
    - `docs/30-SECURITY/SECURITY_AUDIT.md`
    - `docs/60-STATUS/STATE_OF_REVIEW.md`
 5) Verify Vercel env secrets are set (no `.env` on mainnet).
-6) Set `ICECUBE_CHAIN_ID=1` and mainnet contract address in config.
+6) Set `CUBIXLES_CHAIN_ID=1` and mainnet contract address in config.
 
 ## 5) Mainnet deploy (contracts)
 
 1) Deploy on mainnet:
 ```sh
 cd contracts
-forge script script/DeployIceCube.s.sol \
+forge script script/DeployCubixles.s.sol \
   --rpc-url "$MAINNET_RPC_URL" \
   --private-key "$MAINNET_DEPLOYER_KEY" \
   --broadcast
@@ -136,7 +136,7 @@ forge script script/DeployIceCube.s.sol \
 2) Export ABI + update frontend config with mainnet address.
 3) Record deployment:
    - `contracts/deployments/mainnet.json`
-   - IceCubeMinter: `0x4130F69f396f5478CFD1e1792e2970da4299383a`
+   - CubixlesMinter: `0x4130F69f396f5478CFD1e1792e2970da4299383a`
    - RoyaltySplitter: `0xf7B96E93D7E4b5aBf80E703Bb358E4Cb8aa53043`
    - Deploy txs:
      - `0xeda91b2834d1fab6b5ee931b1ca1c9a9cb26ab571d50477c62e13cccd2fa3c57`

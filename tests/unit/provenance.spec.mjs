@@ -5,7 +5,7 @@ import {
   normalizeAddress,
   buildProvenanceBundle,
 } from "../../app/_client/src/data/nft/indexer.ts";
-import { ICECUBE_CONTRACT } from "../../app/_client/src/config/contracts";
+import { CUBIXLES_CONTRACT } from "../../app/_client/src/config/contracts";
 
 describe("provenance shaping", () => {
   it("normalizes addresses and tokenIds", () => {
@@ -17,7 +17,7 @@ describe("provenance shaping", () => {
   });
 
   it("rejects non-configured chainId", () => {
-    const wrongChain = ICECUBE_CONTRACT.chainId === 1 ? 11155111 : 1;
+    const wrongChain = CUBIXLES_CONTRACT.chainId === 1 ? 11155111 : 1;
     expect(() => assertConfiguredChain(wrongChain)).toThrow(/configured/i);
   });
 
@@ -26,14 +26,14 @@ describe("provenance shaping", () => {
       buildProvenanceBundle(
         [],
         "0x000000000000000000000000000000000000dEaD",
-        ICECUBE_CONTRACT.chainId
+        CUBIXLES_CONTRACT.chainId
       )
     )
       .rejects.toThrow(/1 to 6/i);
     await expect(
       buildProvenanceBundle(
         new Array(7).fill(null).map((_, idx) => ({
-          chainId: ICECUBE_CONTRACT.chainId,
+          chainId: CUBIXLES_CONTRACT.chainId,
           contractAddress: "0x000000000000000000000000000000000000dEaD",
           tokenId: String(idx + 1),
           name: null,
@@ -43,7 +43,7 @@ describe("provenance shaping", () => {
           source: "alchemy",
         })),
         "0x000000000000000000000000000000000000dEaD",
-        ICECUBE_CONTRACT.chainId
+        CUBIXLES_CONTRACT.chainId
       )
     ).rejects.toThrow(/1 to 6/i);
   });

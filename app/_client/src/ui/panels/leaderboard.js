@@ -1,5 +1,5 @@
 import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
-import { ICECUBE_CONTRACT } from "../../config/contracts";
+import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import { subscribeWallet } from "../../features/wallet/wallet.js";
 
 const MAX_ENTRIES = 50;
@@ -76,8 +76,8 @@ export function initLeaderboardUi() {
   }
 
   function updateLeaderboardDetails() {
-    contractEl.textContent = `Contract: ${ICECUBE_CONTRACT.address}`;
-    chainEl.textContent = `Chain: ${formatChain(ICECUBE_CONTRACT.chainId)}`;
+    contractEl.textContent = `Contract: ${CUBIXLES_CONTRACT.address}`;
+    chainEl.textContent = `Chain: ${formatChain(CUBIXLES_CONTRACT.chainId)}`;
     updatedEl.textContent = `Last updated: ${new Date().toISOString()}`;
   }
 
@@ -90,7 +90,7 @@ export function initLeaderboardUi() {
     if (provider) {
       return new BrowserProvider(provider);
     }
-    if (ICECUBE_CONTRACT.chainId === 1) {
+    if (CUBIXLES_CONTRACT.chainId === 1) {
       return new JsonRpcProvider("https://cloudflare-eth.com");
     }
     return null;
@@ -101,7 +101,7 @@ export function initLeaderboardUi() {
     if (!readProvider) {
       return [];
     }
-    const contract = new Contract(ICECUBE_CONTRACT.address, ICECUBE_CONTRACT.abi, readProvider);
+    const contract = new Contract(CUBIXLES_CONTRACT.address, CUBIXLES_CONTRACT.abi, readProvider);
     const totalMinted = await contract.totalMinted();
     const count = Number(totalMinted);
     if (!count) {
@@ -119,10 +119,10 @@ export function initLeaderboardUi() {
       return { entries: [], supplyNow: null };
     }
     const network = await readProvider.getNetwork();
-    if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
+    if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
       throw new Error(`Wrong network for leaderboard.`);
     }
-    const contract = new Contract(ICECUBE_CONTRACT.address, ICECUBE_CONTRACT.abi, readProvider);
+    const contract = new Contract(CUBIXLES_CONTRACT.address, CUBIXLES_CONTRACT.abi, readProvider);
     const tokenIds = await fetchMintedTokenIds(provider);
     if (!tokenIds.length) {
       return { entries: [], supplyNow: null };
@@ -203,7 +203,7 @@ export function initLeaderboardUi() {
 
   async function refreshLeaderboard() {
     updateLeaderboardDetails();
-    if (isZeroAddress(ICECUBE_CONTRACT.address) || !ICECUBE_CONTRACT.abi?.length) {
+    if (isZeroAddress(CUBIXLES_CONTRACT.address) || !CUBIXLES_CONTRACT.abi?.length) {
       resetList("Contract not configured.");
       supplyEl.textContent = "Supply now: —";
       return;

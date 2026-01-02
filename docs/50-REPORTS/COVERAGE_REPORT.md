@@ -5,9 +5,9 @@ Excluded: contracts/script/**, contracts/test/**
 
 ## Uncovered Lines (by contract)
 
-### IceCubeMinter.sol
+### CubixlesMinter.sol
 
-- src/icecube/IceCubeMinter.sol
+- src/cubixles/CubixlesMinter.sol
   - Coverage: 158/159 = 99.37%
   - Missed lines: 474
 

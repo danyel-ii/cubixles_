@@ -40,4 +40,4 @@ slither .
 - If an issue is accepted, include rationale and severity.
 
 ## Current findings (triaged)
-- No active Slither findings after refactors in `IceCubeMinter` and `RoyaltySplitter`.
+- No active Slither findings after refactors in `CubixlesMinter` and `RoyaltySplitter`.

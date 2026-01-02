@@ -9,7 +9,7 @@ Last updated: 2026-01-01
 - Owner: TBD
 
 This plan defines the tests needed to trust the system end-to-end:
-- Interactive p5-based NFT (`animation_url`)
+- Interactive p5-based NFT (`external_url`)
 - Provenance refs (1–6 NFTs)
 - Economics (dynamic mint price + ERC-2981 resale royalties)
 - Hosted tokenURI (IPFS via Pinata + Vercel endpoints)
@@ -22,9 +22,9 @@ This plan defines the tests needed to trust the system end-to-end:
 2. **Ref count**: `refs.length` in `[1..6]`.
 3. **TokenURI correctness**: stored tokenURI points to metadata JSON that:
    - includes provenance bundle (refs + full metadata gamut)
-   - includes `animation_url` pointing to `https://<domain>/m/<tokenId>`
-   - includes `image` pointing to the pre-generated GIF thumbnail
-   - includes `gif` params + `attributes` traits for wallets/markets
+   - includes `external_url` pointing to `https://<domain>/m/<tokenId>`
+   - includes `image` pointing to the palette image (gateway URL)
+   - includes palette + selection traits in `attributes`
 4. **Economics**:
    - mint requires `msg.value >= currentMintPrice()`
    - mint pays `currentMintPrice()` to RoyaltySplitter and refunds any overpayment
@@ -34,7 +34,7 @@ This plan defines the tests needed to trust the system end-to-end:
    - `royaltyInfo(tokenId, salePrice)` returns the **splitter** as receiver
    - bps matches configured value
 6. **Hosted tokenURI**:
-   - pin metadata (with `animation_url` + GIF `image`) -> `ipfs://<metaCID>`
+   - pin metadata (with `external_url` + `image`) -> `ipfs://<metaCID>`
    - mint uses `tokenURI = ipfs://<metaCID>` (not `data:`)
 
 ## 1) Contract tests (Foundry) — required
@@ -113,7 +113,7 @@ Use Foundry fuzzing to generate:
 ### 2.1 Unit tests (mock Pinata)
 For `/api/pin/metadata`:
 - accepts `{ address, nonce, signature, payload }`
-- validates required fields exist (`name`, `animation_url`, `provenance`, `schemaVersion`)
+- validates required fields exist (`name`, `external_url`, `provenance`, `schemaVersion`)
 - rejects invalid nonce/signature with `401`
 - returns `{ cid, tokenURI }` and caches by payload hash
 - rejects malformed JSON
@@ -136,7 +136,7 @@ For `/api/identity`:
 
 ### 2.2 Integration smoke test (against real Pinata, manual)
 - POST a small PNG -> confirm CID resolves via gateway
-- POST metadata JSON referencing that CID + `animation_url` -> confirm JSON resolves via gateway
+- POST metadata JSON referencing that CID + `external_url` -> confirm JSON resolves via gateway
 
 ## 3) Frontend tests (miniapp) — required
 
@@ -210,7 +210,7 @@ This is the “ship gate” checklist:
 6. Confirm onchain:
    - transaction success
    - tokenURI resolves to metadata JSON
-   - metadata includes `animation_url` pointing to `/m/<tokenId>`
+   - metadata includes `external_url` pointing to `/m/<tokenId>`
    - resale royalty points to splitter
    - balances reflect mint-time splits + refund
 7. Open `https://<domain>/m/<tokenId>` and verify the cube loads with the correct refs.
@@ -221,7 +221,7 @@ Not tests, but they reduce time-to-fix:
 - Log the computed economics breakdown before calling mint:
   - required total, pot, per-slice amounts, expected refund
 - Log the final URIs:
-  - `imageIpfsUri`, `metaIpfsUri`, `animation_url`
+  - `imageIpfsUri`, `metaIpfsUri`, `external_url`
 - Expose a “copy diagnostics” button (dev-only)
 
 ## 6) Commands / what to run

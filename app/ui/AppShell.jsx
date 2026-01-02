@@ -35,7 +35,7 @@ export default function AppShell() {
             <div className="overlay-section-title">What gets minted</div>
             <p className="overlay-text">
               An ERC-721 with hosted metadata and an{" "}
-              <span className="overlay-em">animation_url</span> pointing to your IPFS-hosted
+              <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
               interactive cube.
             </p>
           </div>
@@ -211,7 +211,7 @@ export default function AppShell() {
         </div>
         <a
           className="ui-footer-link"
-          href="https://deepwiki.com/danyel-ii/cubeless_/1-overview#what-is-cubeless"
+          href="https://deepwiki.com/danyel-ii/cubixles_/1-overview#what-is-cubixles"
           target="_blank"
           rel="noreferrer"
         >

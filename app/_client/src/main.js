@@ -78,7 +78,7 @@ function ensureP5Instance() {
   if (typeof window === "undefined") {
     return;
   }
-  if (window.__CUBIXLES_P5_INSTANCE__ || window.__CUBELESS_P5__) {
+  if (window.__CUBIXLES_P5_INSTANCE__ || window.__CUBIXLES_P5__) {
     return;
   }
   if (window.__CUBIXLES_P5_INIT__) {
@@ -89,7 +89,7 @@ function ensureP5Instance() {
     .then(() => {
       if (
         window.__CUBIXLES_P5_INSTANCE__ ||
-        window.__CUBELESS_P5__ ||
+        window.__CUBIXLES_P5__ ||
         typeof window.p5 !== "function"
       ) {
         window.__CUBIXLES_P5_INIT__ = false;
@@ -97,7 +97,7 @@ function ensureP5Instance() {
       }
       const instance = new window.p5();
       window.__CUBIXLES_P5_INSTANCE__ = instance;
-      window.__CUBELESS_P5__ = instance;
+      window.__CUBIXLES_P5__ = instance;
       window.__CUBIXLES_P5_INIT__ = false;
     })
     .catch((error) => {

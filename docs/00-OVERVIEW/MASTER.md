@@ -77,7 +77,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 - **cubixles_**: The miniapp + contract system that mints an ERC-721 cube composed of user-selected NFT references.
 - **refs / NftRef**: A list of NFT references (contractAddress + tokenId) used to texture the cube.
 - **provenance**: Metadata field recording refs and mint context for auditability.
-- **animation_url**: Token metadata field that points to the interactive token viewer `/m/<tokenId>`.
+- **external_url**: Token metadata field that points to the interactive token viewer `/m/<tokenId>`.
 - **RoyaltySplitter**: ERC-2981 receiver that forwards royalties and optionally attempts $LESS purchases.
 - **$LESS**: The ERC-20 token used for dynamic mint pricing and delta metrics.
 - **deltaFromLast**: Current metric used to rank tokens by $LESS supply delta from last transfer snapshot.

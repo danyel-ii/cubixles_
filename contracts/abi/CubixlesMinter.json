@@ -335,7 +335,7 @@
       {
         "name": "refs",
         "type": "tuple[]",
-        "internalType": "struct IceCubeMinter.NftRef[]",
+        "internalType": "struct CubixlesMinter.NftRef[]",
         "components": [
           {
             "name": "contractAddress",
@@ -502,7 +502,7 @@
       {
         "name": "refs",
         "type": "tuple[]",
-        "internalType": "struct IceCubeMinter.NftRef[]",
+        "internalType": "struct CubixlesMinter.NftRef[]",
         "components": [
           {
             "name": "contractAddress",

@@ -1,4 +1,4 @@
-# Contributing to cubeLess
+# Contributing to cubixles_
 
 Last updated: 2025-12-26
 

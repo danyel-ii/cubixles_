@@ -78,7 +78,7 @@ are split into smaller modules.
   - Token URI pinning helper.
 - `app/_client/src/data/chain/alchemy-client.ts`
   - Alchemy NFT API wrapper via `/api/nfts` (mainnet; optional Sepolia via env).
-- `app/_client/src/data/chain/icecube-reader.js`
+- `app/_client/src/data/chain/cubixles-reader.js`
   - Reads tokenURI via `/api/nfts` JSON-RPC (no wallet required).
 - `app/_client/src/data/chain/less-supply.js`
   - Mainnet $LESS remaining supply fetcher via `/api/nfts` (totalSupply minus burn address).
@@ -93,7 +93,7 @@ are split into smaller modules.
 - `app/_client/src/gif/variant.js`
   - Deterministic GIF variant selection + IPFS path builder.
 - `app/_client/src/routes/token-view.js`
-  - `/m/<tokenId>` viewer route for animation_url rendering.
+  - `/m/<tokenId>` viewer route for external_url rendering.
 - `app/_client/src/shared/utils/uri.ts`
   - URI normalization and resolution helpers.
 - `app/_client/src/types/provenance.ts`
@@ -101,16 +101,16 @@ are split into smaller modules.
 
 ## Contracts Layout
 
-- `contracts/src/icecube/IceCubeMinter.sol`
+- `contracts/src/cubixles/CubixlesMinter.sol`
   - ERC-721 minting contract with ownership gating + ERC-2981.
 - `contracts/src/royalties/RoyaltySplitter.sol`
   - Royalty receiver that can swap for $LESS and forward proceeds.
 - `contracts/src/mocks/Counter.sol`
   - Foundry sample contract used by tests/scripts.
-- `contracts/script/DeployIceCube.s.sol`
-  - Deploys RoyaltySplitter + IceCubeMinter and writes deployment JSON (path via `ICECUBE_DEPLOYMENT_PATH`).
+- `contracts/script/DeployCubixles.s.sol`
+  - Deploys RoyaltySplitter + CubixlesMinter and writes deployment JSON (path via `CUBIXLES_DEPLOYMENT_PATH`).
 - `contracts/scripts/export-abi.mjs`
-  - Exports IceCubeMinter ABI from the Foundry output directory.
+  - Exports CubixlesMinter ABI from the Foundry output directory.
 - `contracts/test/*.t.sol`
   - Foundry tests for core contract behavior.
 - `contracts/test/fuzz/*.t.sol`

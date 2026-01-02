@@ -4,10 +4,10 @@ import {
   downscaleImageToMax,
   getMaxTextureSize,
 } from "../app/app-utils.js";
-import { fetchTokenUri } from "../data/chain/icecube-reader.js";
+import { fetchTokenUri } from "../data/chain/cubixles-reader.js";
 import { getProvenance } from "../data/nft/indexer";
 import { resolveUri } from "../shared/utils/uri";
-import { ICECUBE_CONTRACT } from "../config/contracts";
+import { CUBIXLES_CONTRACT } from "../config/contracts";
 import { fetchWithGateways } from "../../../../src/shared/ipfs-fetch.js";
 import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/metadata.js";
 
@@ -49,7 +49,7 @@ async function loadImages(urls) {
 }
 
 async function waitForFrostedTexture() {
-  if (typeof window !== "undefined" && window.__CUBELESS_SKIP_FROSTED__) {
+  if (typeof window !== "undefined" && window.__CUBIXLES_SKIP_FROSTED__) {
     return;
   }
   if (state.frostedTexture) {
@@ -198,7 +198,7 @@ export async function initTokenViewRoute() {
         getProvenance(
           ref.contractAddress,
           String(ref.tokenId),
-          ICECUBE_CONTRACT.chainId
+          CUBIXLES_CONTRACT.chainId
         )
       )
     );

@@ -4,13 +4,13 @@ Last updated: 2026-01-01
 
 ## Summary
 
-The repo is aligned on the "cubixles_" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `animation_url` + `external_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs). Contracts route mint fees and resale royalties to the RoyaltySplitter (50% ETH to owner + 50% swap to $LESS with a 90% owner / 10% burn split), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The Next.js app router serves the UI, with hardened `/api/*` routes handling Alchemy and Pinata server-side. Coverage gate is enforced at 90% (see `docs/30-SECURITY/SECURITY_AUDIT.md` for latest run).
+The repo is aligned on the "cubixles_" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `image` + `external_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs). Contracts route mint fees and resale royalties to the RoyaltySplitter (50% ETH to owner + 50% swap to $LESS with a 90% owner / 10% burn split), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The Next.js app router serves the UI, with hardened `/api/*` routes handling Alchemy and Pinata server-side. Coverage gate is enforced at 90% (see `docs/30-SECURITY/SECURITY_AUDIT.md` for latest run).
 
 ## What’s working
 
 - **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired; data reads proxy through `/api/nfts` (no client keys), and metadata pinning now requires a signed nonce.
 - **Provenance**: NFT selection -> provenance bundle -> mint metadata pipeline is in place.
-- **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `animation_url` (`/m/<tokenId>`), GIF traits, and logs diagnostics.
+- **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `external_url` (`/m/<tokenId>`), palette/selection traits, and logs diagnostics.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render.
 - **Contracts**: Foundry tests cover gating, pricing, and royalty routing; mint price is dynamic from $LESS supply (base `0.0015 ETH`, rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter which swaps to LESS and forwards to the owner/burn splits. Onchain $LESS supply snapshots + delta views are live.
 - **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/30-SECURITY/` (coverage gate 90% via `npm run coverage:contracts`).
@@ -33,15 +33,15 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
 
 ## Deployment status
 
-- Repo: `https://github.com/danyel-ii/cubeless_.git`
+- Repo: `https://github.com/danyel-ii/cubixles_.git`
 - Vercel domain: `https://cubixles-red.vercel.app`
 - Risk: Vercel may be serving cached builds or pointing to an older repo/branch (verify source SHA and build output).
-- Mainnet contracts (2025-12-30, swaps enabled, mint fees routed to splitter):
-  - IceCubeMinter: `0x4130F69f396f5478CFD1e1792e2970da4299383a`
+- Mainnet contracts (legacy, pre-rename; pending redeploy):
+  - CubixlesMinter: `0x4130F69f396f5478CFD1e1792e2970da4299383a`
   - RoyaltySplitter: `0xf7B96E93D7E4b5aBf80E703Bb358E4Cb8aa53043`
   - Deploy txs:
     - RoyaltySplitter CREATE: `0xeda91b2834d1fab6b5ee931b1ca1c9a9cb26ab571d50477c62e13cccd2fa3c57`
-    - IceCubeMinter CREATE: `0x0d89d39da96ed1ff7b681d7a8f4c23dc388403b220fb1f6298834e14e9a03c6d`
+    - CubixlesMinter CREATE: `0x0d89d39da96ed1ff7b681d7a8f4c23dc388403b220fb1f6298834e14e9a03c6d`
     - Ownership transfer: `0xf9c2f5a30edbadb28ae76564fd9c0ba2ee7eeafe7b775bfb474c910b44d59bba`
 
 ## Tests

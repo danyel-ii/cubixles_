@@ -6,7 +6,7 @@ import { StdStorage, stdStorage } from "forge-std/StdStorage.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC2981 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
-import { IceCubeMinter } from "../src/icecube/IceCubeMinter.sol";
+import { CubixlesMinter } from "../src/cubixles/CubixlesMinter.sol";
 import { MockERC20 } from "./mocks/MockERC20.sol";
 import { Refs } from "./helpers/Refs.sol";
 
@@ -22,18 +22,18 @@ contract MockERC721 is ERC721 {
     }
 }
 
-contract IceCubeMinterHarness is IceCubeMinter {
-    constructor(address splitter, address lessToken, uint96 bps) IceCubeMinter(splitter, lessToken, bps) {}
+contract CubixlesMinterHarness is CubixlesMinter {
+    constructor(address splitter, address lessToken, uint96 bps) CubixlesMinter(splitter, lessToken, bps) {}
 
     function exposedRoundUp(uint256 value, uint256 step) external pure returns (uint256) {
         return _roundUp(value, step);
     }
 }
 
-contract IceCubeMinterTest is Test {
+contract CubixlesMinterTest is Test {
     using stdStorage for StdStorage;
 
-    IceCubeMinter private minter;
+    CubixlesMinter private minter;
     MockERC721 private nftA;
     MockERC721 private nftB;
     MockERC721 private nftC;
@@ -49,7 +49,7 @@ contract IceCubeMinterTest is Test {
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new IceCubeMinter(resaleSplitter, address(lessToken), 500);
+        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500);
         vm.stopPrank();
 
         nftA = new MockERC721("NFT A", "NFTA");
@@ -61,17 +61,17 @@ contract IceCubeMinterTest is Test {
         uint256 tokenA,
         uint256 tokenB,
         uint256 tokenC
-    ) internal view returns (IceCubeMinter.NftRef[] memory refs) {
-        refs = new IceCubeMinter.NftRef[](3);
-        refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nftA), tokenId: tokenA });
-        refs[1] = IceCubeMinter.NftRef({ contractAddress: address(nftB), tokenId: tokenB });
-        refs[2] = IceCubeMinter.NftRef({ contractAddress: address(nftC), tokenId: tokenC });
+    ) internal view returns (CubixlesMinter.NftRef[] memory refs) {
+        refs = new CubixlesMinter.NftRef[](3);
+        refs[0] = CubixlesMinter.NftRef({ contractAddress: address(nftA), tokenId: tokenA });
+        refs[1] = CubixlesMinter.NftRef({ contractAddress: address(nftB), tokenId: tokenB });
+        refs[2] = CubixlesMinter.NftRef({ contractAddress: address(nftC), tokenId: tokenC });
     }
 
     function _previewTokenId(
         address minterAddr,
         bytes32 salt,
-        IceCubeMinter.NftRef[] memory refs
+        CubixlesMinter.NftRef[] memory refs
     ) internal returns (uint256) {
         vm.prank(minterAddr);
         return minter.previewTokenId(salt, refs);
@@ -87,7 +87,7 @@ contract IceCubeMinterTest is Test {
     function _commitMint(
         address minterAddr,
         bytes32 salt,
-        IceCubeMinter.NftRef[] memory refs
+        CubixlesMinter.NftRef[] memory refs
     ) internal {
         bytes32 refsHash = Refs.hashCanonical(refs);
         vm.prank(minterAddr);
@@ -98,7 +98,7 @@ contract IceCubeMinterTest is Test {
     function _commitMintSameBlock(
         address minterAddr,
         bytes32 salt,
-        IceCubeMinter.NftRef[] memory refs
+        CubixlesMinter.NftRef[] memory refs
     ) internal {
         bytes32 refsHash = Refs.hashCanonical(refs);
         vm.prank(minterAddr);
@@ -111,13 +111,13 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(address(0xBEEF));
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
         _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IceCubeMinter.RefNotOwned.selector,
+                CubixlesMinter.RefNotOwned.selector,
                 address(nftC),
                 tokenC,
                 minterAddr,
@@ -133,7 +133,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 amount = minter.currentMintPrice();
         vm.deal(minterAddr, amount);
 
@@ -150,12 +150,12 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 amount = minter.currentMintPrice();
         vm.deal(minterAddr, amount);
 
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.MintCommitRequired.selector);
+        vm.expectRevert(CubixlesMinter.MintCommitRequired.selector);
         minter.mint{ value: amount }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
@@ -165,7 +165,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 amount = minter.currentMintPrice();
         vm.deal(minterAddr, amount);
 
@@ -176,7 +176,7 @@ contract IceCubeMinterTest is Test {
             .checked_write(minter.MAX_MINTS());
 
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.MintCapReached.selector);
+        vm.expectRevert(CubixlesMinter.MintCapReached.selector);
         minter.mint{ value: amount }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
@@ -186,7 +186,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
@@ -204,8 +204,8 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
-        IceCubeMinter.NftRef[] memory shuffled = new IceCubeMinter.NftRef[](3);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory shuffled = new CubixlesMinter.NftRef[](3);
         shuffled[0] = refs[2];
         shuffled[1] = refs[0];
         shuffled[2] = refs[1];
@@ -223,7 +223,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterA);
         uint256 tokenC = nftC.mint(minterA);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         bytes32 saltA = keccak256("salt-a");
         bytes32 saltB = keccak256("salt-b");
 
@@ -254,7 +254,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
 
@@ -274,22 +274,22 @@ contract IceCubeMinterTest is Test {
     }
 
     function testMintRejectsEmptyRefs() public {
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](0);
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](0);
         address minterAddr = makeAddr("minter");
 
         _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.InvalidReferenceCount.selector);
+        vm.expectRevert(CubixlesMinter.InvalidReferenceCount.selector);
         minter.mint(DEFAULT_SALT, "ipfs://token", refs);
     }
 
     function testMintRejectsTooManyRefs() public {
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](7);
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](7);
         address minterAddr = makeAddr("minter");
 
         _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.InvalidReferenceCount.selector);
+        vm.expectRevert(CubixlesMinter.InvalidReferenceCount.selector);
         minter.mint(DEFAULT_SALT, "ipfs://token", refs);
     }
 
@@ -299,13 +299,13 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price - 1);
         _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.InsufficientEth.selector);
+        vm.expectRevert(CubixlesMinter.InsufficientEth.selector);
         minter.mint{ value: price - 1 }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
@@ -315,10 +315,10 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](3);
-        refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nftA), tokenId: tokenA });
-        refs[1] = IceCubeMinter.NftRef({ contractAddress: address(nftB), tokenId: tokenB });
-        refs[2] = IceCubeMinter.NftRef({ contractAddress: address(nftC), tokenId: tokenC });
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](3);
+        refs[0] = CubixlesMinter.NftRef({ contractAddress: address(nftA), tokenId: tokenA });
+        refs[1] = CubixlesMinter.NftRef({ contractAddress: address(nftB), tokenId: tokenB });
+        refs[2] = CubixlesMinter.NftRef({ contractAddress: address(nftC), tokenId: tokenC });
 
         uint256 required = minter.currentMintPrice();
         uint256 amount = required + 0.001 ether;
@@ -340,7 +340,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
 
@@ -360,23 +360,23 @@ contract IceCubeMinterTest is Test {
     }
 
     function testRoundUpZeroReturnsZero() public {
-        IceCubeMinterHarness harness = new IceCubeMinterHarness(resaleSplitter, address(lessToken), 500);
+        CubixlesMinterHarness harness = new CubixlesMinterHarness(resaleSplitter, address(lessToken), 500);
         assertEq(harness.exposedRoundUp(0, 1e14), 0);
     }
 
     function testConstructorRevertsOnZeroResaleSplitter() public {
-        vm.expectRevert(IceCubeMinter.ResaleSplitterRequired.selector);
-        new IceCubeMinter(address(0), address(lessToken), 500);
+        vm.expectRevert(CubixlesMinter.ResaleSplitterRequired.selector);
+        new CubixlesMinter(address(0), address(lessToken), 500);
     }
 
     function testConstructorRevertsOnZeroLessToken() public {
-        vm.expectRevert(IceCubeMinter.LessTokenRequired.selector);
-        new IceCubeMinter(resaleSplitter, address(0), 500);
+        vm.expectRevert(CubixlesMinter.LessTokenRequired.selector);
+        new CubixlesMinter(resaleSplitter, address(0), 500);
     }
 
     function testConstructorRevertsOnRoyaltyTooHigh() public {
-        vm.expectRevert(IceCubeMinter.RoyaltyTooHigh.selector);
-        new IceCubeMinter(resaleSplitter, address(lessToken), 1001);
+        vm.expectRevert(CubixlesMinter.RoyaltyTooHigh.selector);
+        new CubixlesMinter(resaleSplitter, address(lessToken), 1001);
     }
 
     function testLastSnapshotUpdatesOnTransfer() public {
@@ -389,7 +389,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
 
@@ -416,7 +416,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
 
@@ -439,7 +439,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
 
@@ -459,7 +459,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 preview = _previewTokenId(minterAddr, DEFAULT_SALT, refs);
 
         uint256 price = minter.currentMintPrice();
@@ -477,7 +477,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price * 2);
 
@@ -487,7 +487,7 @@ contract IceCubeMinterTest is Test {
 
         _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.TokenIdExists.selector);
+        vm.expectRevert(CubixlesMinter.TokenIdExists.selector);
         minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
@@ -497,11 +497,11 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refsA = _buildRefs(tokenA, tokenB, tokenC);
-        IceCubeMinter.NftRef[] memory refsB = new IceCubeMinter.NftRef[](3);
-        refsB[0] = IceCubeMinter.NftRef({ contractAddress: address(nftB), tokenId: tokenB });
-        refsB[1] = IceCubeMinter.NftRef({ contractAddress: address(nftA), tokenId: tokenA });
-        refsB[2] = IceCubeMinter.NftRef({ contractAddress: address(nftC), tokenId: tokenC });
+        CubixlesMinter.NftRef[] memory refsA = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refsB = new CubixlesMinter.NftRef[](3);
+        refsB[0] = CubixlesMinter.NftRef({ contractAddress: address(nftB), tokenId: tokenB });
+        refsB[1] = CubixlesMinter.NftRef({ contractAddress: address(nftA), tokenId: tokenA });
+        refsB[2] = CubixlesMinter.NftRef({ contractAddress: address(nftC), tokenId: tokenC });
 
         uint256 previewA = _previewTokenId(minterAddr, DEFAULT_SALT, refsA);
         uint256 previewB = _previewTokenId(minterAddr, DEFAULT_SALT, refsB);
@@ -538,7 +538,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 amount = minter.currentMintPrice();
         vm.deal(minterAddr, amount);
 
@@ -548,7 +548,7 @@ contract IceCubeMinterTest is Test {
         vm.roll(block.number + minter.COMMIT_EXPIRY_BLOCKS() + 1);
 
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.MintCommitExpired.selector);
+        vm.expectRevert(CubixlesMinter.MintCommitExpired.selector);
         minter.mint{ value: amount }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
@@ -558,8 +558,8 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
-        IceCubeMinter.NftRef[] memory otherRefs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory otherRefs = _buildRefs(tokenA, tokenB, tokenC);
         otherRefs[0].tokenId = nftA.mint(minterAddr);
 
         uint256 amount = minter.currentMintPrice();
@@ -567,13 +567,13 @@ contract IceCubeMinterTest is Test {
 
         _commitMint(minterAddr, DEFAULT_SALT, otherRefs);
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.MintCommitMismatch.selector);
+        vm.expectRevert(CubixlesMinter.MintCommitMismatch.selector);
         minter.mint{ value: amount }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
     function testCommitMintRevertsOnEmptyHash() public {
         vm.prank(makeAddr("minter"));
-        vm.expectRevert(IceCubeMinter.MintCommitEmpty.selector);
+        vm.expectRevert(CubixlesMinter.MintCommitEmpty.selector);
         minter.commitMint(DEFAULT_SALT, bytes32(0));
     }
 
@@ -583,13 +583,13 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         bytes32 refsHash = Refs.hashCanonical(refs);
         vm.prank(minterAddr);
         minter.commitMint(DEFAULT_SALT, refsHash);
 
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.MintCommitActive.selector);
+        vm.expectRevert(CubixlesMinter.MintCommitActive.selector);
         minter.commitMint(DEFAULT_SALT, refsHash);
     }
 
@@ -599,13 +599,13 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 amount = minter.currentMintPrice();
         vm.deal(minterAddr, amount);
 
         _commitMintSameBlock(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.MintCommitPendingBlock.selector);
+        vm.expectRevert(CubixlesMinter.MintCommitPendingBlock.selector);
         minter.mint{ value: amount }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
@@ -615,13 +615,13 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 amount = minter.currentMintPrice();
         vm.deal(minterAddr, amount);
 
         _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
-        vm.expectRevert(IceCubeMinter.MintCommitSaltMismatch.selector);
+        vm.expectRevert(CubixlesMinter.MintCommitSaltMismatch.selector);
         minter.mint{ value: amount }(keccak256("salt-b"), "ipfs://token", refs);
     }
 
@@ -638,19 +638,19 @@ contract IceCubeMinterTest is Test {
 
     function testSetRoyaltyReceiverRevertsOnZero() public {
         vm.prank(owner);
-        vm.expectRevert(IceCubeMinter.ResaleSplitterRequired.selector);
+        vm.expectRevert(CubixlesMinter.ResaleSplitterRequired.selector);
         minter.setRoyaltyReceiver(address(0));
     }
 
     function testSetResaleRoyaltyRevertsOnZeroReceiver() public {
         vm.prank(owner);
-        vm.expectRevert(IceCubeMinter.RoyaltyReceiverRequired.selector);
+        vm.expectRevert(CubixlesMinter.RoyaltyReceiverRequired.selector);
         minter.setResaleRoyalty(500, address(0));
     }
 
     function testSetResaleRoyaltyRevertsOnHighBps() public {
         vm.prank(owner);
-        vm.expectRevert(IceCubeMinter.RoyaltyTooHigh.selector);
+        vm.expectRevert(CubixlesMinter.RoyaltyTooHigh.selector);
         minter.setResaleRoyalty(1001, makeAddr("receiver"));
     }
 
@@ -675,7 +675,7 @@ contract IceCubeMinterTest is Test {
         uint256 tokenB = nftB.mint(minterAddr);
         uint256 tokenC = nftC.mint(minterAddr);
 
-        IceCubeMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
 

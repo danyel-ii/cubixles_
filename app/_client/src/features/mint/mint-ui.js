@@ -1,5 +1,5 @@
 import { BrowserProvider, Contract } from "ethers";
-import { ICECUBE_CONTRACT } from "../../config/contracts";
+import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import { buildPalettePreviewGifUrl, buildTokenViewUrl } from "../../config/links.js";
 import { buildProvenanceBundle } from "../../data/nft/indexer";
 import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
@@ -103,7 +103,7 @@ export function initMintUi() {
     if (!hash) {
       return "";
     }
-    const chainId = ICECUBE_CONTRACT.chainId;
+    const chainId = CUBIXLES_CONTRACT.chainId;
     const base =
       chainId === 1
         ? "https://etherscan.io"
@@ -216,18 +216,18 @@ export function initMintUi() {
     if (!walletState || walletState.status !== "connected") {
       return null;
     }
-    if (isZeroAddress(ICECUBE_CONTRACT.address) || !ICECUBE_CONTRACT.abi?.length) {
+    if (isZeroAddress(CUBIXLES_CONTRACT.address) || !CUBIXLES_CONTRACT.abi?.length) {
       return null;
     }
     try {
       const provider = new BrowserProvider(walletState.provider);
       const network = await provider.getNetwork();
-      if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
+      if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
         return null;
       }
       const contract = new Contract(
-        ICECUBE_CONTRACT.address,
-        ICECUBE_CONTRACT.abi,
+        CUBIXLES_CONTRACT.address,
+        CUBIXLES_CONTRACT.abi,
         provider
       );
       const price = await contract.currentMintPrice();
@@ -349,7 +349,7 @@ export function initMintUi() {
       setDisabled(true);
       return;
     }
-    if (isZeroAddress(ICECUBE_CONTRACT.address)) {
+    if (isZeroAddress(CUBIXLES_CONTRACT.address)) {
       setStatus("Deploy contract and update address before minting.", "error");
       setDisabled(true);
       return;
@@ -359,7 +359,7 @@ export function initMintUi() {
       setDisabled(true);
       return;
     }
-    if (!ICECUBE_CONTRACT.abi || ICECUBE_CONTRACT.abi.length === 0) {
+    if (!CUBIXLES_CONTRACT.abi || CUBIXLES_CONTRACT.abi.length === 0) {
       setStatus("ABI missing. Run export-abi before minting.", "error");
       setDisabled(true);
       return;
@@ -414,9 +414,9 @@ export function initMintUi() {
       await refreshFloorSnapshot(true);
       const provider = new BrowserProvider(walletState.provider);
       const network = await provider.getNetwork();
-      if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
+      if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
         throw new Error(
-          `Switch wallet to ${formatChainName(ICECUBE_CONTRACT.chainId)}.`
+          `Switch wallet to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`
         );
       }
       if (!currentMintPriceWei) {
@@ -424,15 +424,15 @@ export function initMintUi() {
       }
       const signer = await provider.getSigner();
       const contract = new Contract(
-        ICECUBE_CONTRACT.address,
-        ICECUBE_CONTRACT.abi,
+        CUBIXLES_CONTRACT.address,
+        CUBIXLES_CONTRACT.abi,
         signer
       );
       let salt = null;
       const bundle = await buildProvenanceBundle(
         state.nftSelection,
         walletState.address,
-        ICECUBE_CONTRACT.chainId
+        CUBIXLES_CONTRACT.chainId
       );
       const refsFaces = state.nftSelection.map((nft) => ({
         contractAddress: nft.contractAddress,
@@ -478,7 +478,7 @@ export function initMintUi() {
         salt = generateSalt();
       }
       const previewTokenId = await contract.previewTokenId(salt, refsCanonical);
-      const lessSupplyMint = await fetchLessTotalSupply(ICECUBE_CONTRACT.chainId);
+      const lessSupplyMint = await fetchLessTotalSupply(CUBIXLES_CONTRACT.chainId);
       const tokenId = BigInt(previewTokenId);
       const selectionSeed = computeGifSeed({
         tokenId,
@@ -495,7 +495,7 @@ export function initMintUi() {
         const commitTx = await contract.commitMint(salt, refsHash);
         showToast({
           title: "Commit submitted",
-          message: `Commit broadcast to ${formatChainName(ICECUBE_CONTRACT.chainId)}.`,
+          message: `Commit broadcast to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`,
           tone: "neutral",
           links: [{ label: "View tx", href: buildTxUrl(commitTx.hash) }],
         });
@@ -551,7 +551,7 @@ export function initMintUi() {
       const metadata = buildMintMetadata({
         tokenId: tokenId.toString(),
         minter: walletState.address,
-        chainId: ICECUBE_CONTRACT.chainId,
+        chainId: CUBIXLES_CONTRACT.chainId,
         selection: state.nftSelection,
         provenanceBundle: bundle,
         refsFaces,
@@ -592,7 +592,7 @@ export function initMintUi() {
       const tx = await contract.mint(salt, tokenUri, refsCanonical, overrides);
       showToast({
         title: "Mint submitted",
-        message: `Transaction broadcast to ${formatChainName(ICECUBE_CONTRACT.chainId)}.`,
+        message: `Transaction broadcast to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`,
         tone: "neutral",
         links: [{ label: "View tx", href: buildTxUrl(tx.hash) }],
       });
@@ -666,7 +666,7 @@ function buildDiagnostics({
       amountInputEth: amountInput ? Number(amountInput) : null,
     },
     uris: {
-      animationUrl: metadata.animation_url || null,
+      externalUrl: metadata.external_url || metadata.animation_url || null,
       image: metadata.image || null,
       tokenUri,
     },
@@ -674,9 +674,9 @@ function buildDiagnostics({
 }
 
 function logDiagnostics(diagnostics, devChecklist) {
-  console.info("[icecube][mint] economics", diagnostics.economics);
+  console.info("[cubixles][mint] economics", diagnostics.economics);
   devChecklist.mark("economics");
-  console.info("[icecube][mint] uris", diagnostics.uris);
+  console.info("[cubixles][mint] uris", diagnostics.uris);
   devChecklist.mark("uris");
   devChecklist.setPayload(diagnostics);
 }

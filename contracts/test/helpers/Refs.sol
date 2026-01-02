@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IceCubeMinter } from "../../src/icecube/IceCubeMinter.sol";
+import { CubixlesMinter } from "../../src/cubixles/CubixlesMinter.sol";
 
 library Refs {
     function hashCanonical(
-        IceCubeMinter.NftRef[] memory refs
+        CubixlesMinter.NftRef[] memory refs
     ) internal pure returns (bytes32) {
-        IceCubeMinter.NftRef[] memory sorted = new IceCubeMinter.NftRef[](refs.length);
+        CubixlesMinter.NftRef[] memory sorted = new CubixlesMinter.NftRef[](refs.length);
         for (uint256 i = 0; i < refs.length; i += 1) {
             sorted[i] = refs[i];
         }
         for (uint256 i = 1; i < sorted.length; i += 1) {
-            IceCubeMinter.NftRef memory key = sorted[i];
+            CubixlesMinter.NftRef memory key = sorted[i];
             uint256 j = i;
             while (j > 0) {
-                IceCubeMinter.NftRef memory prev = sorted[j - 1];
+                CubixlesMinter.NftRef memory prev = sorted[j - 1];
                 if (
                     prev.contractAddress < key.contractAddress ||
                     (prev.contractAddress == key.contractAddress && prev.tokenId <= key.tokenId)

@@ -6,10 +6,10 @@ const sourcePath = join(
   root,
   "contracts",
   "out",
-  "IceCubeMinter.sol",
-  "IceCubeMinter.json"
+  "CubixlesMinter.sol",
+  "CubixlesMinter.json"
 );
-const targetPath = join(root, "contracts", "abi", "IceCubeMinter.json");
+const targetPath = join(root, "contracts", "abi", "CubixlesMinter.json");
 
 const payload = JSON.parse(await readFile(sourcePath, "utf8"));
 await mkdir(dirname(targetPath), { recursive: true });

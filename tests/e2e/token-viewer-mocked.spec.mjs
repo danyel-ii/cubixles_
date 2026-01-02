@@ -7,7 +7,7 @@ test("token viewer loads metadata and refs without crashing", async ({ page }) =
   const tokenUriResponse = coder.encode(["string"], ["ipfs://cid/meta.json"]);
 
   await page.addInitScript(() => {
-    window.__CUBELESS_SKIP_FROSTED__ = true;
+    window.__CUBIXLES_SKIP_FROSTED__ = true;
     window.loadImage = (url, onLoad) => {
       const img = { width: 100, height: 100, resize: () => {} };
       onLoad(img);

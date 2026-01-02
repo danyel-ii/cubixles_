@@ -1,5 +1,5 @@
 import { BrowserProvider, Contract, Interface } from "ethers";
-import { ICECUBE_CONTRACT } from "../../config/contracts";
+import { CUBIXLES_CONTRACT } from "../../config/contracts";
 
 function isZeroAddress(address) {
   return !address || address === "0x0000000000000000000000000000000000000000";
@@ -9,7 +9,7 @@ export async function fetchLessDelta(provider, tokenId) {
   if (tokenId === null || tokenId === undefined) {
     return null;
   }
-  if (isZeroAddress(ICECUBE_CONTRACT.address) || !ICECUBE_CONTRACT.abi?.length) {
+  if (isZeroAddress(CUBIXLES_CONTRACT.address) || !CUBIXLES_CONTRACT.abi?.length) {
     return null;
   }
   if (!provider) {
@@ -17,12 +17,12 @@ export async function fetchLessDelta(provider, tokenId) {
   }
   const browserProvider = new BrowserProvider(provider);
   const network = await browserProvider.getNetwork();
-  if (Number(network.chainId) !== ICECUBE_CONTRACT.chainId) {
+  if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
     return null;
   }
   const contract = new Contract(
-    ICECUBE_CONTRACT.address,
-    ICECUBE_CONTRACT.abi,
+    CUBIXLES_CONTRACT.address,
+    CUBIXLES_CONTRACT.abi,
     browserProvider
   );
   const [supplyNow, deltaFromLast, deltaFromMint] = await Promise.all([
@@ -58,15 +58,15 @@ async function rpcCallBatch(chainId, calls) {
 }
 
 async function fetchLessDeltaFromRpc(tokenId) {
-  const iface = new Interface(ICECUBE_CONTRACT.abi);
+  const iface = new Interface(CUBIXLES_CONTRACT.abi);
   const supplyData = iface.encodeFunctionData("lessSupplyNow");
   const lastData = iface.encodeFunctionData("deltaFromLast", [tokenId]);
   const mintData = iface.encodeFunctionData("deltaFromMint", [tokenId]);
 
-  const results = await rpcCallBatch(ICECUBE_CONTRACT.chainId, [
-    { to: ICECUBE_CONTRACT.address, data: supplyData },
-    { to: ICECUBE_CONTRACT.address, data: lastData },
-    { to: ICECUBE_CONTRACT.address, data: mintData },
+  const results = await rpcCallBatch(CUBIXLES_CONTRACT.chainId, [
+    { to: CUBIXLES_CONTRACT.address, data: supplyData },
+    { to: CUBIXLES_CONTRACT.address, data: lastData },
+    { to: CUBIXLES_CONTRACT.address, data: mintData },
   ]);
   const supplyRaw = results[0]?.result;
   const lastRaw = results[1]?.result;

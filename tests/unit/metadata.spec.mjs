@@ -48,7 +48,7 @@ describe("mint metadata builder", () => {
         { contractAddress: selection[0].contractAddress, tokenId: selection[0].tokenId },
       ],
       salt: "0x" + "11".repeat(32),
-      animationUrl: "https://example.com/m/123",
+      externalUrl: "https://example.com/m/123",
       imageUrl: "ipfs://cid/gif_0001.gif",
       paletteEntry: {
         output: "palette_test.png",
@@ -75,13 +75,13 @@ describe("mint metadata builder", () => {
       },
     });
 
-    expect(metadata.animation_url).toBe("https://example.com/m/123");
+    expect(metadata.external_url).toBe("https://example.com/m/123");
+    expect(metadata.animation_url).toBeUndefined();
     expect(metadata.image).toBe("ipfs://cid/gif_0001.gif");
     expect(metadata.provenance.refsCanonical?.length).toBe(1);
     const traits = metadata.attributes.map((attr) => attr.trait_type);
     expect(traits).toContain("Palette Index");
     expect(traits).toContain("Palette ID");
-    expect(traits).toContain("Palette URL");
     expect(traits).toContain("Palette Hex Colors");
     expect(traits).toContain("Palette Used Hex Colors");
     expect(traits).toContain("Palette Rarity Inverse Frequency");

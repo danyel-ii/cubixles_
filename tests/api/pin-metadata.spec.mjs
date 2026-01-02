@@ -25,7 +25,7 @@ import { POST } from "../../app/api/pin/metadata/route.js";
 const validPayload = {
   name: "cubixles_ #1",
   description: "test",
-  animation_url: "https://example.com/m/1",
+  external_url: "https://example.com/m/1",
   image: "ipfs://cid/gif_0001.gif",
   provenance: {
     refs: [

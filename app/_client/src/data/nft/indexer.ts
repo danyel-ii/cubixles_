@@ -1,6 +1,6 @@
 import { getAddress } from "ethers";
 import { alchemyGet } from "../chain/alchemy-client";
-import { ICECUBE_CONTRACT } from "../../config/contracts";
+import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import type {
   NftItem,
   ProvenanceBundle,
@@ -30,8 +30,8 @@ type AlchemyMetadataResponse = AlchemyNft & {
 };
 
 function assertConfiguredChain(chainId: number) {
-  if (chainId !== ICECUBE_CONTRACT.chainId) {
-    throw new Error(`Configured for chain ${ICECUBE_CONTRACT.chainId}.`);
+  if (chainId !== CUBIXLES_CONTRACT.chainId) {
+    throw new Error(`Configured for chain ${CUBIXLES_CONTRACT.chainId}.`);
   }
 }
 

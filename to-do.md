@@ -12,10 +12,10 @@ Last updated: 2025-12-31
 - Palette images CID: `bafybeifqsx5gbbqmohxqn3nky6rxz2vy7o5uvabdtic5uni5uykme7v3de`.
 
 ## Metadata strategy
-- Preserve current metadata (provenance, refs, animation_url, attributes).
+- Preserve current metadata (provenance, refs, external_url, attributes).
 - Merge new manifest fields into a combined metadata JSON at mint time.
 - Standardize `image` for all tokens to a single shared GIF/MP4 (marketplace preview).
-- Keep unique `animation_url` per token (IPFS cube viewer).
+- Keep unique `external_url` per token (IPFS cube viewer).
 - Shared preview media: `palette_cycle_512.gif` hosted at the app base URL.
 
 ## Mint flow + randomness
@@ -46,7 +46,7 @@ Last updated: 2025-12-31
 - Update Farcaster manifest with new image URLs/metadata references.
 
 ## Gallery requirement
-- Keep a persistent record of all pinned cube `animation_url`s.
+- Keep a persistent record of all pinned cube `external_url`s.
 - Build a `gallery.html` later with:
   - Grid layout.
   - Infinite scroll.

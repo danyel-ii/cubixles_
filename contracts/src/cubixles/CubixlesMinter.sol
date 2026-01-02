@@ -11,11 +11,11 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
 
-/// @title IceCubeMinter
+/// @title CubixlesMinter
 /// @notice Mints cubixles_ NFTs with provenance-bound refs and ERC-2981 royalties.
 /// @dev Token IDs are derived from minter + salt + canonical refs hash.
 /// @author cubixles_
-contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
+contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Reference to an ERC-721 token used for provenance.
     struct NftRef {
         address contractAddress;
@@ -141,7 +141,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @param lessToken_ LESS token address.
     /// @param resaleRoyaltyBps Royalty rate in basis points.
     constructor(address resaleSplitter_, address lessToken_, uint96 resaleRoyaltyBps)
-        ERC721("IceCube", "ICECUBE")
+        ERC721("cubixles_", "cubixles_")
         Ownable(msg.sender)
     {
         if (resaleSplitter_ == address(0)) {

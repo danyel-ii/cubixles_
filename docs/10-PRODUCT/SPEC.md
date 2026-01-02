@@ -129,8 +129,8 @@ v0 mapping order (fixed):
 ## Mint Metadata Schema (tokenURI JSON)
 
 Notes:
-- `animation_url` should point to the token viewer route (e.g. `https://<domain>/m/<tokenId>`).
-- `image` is an optional static thumbnail for marketplaces (GIF library).
+- `external_url` should point to the token viewer route (e.g. `https://<domain>/m/<tokenId>`).
+- `image` is the palette image (gateway URL), and `image_ipfs` holds the ipfs:// URI for wallets.
 - `provenance` stores the full bundle for traceability.
 - `provenance.refsFaces` preserves face order; `provenance.refsCanonical` is the sorted list used for tokenId hashing.
 
@@ -139,19 +139,9 @@ type MintMetadata = {
   schemaVersion: 1;
   name: string;
   description: string;
-  image: string | null; // pre-generated GIF thumbnail
-  animation_url: string | null; // https://<domain>/m/<tokenId>
-  gif: {
-    variantIndex: number;
-    selectionSeed: string;
-    params: {
-      rgb_sep_px: number;
-      band_shift_px: number;
-      grain_intensity: number;
-      contrast_flicker: number;
-      solarization_strength: number;
-    };
-  };
+  image: string | null; // palette image (gateway URL)
+  image_ipfs?: string | null; // ipfs://... for wallets
+  external_url: string | null; // https://<domain>/m/<tokenId>
   attributes: Array<{ trait_type: string; value: string | number }>;
   provenance: ProvenanceBundle & {
     schemaVersion: 1;
@@ -209,14 +199,14 @@ type MintMetadata = {
 
 ## Token Viewer Route
 
-- `animation_url` resolves to `https://<domain>/m/<tokenId>`.
+- `external_url` resolves to `https://<domain>/m/<tokenId>`.
 - The viewer reads `tokenURI`, extracts `provenance.refs`, and renders the cube with those textures.
 
 ## Palette Mapping
 
 - The in-wallet static image is chosen from a 10,000-image IPFS folder using the onchain random index.
 - A manifest JSON maps random indices to filenames and palette metadata.
-- `image` points to a shared GIF/MP4 preview.
+- `image` points to the palette image (gateway URL).
 - The palette-specific image URL is stored under `palette.image_url`.
 
 ## Farcaster Frame Embed

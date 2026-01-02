@@ -14,6 +14,7 @@ export const metadataSchema = z
     description: z.string().optional(),
     image: z.string().optional(),
     animation_url: z.string().optional(),
+    external_url: z.string().optional(),
     tokenId: z.union([z.string(), z.number()]).optional(),
     provenance: z.object({
       mintedBy: addressSchema.optional(),

@@ -1,4 +1,4 @@
-# cubixles_ Deployment (IceCubeMinter, Mainnet + Sepolia)
+# cubixles_ Deployment (CubixlesMinter, Mainnet + Sepolia)
 
 Last updated: 2026-01-01
 
@@ -51,7 +51,7 @@ struct NftRef {
   - RoyaltySplitter swaps half the royalty via the v4 PoolManager when enabled; otherwise it forwards ETH to owner.
   - If the swap fails, the full amount is forwarded to owner.
   - If the swap succeeds, 50% of ETH is sent to owner, the remaining ETH is swapped to $LESS, then $LESS is split 90% owner / 10% burn.
-  - If `ICECUBE_POOL_MANAGER` is unset, swap is disabled and all ETH is forwarded.
+  - If `CUBIXLES_POOL_MANAGER` is unset, swap is disabled and all ETH is forwarded.
 
 ## Admin Controls
 
@@ -60,17 +60,17 @@ struct NftRef {
 
 ## Deployment Inputs
 
-Environment variables read by `contracts/script/DeployIceCube.s.sol`:
+Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 
-- Note: env var names remain `ICECUBE_*` for compatibility with existing deploy tooling.
-- `ICECUBE_OWNER`
-- `ICECUBE_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
-- `ICECUBE_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
-- `ICECUBE_POOL_MANAGER` (optional, leave unset for no-swap mode)
-- `ICECUBE_POOL_FEE` (optional, defaults to 0)
-- `ICECUBE_POOL_TICK_SPACING` (required if pool manager is set)
-- `ICECUBE_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
-- `ICECUBE_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
-- `ICECUBE_RESALE_BPS` (optional, defaults to 500)
-- `ICECUBE_CHAIN_ID` (optional, defaults to `block.chainid`)
-- `ICECUBE_DEPLOYMENT_PATH` (optional, defaults to `contracts/deployments/mainnet.json` on chainId 1, otherwise `contracts/deployments/sepolia.json`)
+- Note: env var names use `CUBIXLES_*` for compatibility with existing deploy tooling.
+- `CUBIXLES_OWNER`
+- `CUBIXLES_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
+- `CUBIXLES_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
+- `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
+- `CUBIXLES_POOL_FEE` (optional, defaults to 0)
+- `CUBIXLES_POOL_TICK_SPACING` (required if pool manager is set)
+- `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
+- `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
+- `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
+- `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
+- `CUBIXLES_DEPLOYMENT_PATH` (optional, defaults to `contracts/deployments/mainnet.json` on chainId 1, otherwise `contracts/deployments/sepolia.json`)

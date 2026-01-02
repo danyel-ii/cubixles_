@@ -3,7 +3,7 @@
 Last updated: 2026-01-01
 
 ## Scope
-- Contracts: `IceCubeMinter`, `RoyaltySplitter`
+- Contracts: `CubixlesMinter`, `RoyaltySplitter`
 - Assets: mint payments, ERC-721 tokens, royalties, $LESS proceeds, tokenURI integrity
 
 ## Actors
@@ -19,7 +19,7 @@ Last updated: 2026-01-01
 - ERC-20 transfer of $LESS (token contract behavior).
 
 ## Attack surfaces
-- `IceCubeMinter.mint` (external, payable, external calls + transfers).
+- `CubixlesMinter.mint` (external, payable, external calls + transfers).
 - `RoyaltySplitter.receive/fallback` (external, payable, PoolManager swap + token transfers).
 
 ## Threats

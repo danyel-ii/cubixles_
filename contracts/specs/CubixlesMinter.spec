@@ -1,4 +1,4 @@
-spec IceCubeMinterSpec {
+spec CubixlesMinterSpec {
   methods {
     resaleSplitter() returns (address);
     royaltyInfo(uint256,uint256) returns (address,uint256);
