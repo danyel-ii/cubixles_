@@ -3,6 +3,13 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   serverExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push("@napi-rs/canvas", "gif-encoder-2");
+    }
+    return config;
+  },
   async headers() {
     const frameAncestors =
       process.env.FRAME_ANCESTORS ||
