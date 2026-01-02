@@ -35,7 +35,6 @@ export function initUiRoot() {
   initTokenIdFromUrl();
   initLandingReturn();
   initDebugPanel();
-  initShareDialog();
 }
 
 function initUiTouchGuards() {
@@ -202,97 +201,5 @@ function initDebugPanel() {
 
   closeButton.addEventListener("click", () => {
     panel.classList.add("is-hidden");
-  });
-}
-
-function initShareDialog() {
-  const isTokenView =
-    document.body.classList.contains("is-token-view") &&
-    window.location.pathname.startsWith("/m/");
-  if (!isTokenView) {
-    return;
-  }
-
-  const modal = document.getElementById("share-modal");
-  const backdrop = document.getElementById("share-backdrop");
-  const closeButton = document.getElementById("share-close");
-  const copyButton = document.getElementById("share-copy");
-  const farcasterLink = document.getElementById("share-farcaster");
-  const xLink = document.getElementById("share-x");
-  const baseLink = document.getElementById("share-base");
-  const signalLink = document.getElementById("share-signal");
-
-  if (
-    !modal ||
-    !backdrop ||
-    !closeButton ||
-    !copyButton ||
-    !farcasterLink ||
-    !xLink ||
-    !baseLink ||
-    !signalLink
-  ) {
-    return;
-  }
-
-  let currentUrl = "";
-  let lastOverlayClosedAt = 0;
-
-  function closeModal() {
-    modal.classList.add("is-hidden");
-  }
-
-  async function copyLink() {
-    if (!currentUrl) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(currentUrl);
-      copyButton.textContent = "Copied!";
-    } catch (error) {
-      copyButton.textContent = "Copy failed";
-    }
-    window.setTimeout(() => {
-      copyButton.textContent = "Copy link";
-    }, 1200);
-  }
-
-  function openModal(url) {
-    currentUrl = url;
-    const encoded = encodeURIComponent(url);
-    const text = encodeURIComponent("Check out this cubixles_ cube");
-    farcasterLink.href = `https://warpcast.com/~/compose?text=${text}&embeds[]=${encoded}`;
-    xLink.href = `https://twitter.com/intent/tweet?text=${text}&url=${encoded}`;
-    baseLink.href = `https://www.base.app/?link=${encoded}`;
-    signalLink.href = `signal://send?text=${text}%20${encoded}`;
-    modal.classList.remove("is-hidden");
-  }
-
-  backdrop.addEventListener("click", closeModal);
-  closeButton.addEventListener("click", closeModal);
-  copyButton.addEventListener("click", copyLink);
-  document.addEventListener("overlay-closed", () => {
-    lastOverlayClosedAt = Date.now();
-  });
-
-  document.addEventListener("share-link-open", (event) => {
-    const url = event?.detail?.url;
-    const overlay = document.getElementById("overlay");
-    const overlayHidden = overlay ? overlay.classList.contains("is-hidden") : true;
-    if (
-      !url ||
-      !document.body.classList.contains("is-token-view") ||
-      !overlayHidden ||
-      Date.now() - lastOverlayClosedAt < 600
-    ) {
-      return;
-    }
-    if (navigator.share) {
-      navigator
-        .share({ title: "cubixles_", text: "Check out this cubixles_ cube", url })
-        .catch(() => openModal(url));
-      return;
-    }
-    openModal(url);
   });
 }
