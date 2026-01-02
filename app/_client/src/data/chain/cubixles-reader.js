@@ -1,12 +1,12 @@
 import { Interface } from "ethers";
-import { ICECUBE_CONTRACT } from "../../config/contracts";
+import { CUBIXLES_CONTRACT } from "../../config/contracts";
 
 export async function fetchTokenUri(tokenId) {
-  if (!ICECUBE_CONTRACT.address || ICECUBE_CONTRACT.address === "0x0000000000000000000000000000000000000000") {
+  if (!CUBIXLES_CONTRACT.address || CUBIXLES_CONTRACT.address === "0x0000000000000000000000000000000000000000") {
     throw new Error("Contract address not configured.");
   }
-  const chainId = ICECUBE_CONTRACT.chainId;
-  const iface = new Interface(ICECUBE_CONTRACT.abi);
+  const chainId = CUBIXLES_CONTRACT.chainId;
+  const iface = new Interface(CUBIXLES_CONTRACT.abi);
   const data = iface.encodeFunctionData("tokenURI", [tokenId]);
   const response = await fetch("/api/nfts", {
     method: "POST",
@@ -14,7 +14,7 @@ export async function fetchTokenUri(tokenId) {
     body: JSON.stringify({
       mode: "rpc",
       chainId,
-      calls: [{ to: ICECUBE_CONTRACT.address, data }],
+      calls: [{ to: CUBIXLES_CONTRACT.address, data }],
     }),
   });
   if (!response.ok) {

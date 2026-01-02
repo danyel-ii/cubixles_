@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 /// @title Counter
 /// @notice Simple counter used for tests.
-/// @author cubeless
+/// @author cubixles_
 contract Counter {
     /// @notice Stored counter value.
     uint256 public number;

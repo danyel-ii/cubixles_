@@ -125,7 +125,7 @@ export async function verifyNonce(nonce) {
 }
 
 function getRpcUrl() {
-  const chainId = Number(process.env.ICECUBE_CHAIN_ID || 1);
+  const chainId = Number(process.env.CUBIXLES_CHAIN_ID || 1);
   if (chainId === 11155111) {
     return process.env.SEPOLIA_RPC_URL || null;
   }

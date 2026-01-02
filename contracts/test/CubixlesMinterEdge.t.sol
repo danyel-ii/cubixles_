@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { Test } from "forge-std/Test.sol";
-import { IceCubeMinter } from "../src/icecube/IceCubeMinter.sol";
+import { CubixlesMinter } from "../src/cubixles/CubixlesMinter.sol";
 import {
     MockERC721Standard,
     MockERC721RevertingOwnerOf,
@@ -14,13 +14,14 @@ import {
     ReceiverConsumesGasOnReceive,
     MaliciousReceiverReenter
 } from "./mocks/Receivers.sol";
+import { Refs } from "./helpers/Refs.sol";
 
 contract RefundRevertsOnReceive {
-    IceCubeMinter public minter;
-    IceCubeMinter.NftRef[] public refs;
+    CubixlesMinter public minter;
+    CubixlesMinter.NftRef[] public refs;
     bytes32 public constant DEFAULT_SALT = keccak256("refund");
 
-    constructor(IceCubeMinter minter_) {
+    constructor(CubixlesMinter minter_) {
         minter = minter_;
     }
 
@@ -37,7 +38,7 @@ contract RefundRevertsOnReceive {
         return this.onERC721Received.selector;
     }
 
-    function configure(IceCubeMinter.NftRef[] calldata refs_) external {
+    function configure(CubixlesMinter.NftRef[] calldata refs_) external {
         delete refs;
         for (uint256 i = 0; i < refs_.length; i += 1) {
             refs.push(refs_[i]);
@@ -49,18 +50,29 @@ contract RefundRevertsOnReceive {
     }
 }
 
-contract IceCubeMinterEdgeTest is Test {
-    IceCubeMinter private minter;
+contract CubixlesMinterEdgeTest is Test {
+    CubixlesMinter private minter;
     MockERC721Standard private nft;
     MockERC20 private lessToken;
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
     bytes32 private constant DEFAULT_SALT = keccak256("salt");
 
+    function _commitMint(
+        address minterAddr,
+        bytes32 salt,
+        CubixlesMinter.NftRef[] memory refs
+    ) internal {
+        bytes32 refsHash = Refs.hashCanonical(refs);
+        vm.prank(minterAddr);
+        minter.commitMint(salt, refsHash);
+        vm.roll(block.number + 1);
+    }
+
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new IceCubeMinter(resaleSplitter, address(lessToken), 500);
+        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500);
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
     }
@@ -68,41 +80,44 @@ contract IceCubeMinterEdgeTest is Test {
     function testMintRevertsWhenOwnerReceiveFails() public {
         ReceiverRevertsOnReceive receiver = new ReceiverRevertsOnReceive();
         vm.prank(owner);
-        minter.transferOwnership(address(receiver));
+        minter = new CubixlesMinter(address(receiver), address(lessToken), 500);
 
         address minterAddr = makeAddr("minter");
         uint256 tokenId = nft.mint(minterAddr);
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
-        refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](1);
+        refs[0] = CubixlesMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
         vm.expectRevert();
         minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
     }
 
     function testMintRevertsWhenRefundFails() public {
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](1);
         RefundRevertsOnReceive refundReverter = new RefundRevertsOnReceive(minter);
         uint256 tokenId = nft.mint(address(refundReverter));
-        refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
+        refs[0] = CubixlesMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
         refundReverter.configure(refs);
         uint256 price = minter.currentMintPrice();
         vm.deal(address(refundReverter), price + 1 wei);
 
+        _commitMint(address(refundReverter), refundReverter.DEFAULT_SALT(), refs);
         vm.expectRevert();
         refundReverter.mintWithOverpay{ value: price + 1 wei }("ipfs://token");
     }
 
     function testOwnerOfRevertBubbles() public {
         MockERC721RevertingOwnerOf badNft = new MockERC721RevertingOwnerOf();
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
-        refs[0] = IceCubeMinter.NftRef({ contractAddress: address(badNft), tokenId: 1 });
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](1);
+        refs[0] = CubixlesMinter.NftRef({ contractAddress: address(badNft), tokenId: 1 });
 
+        _commitMint(address(this), DEFAULT_SALT, refs);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IceCubeMinter.RefOwnershipCheckFailed.selector,
+                CubixlesMinter.RefOwnershipCheckFailed.selector,
                 address(badNft),
                 1
             )
@@ -113,12 +128,13 @@ contract IceCubeMinterEdgeTest is Test {
     function testWrongOwnerReverts() public {
         address wrongOwner = makeAddr("wrongOwner");
         MockERC721ReturnsWrongOwner badNft = new MockERC721ReturnsWrongOwner(wrongOwner);
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
-        refs[0] = IceCubeMinter.NftRef({ contractAddress: address(badNft), tokenId: 1 });
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](1);
+        refs[0] = CubixlesMinter.NftRef({ contractAddress: address(badNft), tokenId: 1 });
 
+        _commitMint(address(this), DEFAULT_SALT, refs);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IceCubeMinter.RefNotOwned.selector,
+                CubixlesMinter.RefNotOwned.selector,
                 address(badNft),
                 1,
                 address(this),
@@ -132,16 +148,18 @@ contract IceCubeMinterEdgeTest is Test {
         address minterAddr = makeAddr("minter");
         uint256 tokenIdA = nft.mint(minterAddr);
         uint256 tokenIdB = nft.mint(minterAddr);
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
-        refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nft), tokenId: tokenIdA });
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](1);
+        refs[0] = CubixlesMinter.NftRef({ contractAddress: address(nft), tokenId: tokenIdA });
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price * 2);
-        vm.startPrank(minterAddr);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        vm.prank(minterAddr);
         uint256 mintedA = minter.mint{ value: price }(DEFAULT_SALT, "ipfs://a", refs);
         refs[0].tokenId = tokenIdB;
+        _commitMint(minterAddr, keccak256("salt-b"), refs);
+        vm.prank(minterAddr);
         uint256 mintedB = minter.mint{ value: price }(keccak256("salt-b"), "ipfs://b", refs);
-        vm.stopPrank();
 
         assertTrue(mintedA != mintedB);
     }
@@ -149,15 +167,16 @@ contract IceCubeMinterEdgeTest is Test {
     function testMintSucceedsWithGasHeavyOwner() public {
         ReceiverConsumesGasOnReceive gasOwner = new ReceiverConsumesGasOnReceive();
         vm.prank(owner);
-        minter.transferOwnership(address(gasOwner));
+        minter = new CubixlesMinter(address(gasOwner), address(lessToken), 500);
 
         address minterAddr = makeAddr("minter");
         uint256 tokenId = nft.mint(minterAddr);
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
-        refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](1);
+        refs[0] = CubixlesMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
         minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
         assertEq(address(gasOwner).balance, price);
@@ -170,8 +189,8 @@ contract IceCubeMinterEdgeTest is Test {
 
         address minterAddr = makeAddr("minter");
         uint256 tokenId = nft.mint(minterAddr);
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](1);
-        refs[0] = IceCubeMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](1);
+        refs[0] = CubixlesMinter.NftRef({ contractAddress: address(nft), tokenId: tokenId });
 
         address[] memory reenterContracts = new address[](1);
         uint256[] memory reenterTokenIds = new uint256[](1);
@@ -187,6 +206,7 @@ contract IceCubeMinterEdgeTest is Test {
 
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
         uint256 mintedId = minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
         assertEq(minter.ownerOf(mintedId), minterAddr);

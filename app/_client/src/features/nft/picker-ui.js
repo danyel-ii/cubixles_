@@ -1,5 +1,5 @@
 import { getNftsForOwner } from "../../data/nft/indexer";
-import { ICECUBE_CONTRACT } from "../../config/contracts";
+import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import { subscribeWallet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
 import {
@@ -163,11 +163,11 @@ export function initNftPickerUi() {
 
   async function loadInventory(address) {
     setLoading(true);
-    setStatus(`Loading ${formatChainName(ICECUBE_CONTRACT.chainId)} NFTs...`);
+    setStatus(`Loading ${formatChainName(CUBIXLES_CONTRACT.chainId)} NFTs...`);
     state.nftStatus = "loading";
     state.nftError = null;
     try {
-      const nfts = await getNftsForOwner(address, ICECUBE_CONTRACT.chainId);
+      const nfts = await getNftsForOwner(address, CUBIXLES_CONTRACT.chainId);
       inventory = nfts;
       state.nftInventory = nfts;
       state.nftStatus = "ready";
@@ -176,7 +176,7 @@ export function initNftPickerUi() {
       selectedOrder = selectedOrder.filter((key) => validKeys.has(key));
       if (!nfts.length) {
         setStatus(
-          `No ${formatChainName(ICECUBE_CONTRACT.chainId)} NFTs found for this wallet.`
+          `No ${formatChainName(CUBIXLES_CONTRACT.chainId)} NFTs found for this wallet.`
         );
       } else {
         setStatus("Select 1 to 6 NFTs to continue.");
@@ -303,7 +303,7 @@ export function initNftPickerUi() {
     state.nftStatus = "idle";
     state.nftError = null;
     setStatus(
-      `Connect your wallet to load ${formatChainName(ICECUBE_CONTRACT.chainId)} NFTs.`
+      `Connect your wallet to load ${formatChainName(CUBIXLES_CONTRACT.chainId)} NFTs.`
     );
     updateSelection();
     renderInventory();
@@ -311,7 +311,7 @@ export function initNftPickerUi() {
   });
 
   setStatus(
-    `Connect your wallet to load ${formatChainName(ICECUBE_CONTRACT.chainId)} NFTs.`
+    `Connect your wallet to load ${formatChainName(CUBIXLES_CONTRACT.chainId)} NFTs.`
   );
   updateSelection();
 }

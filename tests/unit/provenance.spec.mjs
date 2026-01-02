@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-  assertSepolia,
+  assertMainnet,
   parseTokenId,
   normalizeAddress,
   buildProvenanceBundle,
@@ -15,17 +15,17 @@ describe("provenance shaping", () => {
     );
   });
 
-  it("rejects non-Sepolia chainId", () => {
-    expect(() => assertSepolia(1)).toThrow(/sepolia/i);
+  it("rejects non-mainnet chainId", () => {
+    expect(() => assertMainnet(11155111)).toThrow(/chain 1/i);
   });
 
   it("enforces selection bounds for provenance bundles", async () => {
-    await expect(buildProvenanceBundle([], "0x000000000000000000000000000000000000dEaD", 11155111))
+    await expect(buildProvenanceBundle([], "0x000000000000000000000000000000000000dEaD", 1))
       .rejects.toThrow(/1 to 6/i);
     await expect(
       buildProvenanceBundle(
         new Array(7).fill(null).map((_, idx) => ({
-          chainId: 11155111,
+          chainId: 1,
           contractAddress: "0x000000000000000000000000000000000000dEaD",
           tokenId: String(idx + 1),
           name: null,
@@ -35,7 +35,7 @@ describe("provenance shaping", () => {
           source: "alchemy",
         })),
         "0x000000000000000000000000000000000000dEaD",
-        11155111
+        1
       )
     ).rejects.toThrow(/1 to 6/i);
   });

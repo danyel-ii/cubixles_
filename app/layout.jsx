@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "cubeless",
+  title: "cubixles_",
   description:
     "Mint interactive p5.js artworks whose provenance is tethered to NFTs you already own.",
 };

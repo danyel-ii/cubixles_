@@ -11,11 +11,11 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
 
-/// @title IceCubeMinter
-/// @notice Mints cubeLess NFTs with provenance-bound refs and ERC-2981 royalties.
+/// @title CubixlesMinter
+/// @notice Mints cubixles_ NFTs with provenance-bound refs and ERC-2981 royalties.
 /// @dev Token IDs are derived from minter + salt + canonical refs hash.
-/// @author cubeless
-contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
+/// @author cubixles_
+contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Reference to an ERC-721 token used for provenance.
     struct NftRef {
         address contractAddress;
@@ -26,6 +26,38 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     error RefOwnershipCheckFailed(address nft, uint256 tokenId);
     /// @notice Reference is not owned by expected minter.
     error RefNotOwned(address nft, uint256 tokenId, address expectedOwner, address actualOwner);
+    /// @notice Resale splitter is required.
+    error ResaleSplitterRequired();
+    /// @notice LESS token is required.
+    error LessTokenRequired();
+    /// @notice Royalty rate is too high.
+    error RoyaltyTooHigh();
+    /// @notice Mint commit is required.
+    error MintCommitRequired();
+    /// @notice Mint commit is expired.
+    error MintCommitExpired();
+    /// @notice Mint commit is for the current block.
+    error MintCommitPendingBlock();
+    /// @notice Provenance references length is invalid.
+    error InvalidReferenceCount();
+    /// @notice Mint cap reached.
+    error MintCapReached();
+    /// @notice ETH payment is insufficient.
+    error InsufficientEth();
+    /// @notice Commit refs hash mismatch.
+    error MintCommitMismatch();
+    /// @notice Commit salt mismatch.
+    error MintCommitSaltMismatch();
+    /// @notice TokenId already exists.
+    error TokenIdExists();
+    /// @notice Commit block hash not found.
+    error MintCommitHashMissing();
+    /// @notice Commit refs hash is empty.
+    error MintCommitEmpty();
+    /// @notice Commit already exists and is still active.
+    error MintCommitActive();
+    /// @notice Royalty receiver is required.
+    error RoyaltyReceiverRequired();
 
     /// @notice Default resale royalty in basis points (5%).
     uint96 public constant RESALE_ROYALTY_BPS_DEFAULT = 500; // 5%
@@ -37,14 +69,31 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     uint256 public constant ONE_BILLION = 1_000_000_000e18;
     /// @notice Fixed-point scale for WAD math.
     uint256 public constant WAD = 1e18;
+    /// @notice Maximum number of mints allowed.
+    uint256 public constant MAX_MINTS = 32_768;
+    /// @notice Palette entries available for random draw.
+    uint256 public constant PALETTE_SIZE = 10_000;
+    /// @notice Commit expiry window (in blocks) for reveal.
+    uint256 public constant COMMIT_EXPIRY_BLOCKS = 256;
+
+    /// @notice Pending commit for commit-reveal minting.
+    struct MintCommit {
+        bytes32 refsHash;
+        bytes32 salt;
+        uint256 blockNumber;
+    }
 
     /// @notice LESS supply at mint time by tokenId.
     mapping(uint256 => uint256) private _mintSupply;
     /// @notice LESS supply at last transfer by tokenId.
     mapping(uint256 => uint256) private _lastSupply;
+    /// @notice Palette index selected at mint time by tokenId.
+    mapping(uint256 => uint256) public paletteIndexByTokenId;
+    /// @notice Pending commit per minter.
+    mapping(address => MintCommit) public mintCommitByMinter;
 
     /// @notice LESS token address.
-    address public immutable lessToken;
+    address public immutable LESS_TOKEN;
     /// @notice Royalty receiver for ERC-2981.
     address public resaleSplitter;
     /// @notice Total minted count (monotonic).
@@ -63,33 +112,55 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Emitted when mint supply snapshot is captured.
     /// @param tokenId Minted token id.
     /// @param supply LESS total supply snapshot.
-    event MintSupplySnapshotted(uint256 indexed tokenId, uint256 supply);
+    event MintSupplySnapshotted(uint256 indexed tokenId, uint256 indexed supply);
+    /// @notice Emitted when a mint commit is created.
+    /// @param minter Wallet that committed.
+    /// @param refsHash Canonical refs hash.
+    /// @param salt User-provided salt.
+    /// @param blockNumber Block number of the commit.
+    event MintCommitCreated(
+        address indexed minter,
+        bytes32 indexed refsHash,
+        bytes32 salt,
+        uint256 indexed blockNumber
+    );
+    /// @notice Emitted when a palette index is assigned at mint.
+    /// @param tokenId Minted token id.
+    /// @param paletteIndex Random palette index assigned.
+    event PaletteAssigned(uint256 indexed tokenId, uint256 indexed paletteIndex);
     /// @notice Emitted when last supply snapshot is updated.
     /// @param tokenId Token id updated.
     /// @param supply LESS total supply snapshot.
-    event LastSupplySnapshotted(uint256 indexed tokenId, uint256 supply);
+    event LastSupplySnapshotted(uint256 indexed tokenId, uint256 indexed supply);
     /// @notice Emitted when royalty receiver changes.
     /// @param resaleSplitter New royalty receiver.
-    event RoyaltyReceiverUpdated(address resaleSplitter);
+    event RoyaltyReceiverUpdated(address indexed resaleSplitter);
 
     /// @notice Create a new minter instance.
     /// @param resaleSplitter_ Royalty receiver for ERC-2981.
     /// @param lessToken_ LESS token address.
     /// @param resaleRoyaltyBps Royalty rate in basis points.
     constructor(address resaleSplitter_, address lessToken_, uint96 resaleRoyaltyBps)
-        ERC721("IceCube", "ICECUBE")
+        ERC721("cubixles_", "cubixles_")
         Ownable(msg.sender)
     {
-        require(resaleSplitter_ != address(0), "Resale splitter required");
-        require(lessToken_ != address(0), "LESS token required");
-        require(resaleRoyaltyBps <= 1000, "Royalty too high");
+        if (resaleSplitter_ == address(0)) {
+            revert ResaleSplitterRequired();
+        }
+        if (lessToken_ == address(0)) {
+            revert LessTokenRequired();
+        }
+        if (resaleRoyaltyBps > 1000) {
+            revert RoyaltyTooHigh();
+        }
         resaleSplitter = resaleSplitter_;
-        lessToken = lessToken_;
+        LESS_TOKEN = lessToken_;
 
         _setDefaultRoyalty(resaleSplitter_, resaleRoyaltyBps);
     }
 
     /// @notice Mint a new NFT tied to provenance refs.
+    /// @dev Requires a prior commit within the expiry window.
     /// @param salt User-provided salt for tokenId derivation.
     /// @param tokenURI IPFS metadata URI to store.
     /// @param refs Provenance references (1..6).
@@ -99,41 +170,41 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         string calldata tokenURI,
         NftRef[] calldata refs
     ) external payable nonReentrant returns (uint256 tokenId) {
-        // Revert if refs length is outside 1..6 to prevent ambiguous split math.
-        require(refs.length >= 1 && refs.length <= 6, "Invalid reference count");
-
-        for (uint256 i = 0; i < refs.length; i += 1) {
-            // slither-disable-next-line calls-loop
-            try IERC721(refs[i].contractAddress).ownerOf(refs[i].tokenId) returns (
-                address nftOwner
-            ) {
-                if (nftOwner != msg.sender) {
-                    revert RefNotOwned(
-                        refs[i].contractAddress,
-                        refs[i].tokenId,
-                        msg.sender,
-                        nftOwner
-                    );
-                }
-            } catch {
-                revert RefOwnershipCheckFailed(refs[i].contractAddress, refs[i].tokenId);
-            }
+        MintCommit memory commit = mintCommitByMinter[msg.sender];
+        _requireValidCommit(commit);
+        _requireValidRefs(refs);
+        if (!(totalMinted < MAX_MINTS)) {
+            revert MintCapReached();
         }
 
         uint256 price = currentMintPrice();
-        require(msg.value >= price, "INSUFFICIENT_ETH");
+        if (msg.value < price) {
+            revert InsufficientEth();
+        }
 
         bytes32 refsHash = _hashRefsCanonical(refs);
+        if (refsHash != commit.refsHash) {
+            revert MintCommitMismatch();
+        }
+        if (salt != commit.salt) {
+            revert MintCommitSaltMismatch();
+        }
         tokenId = _computeTokenId(msg.sender, salt, refsHash);
-        require(_ownerOf(tokenId) == address(0), "TOKENID_EXISTS");
+        if (_ownerOf(tokenId) != address(0)) {
+            revert TokenIdExists();
+        }
+
+        uint256 paletteIndex = _assignPaletteIndex(refsHash, salt, msg.sender, commit.blockNumber);
 
         _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, tokenURI);
-        totalMinted += 1;
+        ++totalMinted;
         tokenIdByIndex[totalMinted] = tokenId;
         minterByTokenId[tokenId] = msg.sender;
+        paletteIndexByTokenId[tokenId] = paletteIndex;
 
         emit Minted(tokenId, msg.sender, salt, refsHash);
+        emit PaletteAssigned(tokenId, paletteIndex);
 
         _snapshotSupply(tokenId, true);
         _transferEth(resaleSplitter, price);
@@ -141,13 +212,36 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         if (msg.value > price) {
             _transferEth(msg.sender, msg.value - price);
         }
+
+        delete mintCommitByMinter[msg.sender];
+    }
+
+    /// @notice Commit a mint request for commit-reveal.
+    /// @param salt User-provided salt for tokenId derivation.
+    /// @param refsHash Canonical refs hash (sorted refs).
+    function commitMint(bytes32 salt, bytes32 refsHash) external {
+        if (refsHash == bytes32(0)) {
+            revert MintCommitEmpty();
+        }
+        MintCommit memory existing = mintCommitByMinter[msg.sender];
+        if (existing.blockNumber != 0) {
+            if (!(block.number > existing.blockNumber + COMMIT_EXPIRY_BLOCKS)) {
+                revert MintCommitActive();
+            }
+        }
+        mintCommitByMinter[msg.sender] = MintCommit({
+            refsHash: refsHash,
+            salt: salt,
+            blockNumber: block.number
+        });
+        emit MintCommitCreated(msg.sender, refsHash, salt, block.number);
     }
 
     /// @notice Current mint price based on LESS total supply.
     /// @dev Price scales from 1x to 2x as LESS supply decreases, then rounds up.
     /// @return Current mint price in wei.
     function currentMintPrice() public view returns (uint256) {
-        uint256 supply = IERC20Minimal(lessToken).totalSupply();
+        uint256 supply = IERC20Minimal(LESS_TOKEN).totalSupply();
         if (supply > ONE_BILLION) {
             supply = ONE_BILLION;
         }
@@ -173,7 +267,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Current LESS total supply.
     /// @return Current total supply from LESS token.
     function lessSupplyNow() public view returns (uint256) {
-        return IERC20Minimal(lessToken).totalSupply();
+        return IERC20Minimal(LESS_TOKEN).totalSupply();
     }
 
     /// @notice LESS supply captured at mint time.
@@ -196,10 +290,10 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     function deltaFromMint(uint256 tokenId) public view returns (uint256) {
         uint256 snapshot = _mintSupply[tokenId];
         uint256 supply = lessSupplyNow();
-        if (supply >= snapshot) {
-            return 0;
+        if (supply < snapshot) {
+            return snapshot - supply;
         }
-        return snapshot - supply;
+        return 0;
     }
 
     /// @notice Supply delta (last snapshot minus current).
@@ -208,16 +302,18 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     function deltaFromLast(uint256 tokenId) public view returns (uint256) {
         uint256 snapshot = _lastSupply[tokenId];
         uint256 supply = lessSupplyNow();
-        if (supply >= snapshot) {
-            return 0;
+        if (supply < snapshot) {
+            return snapshot - supply;
         }
-        return snapshot - supply;
+        return 0;
     }
 
     /// @notice Update the default royalty receiver.
     /// @param resaleSplitter_ Address to receive ERC-2981 royalties.
     function setRoyaltyReceiver(address resaleSplitter_) external onlyOwner {
-        require(resaleSplitter_ != address(0), "Resale splitter required");
+        if (resaleSplitter_ == address(0)) {
+            revert ResaleSplitterRequired();
+        }
         resaleSplitter = resaleSplitter_;
         _setDefaultRoyalty(resaleSplitter_, RESALE_ROYALTY_BPS_DEFAULT);
 
@@ -228,8 +324,12 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @param bps New royalty bps (max 1000).
     /// @param receiver Receiver for ERC-2981 royalties.
     function setResaleRoyalty(uint96 bps, address receiver) external onlyOwner {
-        require(receiver != address(0), "Receiver required");
-        require(bps <= 1000, "Royalty too high");
+        if (receiver == address(0)) {
+            revert RoyaltyReceiverRequired();
+        }
+        if (bps > 1000) {
+            revert RoyaltyTooHigh();
+        }
         _setDefaultRoyalty(receiver, bps);
     }
 
@@ -266,20 +366,20 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @dev Canonicalize refs and hash for tokenId derivation.
     function _hashRefsCanonical(NftRef[] calldata refs) internal pure returns (bytes32) {
         NftRef[] memory sorted = new NftRef[](refs.length);
-        for (uint256 i = 0; i < refs.length; i += 1) {
+        for (uint256 i = 0; i < refs.length; ++i) {
             sorted[i] = refs[i];
         }
-        for (uint256 i = 1; i < sorted.length; i += 1) {
+        for (uint256 i = 1; i < sorted.length; ++i) {
             NftRef memory key = sorted[i];
             uint256 j = i;
             while (j > 0 && _refLessThan(key, sorted[j - 1])) {
                 sorted[j] = sorted[j - 1];
-                j -= 1;
+                --j;
             }
             sorted[j] = key;
         }
         bytes memory packed = "";
-        for (uint256 i = 0; i < sorted.length; i += 1) {
+        for (uint256 i = 0; i < sorted.length; ++i) {
             packed = abi.encodePacked(packed, sorted[i].contractAddress, sorted[i].tokenId);
         }
         return keccak256(packed);
@@ -302,7 +402,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         bytes32 salt,
         bytes32 refsHash
     ) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encodePacked("cubeless:tokenid:v1", minter, salt, refsHash)));
+        return uint256(keccak256(abi.encodePacked("cubixles_:tokenid:v1", minter, salt, refsHash)));
     }
 
     /// @dev Round up to the nearest step.
@@ -316,7 +416,7 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
 
     /// @dev Record LESS supply snapshots and emit events.
     function _snapshotSupply(uint256 tokenId, bool isMint) internal {
-        uint256 supply = IERC20Minimal(lessToken).totalSupply();
+        uint256 supply = IERC20Minimal(LESS_TOKEN).totalSupply();
         if (isMint) {
             _mintSupply[tokenId] = supply;
             _lastSupply[tokenId] = supply;
@@ -325,5 +425,56 @@ contract IceCubeMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
             _lastSupply[tokenId] = supply;
         }
         emit LastSupplySnapshotted(tokenId, supply);
+    }
+
+    function _requireValidCommit(MintCommit memory commit) private view {
+        if (commit.blockNumber == 0) {
+            revert MintCommitRequired();
+        }
+        uint256 expiryBlock = commit.blockNumber + COMMIT_EXPIRY_BLOCKS;
+        if (!(block.number < expiryBlock + 1)) {
+            revert MintCommitExpired();
+        }
+        if (!(block.number > commit.blockNumber)) {
+            revert MintCommitPendingBlock();
+        }
+    }
+
+    function _requireValidRefs(NftRef[] calldata refs) private view {
+        if (refs.length < 1 || refs.length > 6) {
+            revert InvalidReferenceCount();
+        }
+        for (uint256 i = 0; i < refs.length; ++i) {
+            // slither-disable-next-line calls-loop
+            try IERC721(refs[i].contractAddress).ownerOf(refs[i].tokenId) returns (
+                address nftOwner
+            ) {
+                if (nftOwner != msg.sender) {
+                    revert RefNotOwned(
+                        refs[i].contractAddress,
+                        refs[i].tokenId,
+                        msg.sender,
+                        nftOwner
+                    );
+                }
+            } catch {
+                revert RefOwnershipCheckFailed(refs[i].contractAddress, refs[i].tokenId);
+            }
+        }
+    }
+
+    function _assignPaletteIndex(
+        bytes32 refsHash,
+        bytes32 salt,
+        address minter,
+        uint256 commitBlockNumber
+    ) private view returns (uint256) {
+        bytes32 commitBlockHash = blockhash(commitBlockNumber);
+        if (commitBlockHash == bytes32(0)) {
+            revert MintCommitHashMissing();
+        }
+        return uint256(
+            keccak256(abi.encodePacked(refsHash, salt, minter, commitBlockNumber, commitBlockHash))
+        ) % PALETTE_SIZE;
     }
 }

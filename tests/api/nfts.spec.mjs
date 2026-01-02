@@ -11,6 +11,7 @@ vi.mock("../../src/server/log.js", () => ({
 }));
 vi.mock("../../src/server/env.js", () => ({
   requireEnv: () => "alchemy-key",
+  readEnvBool: () => false,
 }));
 vi.mock("../../src/server/cache.js", () => ({
   getCache: async () => null,
@@ -49,7 +50,7 @@ describe("/api/nfts", () => {
         method: "POST",
         body: JSON.stringify({
           mode: "alchemy",
-          chainId: 11155111,
+          chainId: 1,
           path: "getNFTsForOwner",
           query: { owner: "0x000000000000000000000000000000000000dEaD" },
         }),
@@ -72,7 +73,7 @@ describe("/api/nfts", () => {
         method: "POST",
         body: JSON.stringify({
           mode: "alchemy",
-          chainId: 11155111,
+          chainId: 1,
           path: "getNFTsForOwner",
           query: { owner: "0x000000000000000000000000000000000000dEaD" },
         }),

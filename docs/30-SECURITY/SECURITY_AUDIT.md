@@ -33,7 +33,7 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: FAIL (4 tests failed; legacy IceCube test suites).
+Result: PASS (81 tests).
 
 ### Coverage (Solidity)
 Command:
@@ -72,7 +72,7 @@ Command:
 ```sh
 npm test
 ```
-Result: FAIL (2 tests failed: `tests/api/nfts.spec.mjs`, `tests/unit/provenance.spec.mjs`).
+Result: PASS (22 tests, Vitest unit/component/API; v4.0.16).
 
 ### Frontend smoke (Playwright)
 Command:
@@ -102,14 +102,13 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 63 warnings (includes legacy `src/icecube/*` import-path warnings).
-- Local slither run (venv):
-  - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
-  - Result: **Failed** — `slither` not available in the venv on this machine.
+  - Result: 0 errors, 37 warnings (import-path-check + lint warnings).
+- Local slither run:
+  - Command: `cd contracts && slither .`
+  - Result: 2 findings (weak PRNG; naming convention).
 
 ## Failures observed (triage)
-- **Legacy IceCube tests**: `IceCubeMinterEdge`, `IceCubeMinterFuzz`, and `IceCubeMinterInvariants` fail because payout assumptions no longer match (mint pays RoyaltySplitter, not owner). Action: migrate tests to `CubixlesMinter` or remove legacy suites.
-- **API/provenance tests**: `tests/api/nfts.spec.mjs` returned 500 and provenance bounds test expected Sepolia gating. Action: update test fixtures and chain gating expectations to mainnet (`chainId: 1`).
+- None in this audit run.
 
 ## Notable risks (triaged)
 1. **External dependency risk**

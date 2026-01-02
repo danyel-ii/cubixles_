@@ -22,8 +22,8 @@ Last updated: 2026-01-02
    - The “last sale” snapshot uses any ERC-721 transfer (excluding mint), so gifts and sales are treated identically.
 
 7. **Static analysis**
-   - Slither findings (8 total) are documented in `docs/30-SECURITY/STATIC_ANALYSIS.md`.
-   - Solhint still reports warnings (mostly NatSpec + import-path-check).
+   - Slither findings (2 total) are documented in `docs/30-SECURITY/STATIC_ANALYSIS.md`.
+   - Solhint still reports warnings (mostly import-path-check).
 
 8. **Deterministic tokenId salts**
    - TokenId depends on user-provided `salt`; weak salts increase collision/replay risk.

@@ -35,7 +35,59 @@
   },
   {
     "type": "function",
+    "name": "COMMIT_EXPIRY_BLOCKS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "LESS_TOKEN",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "MAX_MINTS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "ONE_BILLION",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "PALETTE_SIZE",
     "inputs": [],
     "outputs": [
       {
@@ -121,6 +173,24 @@
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "commitMint",
+    "inputs": [
+      {
+        "name": "salt",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "refsHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -250,19 +320,6 @@
   },
   {
     "type": "function",
-    "name": "lessToken",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "mint",
     "inputs": [
       {
@@ -278,7 +335,7 @@
       {
         "name": "refs",
         "type": "tuple[]",
-        "internalType": "struct IceCubeMinter.NftRef[]",
+        "internalType": "struct CubixlesMinter.NftRef[]",
         "components": [
           {
             "name": "contractAddress",
@@ -301,6 +358,35 @@
       }
     ],
     "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "mintCommitByMinter",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "refsHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "salt",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "blockNumber",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -387,6 +473,25 @@
   },
   {
     "type": "function",
+    "name": "paletteIndexByTokenId",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "previewTokenId",
     "inputs": [
       {
@@ -397,7 +502,7 @@
       {
         "name": "refs",
         "type": "tuple[]",
-        "internalType": "struct IceCubeMinter.NftRef[]",
+        "internalType": "struct CubixlesMinter.NftRef[]",
         "components": [
           {
             "name": "contractAddress",
@@ -771,7 +876,7 @@
       {
         "name": "supply",
         "type": "uint256",
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256"
       }
     ],
@@ -792,6 +897,37 @@
   },
   {
     "type": "event",
+    "name": "MintCommitCreated",
+    "inputs": [
+      {
+        "name": "minter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "refsHash",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "salt",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "blockNumber",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "MintSupplySnapshotted",
     "inputs": [
       {
@@ -803,7 +939,7 @@
       {
         "name": "supply",
         "type": "uint256",
-        "indexed": false,
+        "indexed": true,
         "internalType": "uint256"
       }
     ],
@@ -861,12 +997,31 @@
   },
   {
     "type": "event",
+    "name": "PaletteAssigned",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "paletteIndex",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "RoyaltyReceiverUpdated",
     "inputs": [
       {
         "name": "resaleSplitter",
         "type": "address",
-        "indexed": false,
+        "indexed": true,
         "internalType": "address"
       }
     ],
@@ -1066,19 +1221,84 @@
   },
   {
     "type": "error",
-    "name": "EthTransferFailed",
+    "name": "FailedCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientBalance",
     "inputs": [
       {
-        "name": "recipient",
-        "type": "address",
-        "internalType": "address"
+        "name": "balance",
+        "type": "uint256",
+        "internalType": "uint256"
       },
       {
-        "name": "amount",
+        "name": "needed",
         "type": "uint256",
         "internalType": "uint256"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "InsufficientEth",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidReferenceCount",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "LessTokenRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintCapReached",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintCommitActive",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintCommitEmpty",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintCommitExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintCommitHashMissing",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintCommitMismatch",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintCommitPendingBlock",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintCommitRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintCommitSaltMismatch",
+    "inputs": []
   },
   {
     "type": "error",
@@ -1148,5 +1368,25 @@
         "internalType": "uint256"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "ResaleSplitterRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RoyaltyReceiverRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RoyaltyTooHigh",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TokenIdExists",
+    "inputs": []
   }
 ]

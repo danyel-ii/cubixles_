@@ -94,7 +94,7 @@ export default function AppShell() {
         Loading token...
       </div>
       <div id="ui" className="ui-panel">
-        <div className="ui-title">cubeless</div>
+        <div className="ui-title">cubixles_</div>
         <div className="ui-sub">Choose 1 to 6 Ethereum Mainnet NFTs to wrap the cube.</div>
         <div className="ui-row">
           <button id="wallet-connect" className="ui-button" type="button">
@@ -175,11 +175,11 @@ export default function AppShell() {
         </div>
         <a
           className="ui-footer-link"
-          href="https://deepwiki.com/danyel-ii/cubeless_/1-overview#what-is-cubeless"
+          href="https://deepwiki.com/danyel-ii/cubixles_/1-overview#what-is-cubixles_"
           target="_blank"
           rel="noreferrer"
         >
-          deepwiki cubeless
+          deepwiki cubixles_
         </a>
       </div>
       <div id="preview-bar" className="preview-bar is-hidden">

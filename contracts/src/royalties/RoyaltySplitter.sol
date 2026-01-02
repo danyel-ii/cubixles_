@@ -18,7 +18,7 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 /// @title RoyaltySplitter
 /// @notice Splits mint ETH and optionally swaps half to LESS via Uniswap v4 PoolManager.
 /// @dev Uses PoolManager unlock + swap; swap failures fall back to owner.
-/// @author cubeless
+/// @author cubixles_
 contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     using BalanceDeltaLibrary for BalanceDelta;
     using PoolIdLibrary for PoolKey;

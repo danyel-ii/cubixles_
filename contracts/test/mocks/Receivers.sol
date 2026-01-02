@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IceCubeMinter } from "../../src/icecube/IceCubeMinter.sol";
+import { CubixlesMinter } from "../../src/cubixles/CubixlesMinter.sol";
 
 contract ReceiverRevertsOnReceive {
     receive() external payable {
@@ -20,7 +20,7 @@ contract ReceiverConsumesGasOnReceive {
 }
 
 contract MaliciousReceiverReenter {
-    IceCubeMinter public minter;
+    CubixlesMinter public minter;
     address[] public refContracts;
     uint256[] public refTokenIds;
     string public tokenUri;
@@ -28,7 +28,7 @@ contract MaliciousReceiverReenter {
     bool public attempted;
 
     function configure(
-        IceCubeMinter minter_,
+        CubixlesMinter minter_,
         address[] calldata refContracts_,
         uint256[] calldata refTokenIds_,
         string calldata tokenUri_,
@@ -48,9 +48,9 @@ contract MaliciousReceiverReenter {
         }
         attempted = true;
         uint256 len = refContracts.length;
-        IceCubeMinter.NftRef[] memory refs = new IceCubeMinter.NftRef[](len);
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](len);
         for (uint256 i = 0; i < len; i += 1) {
-            refs[i] = IceCubeMinter.NftRef({
+            refs[i] = CubixlesMinter.NftRef({
                 contractAddress: refContracts[i],
                 tokenId: refTokenIds[i]
             });
