@@ -3,6 +3,7 @@ import { requireEnv } from "./env.js";
 import { getCache, setCache } from "./cache.js";
 
 const PINATA_ENDPOINT = "https://api.pinata.cloud/pinning/pinJSONToIPFS";
+const PINATA_FILE_ENDPOINT = "https://api.pinata.cloud/pinning/pinFileToIPFS";
 
 const DEDUPE_TTL_MS = 10 * 60 * 1000;
 
@@ -41,6 +42,32 @@ export async function pinJson(payload, { name } = {}) {
   if (!response.ok) {
     const text = await response.text();
     const error = new Error(text || "Pinata error");
+    error.status = response.status;
+    throw error;
+  }
+  const data = await response.json();
+  return data?.IpfsHash ?? null;
+}
+
+export async function pinFile(buffer, { name, mimeType = "image/gif" } = {}) {
+  const jwt = requireEnv("PINATA_JWT");
+  const form = new FormData();
+  const fileName = name || "cubixles.gif";
+  const blob = new Blob([buffer], { type: mimeType });
+  form.append("file", blob, fileName);
+  if (name) {
+    form.append("pinataMetadata", JSON.stringify({ name }));
+  }
+  const response = await fetch(PINATA_FILE_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+    },
+    body: form,
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    const error = new Error(text || "Pinata file error");
     error.status = response.status;
     throw error;
   }
