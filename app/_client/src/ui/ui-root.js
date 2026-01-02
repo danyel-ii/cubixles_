@@ -206,6 +206,13 @@ function initDebugPanel() {
 }
 
 function initShareDialog() {
+  const isTokenView =
+    document.body.classList.contains("is-token-view") &&
+    window.location.pathname.startsWith("/m/");
+  if (!isTokenView) {
+    return;
+  }
+
   const modal = document.getElementById("share-modal");
   const backdrop = document.getElementById("share-backdrop");
   const closeButton = document.getElementById("share-close");

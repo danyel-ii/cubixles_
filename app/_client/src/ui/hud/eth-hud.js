@@ -28,7 +28,9 @@ export function initEthHud() {
     valueEl.textContent = `ΔLESS ${formatLess(state.lessDeltaLast)}`;
     if (timeEl) {
       timeEl.textContent = "";
-      const isTokenView = document.body.classList.contains("is-token-view");
+      const isTokenView =
+        document.body.classList.contains("is-token-view") &&
+        window.location.pathname.startsWith("/m/");
       const overlay = document.getElementById("overlay");
       const overlayHidden = overlay ? overlay.classList.contains("is-hidden") : true;
       if (isTokenView && overlayHidden && state.currentCubeTokenId) {
