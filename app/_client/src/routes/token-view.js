@@ -88,6 +88,7 @@ function initTokenShareDialog() {
     </div>
   `;
   document.body.appendChild(modal);
+  modal.classList.add("is-hidden");
 
   const backdrop = modal.querySelector("#share-backdrop");
   const closeButton = modal.querySelector("#share-close");
@@ -145,30 +146,6 @@ function initTokenShareDialog() {
       return;
     }
     openModal(currentUrl);
-  });
-
-  function openShare(url) {
-    if (!url) {
-      return;
-    }
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
-
-  farcasterLink?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openShare(farcasterLink.href);
-  });
-  xLink?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openShare(xLink.href);
-  });
-  baseLink?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openShare(baseLink.href);
-  });
-  signalLink?.addEventListener("click", (event) => {
-    event.preventDefault();
-    openShare(signalLink.href);
   });
 
   return (url) => {

@@ -524,6 +524,10 @@ button.ui-button {
   justify-content: center;
 }
 
+.share-modal.is-hidden {
+  display: none;
+}
+
 .share-backdrop {
   position: absolute;
   inset: 0;
