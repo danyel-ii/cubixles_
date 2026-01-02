@@ -17,8 +17,13 @@
     "subtitle": "realm of provenance",
     "description": "cubixles_ is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
     "screenshotUrls": [
-      "https://cubixles-red.vercel.app/image.png",
-      "https://cubixles-red.vercel.app/hero.png"
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_1.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_2.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_3.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_4.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_5.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_6.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_7.jpg"
     ],
     "primaryCategory": "art-creativity",
     "tags": ["nft", "art", "remix", "community", "token"],
@@ -42,8 +47,13 @@
     "subtitle": "realm of provenance",
     "description": "cubixles_ is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
     "screenshotUrls": [
-      "https://cubixles-red.vercel.app/image.png",
-      "https://cubixles-red.vercel.app/hero.png"
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_1.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_2.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_3.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_4.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_5.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_6.jpg",
+      "https://gateway.pinata.cloud/ipfs/bafybeigg3jlod5kyo6uuq4wxtpuyr2wtckdpt4mg3hsneqippdspvyytqa/cubixles_7.jpg"
     ],
     "primaryCategory": "art-creativity",
     "tags": ["nft", "art", "remix", "community", "token"],
