@@ -28,7 +28,8 @@ export function initEthHud() {
     valueEl.textContent = `ΔLESS ${formatLess(state.lessDeltaLast)}`;
     if (timeEl) {
       timeEl.textContent = "";
-      if (state.currentCubeTokenId) {
+      const isTokenView = document.body.classList.contains("is-token-view");
+      if (isTokenView && state.currentCubeTokenId) {
         const url = buildTokenViewUrl(state.currentCubeTokenId.toString());
         if (!url) {
           timeEl.textContent = "token: —";
