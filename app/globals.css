@@ -493,6 +493,89 @@ button.ui-button {
   text-decoration: underline;
 }
 
+.share-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 10, 14, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.share-card {
+  position: relative;
+  z-index: 1;
+  width: min(320px, 90vw);
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(12, 16, 24, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px rgba(5, 10, 20, 0.4);
+  color: rgba(230, 233, 239, 0.9);
+}
+
+.share-title {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(230, 233, 239, 0.7);
+}
+
+.share-actions {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(30, 40, 58, 0.9);
+  color: rgba(230, 233, 239, 0.9);
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.share-button.is-ghost {
+  background: transparent;
+  border-style: dashed;
+}
+
+.share-button:hover {
+  border-color: rgba(120, 180, 255, 0.5);
+}
+
+.share-close {
+  margin-top: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: rgba(230, 233, 239, 0.7);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.share-close:hover {
+  color: rgba(230, 233, 239, 0.95);
+}
+
 body.is-minted .preview-bar {
   display: none;
 }

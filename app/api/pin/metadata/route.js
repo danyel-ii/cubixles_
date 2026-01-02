@@ -121,7 +121,7 @@ export async function POST(request) {
         if (gifCid) {
           finalPayload = {
             ...payload,
-            image: `ipfs://${gifCid}`,
+            preview_gif: `ipfs://${gifCid}`,
           };
         }
       } catch (error) {

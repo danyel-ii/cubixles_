@@ -40,6 +40,10 @@ export function initEthHud() {
         link.href = url;
         link.target = "_blank";
         link.rel = "noreferrer";
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          document.dispatchEvent(new CustomEvent("share-link-open", { detail: { url } }));
+        });
         timeEl.append(link);
       } else {
         timeEl.textContent = "token: —";

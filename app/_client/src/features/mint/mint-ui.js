@@ -467,7 +467,9 @@ export function initMintUi() {
           tone: "neutral",
           links: [{ label: "View tx", href: buildTxUrl(commitTx.hash) }],
         });
-        setStatus("Waiting for commit confirmation...");
+        setStatus(
+          "Waiting for commit confirmation. Please stay on this page while the transaction is being committed."
+        );
         const commitReceipt = await commitTx.wait();
         commitBlockNumber = commitReceipt?.blockNumber;
         if (!commitBlockNumber) {
@@ -558,7 +560,9 @@ export function initMintUi() {
         tone: "neutral",
         links: [{ label: "View tx", href: buildTxUrl(tx.hash) }],
       });
-      setStatus("Waiting for confirmation...");
+      setStatus(
+        "Waiting for mint confirmation. Please stay on this page while the transaction is being committed."
+      );
       const receipt = await tx.wait();
       const mintedTokenId = extractMintedTokenId(receipt, contract);
       if (mintedTokenId !== null && mintedTokenId !== undefined) {

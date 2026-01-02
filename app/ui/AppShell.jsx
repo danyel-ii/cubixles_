@@ -114,6 +114,32 @@ export default function AppShell() {
       <div id="token-view-status" className="token-view-status is-hidden">
         Loading token...
       </div>
+      <div id="share-modal" className="share-modal is-hidden" role="dialog" aria-modal="true">
+        <div id="share-backdrop" className="share-backdrop" aria-hidden="true"></div>
+        <div className="share-card">
+          <div className="share-title">Share this cube</div>
+          <div className="share-actions">
+            <a id="share-farcaster" className="share-button" target="_blank" rel="noreferrer">
+              Farcaster
+            </a>
+            <a id="share-x" className="share-button" target="_blank" rel="noreferrer">
+              X
+            </a>
+            <a id="share-base" className="share-button" target="_blank" rel="noreferrer">
+              Base
+            </a>
+            <a id="share-signal" className="share-button" target="_blank" rel="noreferrer">
+              Signal
+            </a>
+            <button id="share-copy" className="share-button is-ghost" type="button">
+              Copy link
+            </button>
+          </div>
+          <button id="share-close" className="share-close" type="button">
+            Close
+          </button>
+        </div>
+      </div>
       <div id="ui" className="ui-panel">
         <div className="ui-title">cubixles_</div>
         <div className="ui-sub">Choose 1 to 6 Ethereum Mainnet NFTs to wrap the cube.</div>
