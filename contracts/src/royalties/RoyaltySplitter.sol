@@ -13,6 +13,12 @@ import { TickMath } from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import { StateLibrary } from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
+interface IWETH {
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address to, uint256 value) external returns (bool);
+    function withdraw(uint256 value) external;
+}
+
 /// @title RoyaltySplitter
 /// @notice Splits mint ETH and optionally swaps half to LESS via Uniswap v4 PoolManager.
 /// @dev Uses PoolManager unlock + swap; swap failures fall back to owner.
@@ -57,6 +63,8 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     error SettleMismatch(uint256 expected, uint256 paid);
     /// @notice Only PoolManager can call unlockCallback.
     error PoolManagerOnly();
+    /// @notice Recipient is required.
+    error RecipientRequired();
 
     /// @notice Emitted when swap enabled toggles.
     /// @param enabled Whether swap is enabled.
@@ -68,6 +76,12 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     /// @param amount ETH amount forwarded.
     /// @param reasonHash Hash of the revert reason.
     event SwapFailedFallbackToOwner(uint256 indexed amount, bytes32 reasonHash);
+    /// @notice Emitted when WETH is swept from the splitter.
+    /// @param weth WETH token address.
+    /// @param recipient Recipient of the sweep.
+    /// @param amount Amount swept.
+    /// @param unwrapped Whether the sweep unwrapped WETH to ETH.
+    event WethSwept(address indexed weth, address indexed recipient, uint256 amount, bool unwrapped);
 
     /// @notice Create a new royalty splitter.
     /// @param owner_ Owner who receives ETH and can configure settings.
@@ -141,6 +155,27 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
         swapMaxSlippageBps = maxSlippageBps;
         emit SwapSlippageUpdated(maxSlippageBps);
+    }
+
+    /// @notice Sweep WETH sent to this contract.
+    /// @param weth WETH token address.
+    /// @param recipient Recipient of ETH or WETH.
+    /// @param unwrap Whether to unwrap to ETH before sending.
+    function sweepWeth(address weth, address recipient, bool unwrap) external onlyOwner nonReentrant {
+        if (recipient == address(0)) {
+            revert RecipientRequired();
+        }
+        uint256 amount = IWETH(weth).balanceOf(address(this));
+        if (amount == 0) {
+            return;
+        }
+        if (unwrap) {
+            IWETH(weth).withdraw(amount);
+            _send(recipient, amount);
+        } else {
+            IWETH(weth).transfer(recipient, amount);
+        }
+        emit WethSwept(weth, recipient, amount, unwrap);
     }
 
     /// @dev Entry for ETH royalty handling.

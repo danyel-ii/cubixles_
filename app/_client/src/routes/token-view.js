@@ -85,7 +85,7 @@ function initTokenShareDialog() {
       </div>
   `;
   document.body.appendChild(modal);
-  modal.classList.add("is-hidden");
+  modal.style.display = "none";
 
   const backdrop = modal.querySelector("#share-backdrop");
   const closeButton = modal.querySelector("#share-close");
@@ -96,6 +96,7 @@ function initTokenShareDialog() {
 
   function closeModal() {
     modal.classList.add("is-hidden");
+    modal.style.display = "none";
   }
 
   async function copyLink() {
@@ -119,6 +120,7 @@ function initTokenShareDialog() {
     const text = encodeURIComponent("Check out this cubixles_ cube");
     xLink.href = `https://twitter.com/intent/tweet?text=${text}&url=${encoded}`;
     modal.classList.remove("is-hidden");
+    modal.style.display = "flex";
   }
 
   backdrop?.addEventListener("click", closeModal);
