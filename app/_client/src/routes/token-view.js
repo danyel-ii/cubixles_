@@ -94,12 +94,24 @@ function initTokenShareDialog() {
 
   let currentUrl = "";
 
-  function closeModal() {
+  function closeModal(event) {
+    if (event?.stopPropagation) {
+      event.stopPropagation();
+    }
+    if (event?.preventDefault) {
+      event.preventDefault();
+    }
     modal.classList.add("is-hidden");
     modal.style.display = "none";
   }
 
-  async function copyLink() {
+  async function copyLink(event) {
+    if (event?.stopPropagation) {
+      event.stopPropagation();
+    }
+    if (event?.preventDefault) {
+      event.preventDefault();
+    }
     if (!currentUrl) {
       return;
     }
@@ -126,6 +138,12 @@ function initTokenShareDialog() {
   backdrop?.addEventListener("click", closeModal);
   closeButton?.addEventListener("click", closeModal);
   copyButton?.addEventListener("click", copyLink);
+  backdrop?.addEventListener("pointerdown", closeModal);
+  closeButton?.addEventListener("pointerdown", closeModal);
+  copyButton?.addEventListener("pointerdown", copyLink);
+  backdrop?.addEventListener("touchstart", closeModal, { passive: false });
+  closeButton?.addEventListener("touchstart", closeModal, { passive: false });
+  copyButton?.addEventListener("touchstart", copyLink, { passive: false });
 
   const shareButton = document.createElement("button");
   shareButton.id = "share-cube";
