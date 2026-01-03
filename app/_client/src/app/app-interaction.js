@@ -7,16 +7,22 @@ const ROT_EPSILON = 0.0001;
 const ROT_CLAMP = Math.PI / 2 - 0.08;
 
 export function onMousePressed() {
-  if (isWalletModalOpen() || isUiPointed()) {
+  if (isWalletModalOpen()) {
     return false;
+  }
+  if (isUiPointed()) {
+    return true;
   }
   state.lastMouse = { x: mouseX, y: mouseY };
   state.isDragging = true;
 }
 
 export function onMouseDragged() {
-  if (isWalletModalOpen() || isUiPointed()) {
+  if (isWalletModalOpen()) {
     return false;
+  }
+  if (isUiPointed()) {
+    return true;
   }
   if (!state.lastMouse) {
     return;
@@ -28,16 +34,22 @@ export function onMouseDragged() {
 }
 
 export function onMouseReleased() {
-  if (isWalletModalOpen() || isUiPointed()) {
+  if (isWalletModalOpen()) {
     return false;
+  }
+  if (isUiPointed()) {
+    return true;
   }
   state.lastMouse = null;
   state.isDragging = false;
 }
 
 export function onMouseWheel(event) {
-  if (isWalletModalOpen() || isUiPointed()) {
+  if (isWalletModalOpen()) {
     return false;
+  }
+  if (isUiPointed()) {
+    return true;
   }
   state.zoom = constrain(
     state.zoom + event.delta * 0.4,
