@@ -64,6 +64,12 @@ export function initLeaderboardUi() {
   }
 
   let walletState = null;
+  let readProviderPromise = null;
+  const MAINNET_RPC_URLS = [
+    "https://cloudflare-eth.com",
+    "https://eth.llamarpc.com",
+    "https://rpc.ankr.com/eth",
+  ];
 
   function formatChain(chainId) {
     if (chainId === 11155111) {
@@ -86,9 +92,24 @@ export function initLeaderboardUi() {
     listEl.innerHTML = "";
   }
 
-  function getReadProvider(provider) {
+  async function getReadProvider(provider) {
     if (CUBIXLES_CONTRACT.chainId === 1) {
-      return new JsonRpcProvider("https://cloudflare-eth.com");
+      if (readProviderPromise) {
+        return readProviderPromise;
+      }
+      readProviderPromise = (async () => {
+        for (const url of MAINNET_RPC_URLS) {
+          const candidate = new JsonRpcProvider(url);
+          try {
+            await candidate.getBlockNumber();
+            return candidate;
+          } catch (error) {
+            continue;
+          }
+        }
+        return null;
+      })();
+      return readProviderPromise;
     }
     if (provider) {
       return new BrowserProvider(provider);
@@ -97,7 +118,7 @@ export function initLeaderboardUi() {
   }
 
   async function fetchMintedTokenIds(provider) {
-    const readProvider = getReadProvider(provider);
+    const readProvider = await getReadProvider(provider);
     if (!readProvider) {
       return [];
     }
@@ -114,7 +135,7 @@ export function initLeaderboardUi() {
   }
 
   async function fetchLeaderboard() {
-    const readProvider = getReadProvider(null);
+    const readProvider = await getReadProvider(null);
     if (!readProvider) {
       return { entries: [], supplyNow: null };
     }
