@@ -48,12 +48,13 @@ export async function connectWallet() {
       }
     }
 
-    if (providerSource === "walletconnect") {
-      if (typeof provider.connect === "function") {
-        await provider.connect();
-      } else if (typeof provider.enable === "function") {
-        await provider.enable();
-      }
+    const needsWalletConnect =
+      providerSource === "walletconnect" || isWalletConnectProvider(provider);
+    if (needsWalletConnect && providerSource !== "walletconnect") {
+      providerSource = "walletconnect";
+    }
+    if (needsWalletConnect) {
+      await ensureWalletConnectSession(provider);
     }
 
     const accounts = await requestAccounts(provider);
@@ -107,6 +108,34 @@ async function requestAccounts(provider) {
     return provider.send("eth_requestAccounts");
   }
   throw new Error("Wallet provider does not support requests.");
+}
+
+function isWalletConnectProvider(provider) {
+  return Boolean(
+    provider &&
+      (provider.isWalletConnect ||
+        provider.session ||
+        provider.connector?.protocol === "wc" ||
+        provider.signer?.session)
+  );
+}
+
+async function ensureWalletConnectSession(provider) {
+  if (!provider) {
+    return;
+  }
+  const hasAccounts = Array.isArray(provider.accounts) && provider.accounts.length > 0;
+  const connected = provider.connected === true || hasAccounts;
+  if (connected) {
+    return;
+  }
+  if (typeof provider.connect === "function") {
+    await provider.connect();
+    return;
+  }
+  if (typeof provider.enable === "function") {
+    await provider.enable();
+  }
 }
 
 async function readChainId(provider) {
