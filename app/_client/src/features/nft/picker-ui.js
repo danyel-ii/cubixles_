@@ -56,6 +56,8 @@ export function initNftPickerUi() {
   let selectedOrder = [];
   let currentAddress = null;
   let isLoading = false;
+  let appliedSelectionKey = null;
+  let isWalletConnected = false;
 
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
@@ -68,6 +70,24 @@ export function initNftPickerUi() {
     refreshButton.disabled = loading || !currentAddress;
     clearButton.disabled = selectedKeys.size === 0 || loading;
     applyButton.disabled = selectedKeys.size < 1 || selectedKeys.size > MAX_SELECTION || loading;
+    updateApplyGlow();
+  }
+
+  function getSelectionKey() {
+    if (!selectedOrder.length) {
+      return "";
+    }
+    return selectedOrder.join("|");
+  }
+
+  function updateApplyGlow() {
+    const hasSelection = selectedKeys.size > 0;
+    const selectionKey = getSelectionKey();
+    const isApplied = appliedSelectionKey && appliedSelectionKey === selectionKey;
+    applyButton.classList.toggle(
+      "is-glow-turquoise",
+      isWalletConnected && hasSelection && !isApplied
+    );
   }
 
   function updateSelection() {
@@ -79,9 +99,14 @@ export function initNftPickerUi() {
     clearButton.disabled = selection.length === 0 || isLoading;
     applyButton.disabled =
       selection.length < 1 || selection.length > MAX_SELECTION || isLoading;
+    const selectionKey = getSelectionKey();
+    if (appliedSelectionKey && appliedSelectionKey !== selectionKey) {
+      appliedSelectionKey = null;
+    }
     if (typeof document !== "undefined") {
       document.dispatchEvent(new CustomEvent("nft-selection-change"));
     }
+    updateApplyGlow();
   }
 
   function renderInventory() {
@@ -171,6 +196,7 @@ export function initNftPickerUi() {
       inventory = nfts;
       state.nftInventory = nfts;
       state.nftStatus = "ready";
+      appliedSelectionKey = null;
       const validKeys = new Set(nfts.map((nft) => buildKey(nft)));
       selectedKeys = new Set([...selectedKeys].filter((key) => validKeys.has(key)));
       selectedOrder = selectedOrder.filter((key) => validKeys.has(key));
@@ -238,6 +264,7 @@ export function initNftPickerUi() {
   clearButton.addEventListener("click", () => {
     selectedKeys = new Set();
     selectedOrder = [];
+    appliedSelectionKey = null;
     updateSelection();
     renderInventory();
     if (inventory.length) {
@@ -251,6 +278,7 @@ export function initNftPickerUi() {
       setStatus("Select 1 to 6 NFTs to continue.", "error");
       return;
     }
+    const selectionKey = getSelectionKey();
     const imageUrls = resolveSelectedImages(selection);
     if (!imageUrls) {
       setStatus("One or more NFTs are missing images.", "error");
@@ -272,6 +300,7 @@ export function initNftPickerUi() {
       state.faceTextures = faceTextures;
       state.selectedDataUrls = imageUrls;
       setStatus("NFTs applied to cube.", "success");
+      appliedSelectionKey = selectionKey;
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to apply NFTs.";
@@ -286,18 +315,23 @@ export function initNftPickerUi() {
 
   subscribeWallet((walletState) => {
     if (walletState?.status === "connected" && walletState.address) {
+      isWalletConnected = true;
       if (currentAddress !== walletState.address) {
         currentAddress = walletState.address;
+        appliedSelectionKey = null;
         loadInventory(currentAddress);
       }
       refreshButton.disabled = isLoading;
+      updateApplyGlow();
       return;
     }
 
+    isWalletConnected = false;
     currentAddress = null;
     inventory = [];
     selectedKeys = new Set();
     selectedOrder = [];
+    appliedSelectionKey = null;
     state.nftInventory = [];
     state.nftSelection = [];
     state.nftStatus = "idle";
@@ -314,4 +348,5 @@ export function initNftPickerUi() {
     `Connect your wallet to load ${formatChainName(CUBIXLES_CONTRACT.chainId)} NFTs.`
   );
   updateSelection();
+  updateApplyGlow();
 }

@@ -57,7 +57,7 @@ export default function AppShell() {
               Mint cost is calculated as a function of current{" "}
               <a
                 className="ui-link"
-                href="https://www.nftstrategy.fun/strategies/0x9c2ca573009f181eac634c4d6e44a0977c24f335"
+                href="https://less.ripe.wtf/about"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -192,7 +192,7 @@ export default function AppShell() {
             Mint price rises as{" "}
             <a
               className="ui-link"
-              href="https://www.nftstrategy.fun/strategies/0x9c2ca573009f181eac634c4d6e44a0977c24f335"
+              href="https://less.ripe.wtf/about"
               target="_blank"
               rel="noreferrer"
             >

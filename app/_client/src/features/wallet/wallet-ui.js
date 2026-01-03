@@ -6,13 +6,6 @@ import {
 } from "./wallet.js";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
 
-function formatAddress(address) {
-  if (!address) {
-    return "";
-  }
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
-
 export function initWalletUi() {
   const connectButton = document.getElementById("wallet-connect");
   const disconnectButton = document.getElementById("wallet-disconnect");
@@ -50,23 +43,18 @@ export function initWalletUi() {
       status: "error",
       error: "Wallet state unavailable.",
     };
+    const isConnected = safeState.status === "connected";
+    connectButton.classList.toggle("is-pulse-magenta", !isConnected);
 
     if (safeState.status === "connected") {
-      const sourceLabel = safeState.providerSource
-        ? ` via ${safeState.providerSource}`
-        : "";
       const chainId = safeState.chainId;
       const expected = CUBIXLES_CONTRACT.chainId;
       if (chainId && chainId !== expected) {
-        statusEl.textContent = `Wallet: ${formatAddress(
-          safeState.address
-        )}${sourceLabel} (wrong network: ${formatChainName(chainId)})`;
+        statusEl.textContent = `Wallet: connected (wrong network: ${formatChainName(chainId)})`;
         switchButton.classList.remove("is-hidden");
         switchButton.disabled = false;
       } else {
-        statusEl.textContent = `Wallet: ${formatAddress(
-          safeState.address
-        )}${sourceLabel}`;
+        statusEl.textContent = "Wallet: connected";
         switchButton.classList.add("is-hidden");
         switchButton.disabled = true;
       }
