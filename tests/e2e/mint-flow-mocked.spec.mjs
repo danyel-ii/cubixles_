@@ -21,6 +21,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   const { selectors, responses } = buildEthereumMock();
 
   await page.addInitScript(({ selectors, responses }) => {
+    window.__CUBIXLES_TEST_HOOKS__ = true;
     const mockBlock = {
       number: "0x1",
       hash: "0x" + "11".repeat(32),
@@ -179,7 +180,9 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await page.evaluate(() => {
     document.getElementById("overlay")?.classList.add("is-hidden");
   });
-  await page.getByRole("button", { name: /connect wallet/i }).click();
+  await page.evaluate(async () => {
+    await window.__CUBIXLES_WALLET__?.connectWallet?.();
+  });
   const refreshButton = page.getByRole("button", { name: /refresh nfts/i });
   await expect(refreshButton).toBeEnabled({ timeout: 5000 });
   await refreshButton.click();

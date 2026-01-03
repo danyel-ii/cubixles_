@@ -239,3 +239,11 @@ export async function switchToMainnet() {
   }
   return ensureChain(walletState.provider, CUBIXLES_CONTRACT.chainId);
 }
+
+if (typeof window !== "undefined" && window.__CUBIXLES_TEST_HOOKS__) {
+  window.__CUBIXLES_WALLET__ = {
+    connectWallet,
+    disconnectWallet,
+    getWalletState,
+  };
+}
