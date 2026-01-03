@@ -40,22 +40,17 @@ export async function connectWallet() {
       ? await sdk.isInMiniApp().catch(() => false)
       : false;
 
-    if (inMiniApp) {
-      try {
-        provider = await getWalletConnectProvider();
-        providerSource = "walletconnect";
-      } catch (error) {
-        provider = await sdk.wallet.getEthereumProvider();
-        providerSource = "farcaster";
+    try {
+      provider = await getWalletConnectProvider();
+      providerSource = "walletconnect";
+    } catch (error) {
+      if (inMiniApp) {
+        throw new Error(
+          "WalletConnect is required in Farcaster. Check NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID."
+        );
       }
-    } else {
-      try {
-        provider = await getWalletConnectProvider();
-        providerSource = "walletconnect";
-      } catch (error) {
-        provider = browserProvider;
-        providerSource = provider ? "browser" : null;
-      }
+      provider = browserProvider;
+      providerSource = provider ? "browser" : null;
     }
 
     if (!provider) {
