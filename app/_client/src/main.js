@@ -2,6 +2,7 @@ import { Buffer } from "buffer";
 import { registerAppLifecycle } from "./app/app-lifecycle.js";
 import { initTokenViewRoute } from "./routes/token-view.js";
 import { initUiRoot } from "./ui/ui-root.js";
+import { notifyFarcasterReady } from "./features/farcaster/frame-ready.js";
 
 if (!globalThis.Buffer) {
   globalThis.Buffer = Buffer;
@@ -16,6 +17,7 @@ if (typeof document !== "undefined") {
   }
 }
 initTokenViewRoute();
+notifyFarcasterReady();
 
 let p5LoadPromise;
 
@@ -57,15 +59,15 @@ function ensureP5Instance() {
   if (typeof window === "undefined") {
     return;
   }
-  if (window.__CUBELESS_P5__) {
+  if (window.__CUBIXLES_P5__) {
     return;
   }
   loadP5Library()
     .then(() => {
-      if (window.__CUBELESS_P5__ || typeof window.p5 !== "function") {
+      if (window.__CUBIXLES_P5__ || typeof window.p5 !== "function") {
         return;
       }
-      window.__CUBELESS_P5__ = new window.p5();
+      window.__CUBIXLES_P5__ = new window.p5();
     })
     .catch((error) => {
       console.warn("p5.js failed to load:", error);

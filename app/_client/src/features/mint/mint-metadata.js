@@ -128,10 +128,10 @@ export function buildMintMetadata({
 
   return {
     schemaVersion: 1,
-    name: tokenId ? `cubeLess #${tokenId}` : "cubeLess",
+    name: tokenId ? `cubixles_ #${tokenId}` : "cubixles_",
     tokenId,
     description: [
-      "cubeLess mints interactive p5.js cubes whose provenance is tied to NFTs you already own.",
+      "cubixles_ mints interactive p5.js cubes whose provenance is tied to NFTs you already own.",
       "Interactive cube:",
       animationUrl,
     ].join("\n"),

@@ -22,7 +22,7 @@ function buildNonceMessage(nonce) {
     ? new Date(parsed.issuedAt + parsed.ttlMs).toISOString()
     : "unknown";
   return [
-    "cubeLess wants you to sign this message to authorize metadata pinning.",
+    "cubixles_ wants you to sign this message to authorize metadata pinning.",
     "No transaction or gas is required.",
     "",
     `Nonce: ${nonce}`,

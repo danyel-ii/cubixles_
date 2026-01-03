@@ -23,7 +23,7 @@ vi.mock("../../src/server/pinata.js", () => ({
 import { POST } from "../../app/api/pin/metadata/route.js";
 
 const validPayload = {
-  name: "cubeLess #1",
+  name: "cubixles_ #1",
   description: "test",
   animation_url: "https://example.com/m/1",
   image: "ipfs://cid/gif_0001.gif",

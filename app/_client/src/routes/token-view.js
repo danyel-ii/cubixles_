@@ -49,7 +49,7 @@ async function loadImages(urls) {
 }
 
 async function waitForFrostedTexture() {
-  if (typeof window !== "undefined" && window.__CUBELESS_SKIP_FROSTED__) {
+  if (typeof window !== "undefined" && window.__CUBIXLES_SKIP_FROSTED__) {
     return;
   }
   if (state.frostedTexture) {

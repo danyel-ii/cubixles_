@@ -11,7 +11,7 @@ import { getGifLibraryCid } from "../config/links.js";
 export function computeGifSeed({ tokenId, minter }) {
   return solidityPackedKeccak256(
     ["string", "uint256", "address"],
-    ["cubeless-gif-v1", tokenId, minter]
+    ["cubixles-gif-v1", tokenId, minter]
   );
 }
 

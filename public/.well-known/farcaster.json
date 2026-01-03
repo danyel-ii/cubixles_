@@ -1,47 +1,18 @@
 {
   "accountAssociation": {
-    "header": "",
-    "payload": "",
-    "signature": ""
-  },
-  "miniapp": {
-    "version": "1",
-    "name": "cubeless",
-    "iconUrl": "https://cubeless-red.vercel.app/icon.png",
-    "homeUrl": "https://cubeless-red.vercel.app",
-    "splashImageUrl": "https://cubeless-red.vercel.app/splash.png",
-    "splashBackgroundColor": "#000000",
-    "webhookUrl": "https://cubeless-red.vercel.app/api/webhook",
-    "subtitle": "realm of provenance",
-    "description": "cubeless is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
-    "screenshotUrls": ["https://cubeless-red.vercel.app/image.png"],
-    "primaryCategory": "art-creativity",
-    "tags": ["nft", "art", "remix", "community", "token"],
-    "heroImageUrl": "https://cubeless-red.vercel.app/hero.png",
-    "tagline": "quick, shareable, remixable",
-    "ogTitle": "cubeless",
-    "ogDescription": "mint the cube, cube your ownership",
-    "ogImageUrl": "https://cubeless-red.vercel.app/ogImage.png",
-    "castShareUrl": ""
+    "header": "REPLACE_WITH_HEADER",
+    "payload": "REPLACE_WITH_PAYLOAD",
+    "signature": "REPLACE_WITH_SIGNATURE"
   },
   "frame": {
     "version": "1",
-    "name": "cubeless",
-    "iconUrl": "https://cubeless-red.vercel.app/icon.png",
-    "homeUrl": "https://cubeless-red.vercel.app",
-    "splashImageUrl": "https://cubeless-red.vercel.app/splash.png",
-    "splashBackgroundColor": "#000000",
-    "webhookUrl": "https://cubeless-red.vercel.app/api/webhook",
-    "subtitle": "realm of provenance",
-    "description": "cubeless is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
-    "screenshotUrls": ["https://cubeless-red.vercel.app/image.png"],
-    "primaryCategory": "art-creativity",
-    "tags": ["nft", "art", "remix", "community", "token"],
-    "heroImageUrl": "https://cubeless-red.vercel.app/hero.png",
-    "tagline": "quick, shareable, remixable",
-    "ogTitle": "cubeless",
-    "ogDescription": "mint the cube, cube your ownership",
-    "ogImageUrl": "https://cubeless-red.vercel.app/ogImage.png",
-    "castShareUrl": ""
+    "name": "cubixles_",
+    "iconUrl": "https://your-domain.com/icon.png",
+    "homeUrl": "https://your-domain.com",
+    "imageUrl": "https://your-domain.com/og.png",
+    "buttonTitle": "Open App",
+    "splashImageUrl": "https://your-domain.com/splash.png",
+    "splashBackgroundColor": "#ffffff",
+    "requiredChains": [1]
   }
 }

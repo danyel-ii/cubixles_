@@ -11,7 +11,7 @@ export default function AppShell() {
     <>
       <div id="overlay" className="overlay">
         <div className="overlay-card">
-          <div className="overlay-title">cubeLess</div>
+          <div className="overlay-title">cubixles_</div>
           <div className="overlay-sub">
             Mint interactive p5.js artworks whose provenance is tethered to NFTs you already own.
           </div>
@@ -59,7 +59,7 @@ export default function AppShell() {
           <div id="overlay-about-panel" className="overlay-about">
             <div className="overlay-section-title">About</div>
             <p className="overlay-text">
-              cubeLess reads your wallet address and NFT metadata to build provenance snapshots. No
+              cubixles_ reads your wallet address and NFT metadata to build provenance snapshots. No
               private keys are accessed; minting is a direct onchain transaction you sign.
             </p>
           </div>
@@ -102,6 +102,9 @@ export default function AppShell() {
           </button>
           <button id="wallet-disconnect" className="ui-button is-ghost" type="button">
             Disconnect
+          </button>
+          <button id="wallet-switch" className="ui-button is-ghost is-hidden" type="button">
+            Switch to Mainnet
           </button>
         </div>
         <div id="wallet-status" className="ui-hint">

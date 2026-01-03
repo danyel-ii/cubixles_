@@ -3,7 +3,7 @@ import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import { buildTokenViewUrl } from "../../config/links.js";
 import { buildProvenanceBundle } from "../../data/nft/indexer";
 import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
-import { subscribeWallet } from "../wallet/wallet.js";
+import { subscribeWallet, switchToMainnet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
 import { buildMintMetadata } from "./mint-metadata.js";
 import { pinTokenMetadata } from "./token-uri-provider.js";
@@ -436,11 +436,20 @@ export function initMintUi() {
     try {
       await refreshFloorSnapshot(true);
       const provider = new BrowserProvider(walletState.provider);
-      const network = await provider.getNetwork();
+      let network = await provider.getNetwork();
       if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
-        throw new Error(
-          `Switch wallet to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`
-        );
+        const switched = await switchToMainnet();
+        if (!switched) {
+          throw new Error(
+            `Switch wallet to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`
+          );
+        }
+        network = await provider.getNetwork();
+        if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
+          throw new Error(
+            `Switch wallet to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`
+          );
+        }
       }
       if (!currentMintPriceWei) {
         throw new Error("Mint price unavailable. Try again shortly.");

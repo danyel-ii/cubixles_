@@ -16,3 +16,4 @@ assets/
 contracts/lcov.info
 .vercel
 .env*.local
+test-results/

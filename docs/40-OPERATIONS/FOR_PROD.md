@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2026-01-02
+Last updated: 2026-01-03
 
 ## 0) Pre-flight (local)
 
@@ -80,6 +80,11 @@ node contracts/scripts/export-abi.mjs
 - `SERVER_AUTH_SALT`
 - `CUBIXLES_CONTRACT_ADDRESS`
 - `CUBIXLES_CHAIN_ID=1` (use `11155111` only for Sepolia rehearsal)
+- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` (required for mobile browser wallet connections)
+
+### Farcaster manifest (production)
+- Publish `public/.well-known/farcaster.json` with `requiredChains: [1]`.
+- Ensure `accountAssociation` is signed for the production domain.
 
 ### Run dev + smoke
 ```sh
