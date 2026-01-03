@@ -1,5 +1,6 @@
 import { Buffer } from "buffer";
 import { registerAppLifecycle } from "./app/app-lifecycle.js";
+import { notifyFarcasterReady } from "./features/farcaster/frame-ready.js";
 import { initTokenViewRoute } from "./routes/token-view.js";
 import { initUiRoot } from "./ui/ui-root.js";
 
@@ -10,9 +11,17 @@ if (!globalThis.Buffer) {
 registerAppLifecycle();
 if (typeof document !== "undefined") {
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initUiRoot, { once: true });
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => {
+        initUiRoot();
+        notifyFarcasterReady();
+      },
+      { once: true }
+    );
   } else {
     initUiRoot();
+    notifyFarcasterReady();
   }
 }
 initTokenViewRoute();
