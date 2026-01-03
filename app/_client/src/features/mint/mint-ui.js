@@ -463,7 +463,7 @@ export function initMintUi() {
         if (latestBlock <= expiryBlock) {
           if (existingCommit.refsHash !== refsHash) {
             throw new Error(
-              "Pending commit exists. Wait ~256 blocks or mint with the same NFT selection."
+              "Pending commit exists. Use the same NFT selection as your last commit or wait ~256 blocks."
             );
           }
           if (latestBlock <= existingBlock) {

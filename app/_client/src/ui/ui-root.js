@@ -68,25 +68,35 @@ function initWalletClickGuard() {
   if (!connectButton || !statusEl) {
     return;
   }
-  document.addEventListener(
-    "click",
-    (event) => {
-      if (!(event.target instanceof Element)) {
-        return;
-      }
-      if (!connectButton.contains(event.target)) {
-        return;
-      }
-      event.preventDefault();
-      event.stopPropagation();
-      statusEl.textContent = "Wallet: connecting…";
-      connectWallet().catch((error) => {
+  let isConnecting = false;
+
+  function handleConnect(event) {
+    if (isConnecting) {
+      return;
+    }
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+    if (!connectButton.contains(event.target)) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    statusEl.textContent = "Wallet: connecting…";
+    isConnecting = true;
+    connectWallet()
+      .catch((error) => {
         const message = error instanceof Error ? error.message : "Connection failed.";
         statusEl.textContent = `Wallet: ${message}`;
+      })
+      .finally(() => {
+        isConnecting = false;
       });
-    },
-    true
-  );
+  }
+
+  ["pointerdown", "touchstart", "click"].forEach((eventName) => {
+    document.addEventListener(eventName, handleConnect, true);
+  });
 }
 
 function initUiPointerGuard() {
