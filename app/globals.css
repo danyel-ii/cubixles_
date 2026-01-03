@@ -365,6 +365,11 @@ canvas {
   touch-action: none;
 }
 
+body.wallet-modal-open canvas {
+  pointer-events: none;
+  touch-action: pan-y;
+}
+
 .ui-panel {
   position: fixed;
   top: 20px;

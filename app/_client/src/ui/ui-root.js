@@ -38,6 +38,7 @@ export function initUiRoot() {
   initLessDeltaTracking();
   initPreviewUi();
   initUiTouchGuards();
+  initWalletModalObserver();
   initTokenIdFromUrl();
   initLandingReturn();
   initDebugPanel();
@@ -60,6 +61,24 @@ function initUiTouchGuards() {
       );
     });
   });
+}
+
+function initWalletModalObserver() {
+  if (typeof document === "undefined") {
+    return;
+  }
+  const selectors =
+    "wcm-modal, w3m-modal, .wcm-modal, .w3m-modal, .walletconnect-modal, [data-wcm-modal]";
+  const root = document.body;
+
+  function toggleClass() {
+    const open = Boolean(document.querySelector(selectors));
+    root.classList.toggle("wallet-modal-open", open);
+  }
+
+  toggleClass();
+  const observer = new MutationObserver(toggleClass);
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 function initTokenIdFromUrl() {
