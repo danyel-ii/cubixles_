@@ -31,6 +31,7 @@ export function subscribeWallet(listener) {
 export async function connectWallet() {
   setState({ status: "connecting", error: null });
   try {
+    setWalletModalOpen(true);
     let provider = getBrowserProvider();
     let providerSource = provider ? "browser" : null;
     let walletModalLock = false;
@@ -61,7 +62,6 @@ export async function connectWallet() {
     }
     if (needsWalletConnect) {
       walletModalLock = true;
-      setWalletModalOpen(true);
       await ensureWalletConnectSession(provider);
     }
 
@@ -74,9 +74,7 @@ export async function connectWallet() {
     setState({ status: "connected", address, provider, providerSource, chainId });
     await ensureChain(provider, CUBIXLES_CONTRACT.chainId);
     attachProviderListeners(provider);
-    if (walletModalLock) {
-      setWalletModalOpen(false);
-    }
+    setWalletModalOpen(false);
   } catch (error) {
     if (typeof document !== "undefined") {
       document.dispatchEvent(

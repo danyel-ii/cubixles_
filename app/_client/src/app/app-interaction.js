@@ -7,11 +7,17 @@ const ROT_EPSILON = 0.0001;
 const ROT_CLAMP = Math.PI / 2 - 0.08;
 
 export function onMousePressed() {
+  if (isWalletModalOpen()) {
+    return false;
+  }
   state.lastMouse = { x: mouseX, y: mouseY };
   state.isDragging = true;
 }
 
 export function onMouseDragged() {
+  if (isWalletModalOpen()) {
+    return false;
+  }
   if (!state.lastMouse) {
     return;
   }
@@ -22,11 +28,17 @@ export function onMouseDragged() {
 }
 
 export function onMouseReleased() {
+  if (isWalletModalOpen()) {
+    return false;
+  }
   state.lastMouse = null;
   state.isDragging = false;
 }
 
 export function onMouseWheel(event) {
+  if (isWalletModalOpen()) {
+    return false;
+  }
   state.zoom = constrain(
     state.zoom + event.delta * 0.4,
     config.zoom.min,
@@ -36,7 +48,7 @@ export function onMouseWheel(event) {
 }
 
 export function onTouchStarted(event) {
-  if (isOverlayActive() || isUiTarget(event)) {
+  if (isOverlayActive() || isUiTarget(event) || isWalletModalActive() || isWalletModalOpen()) {
     return true;
   }
   if (touches.length === 2) {
@@ -56,7 +68,7 @@ export function onTouchStarted(event) {
 }
 
 export function onTouchMoved(event) {
-  if (isOverlayActive() || isUiTarget(event)) {
+  if (isOverlayActive() || isUiTarget(event) || isWalletModalActive() || isWalletModalOpen()) {
     return true;
   }
   if (touches.length === 2) {
@@ -85,7 +97,7 @@ export function onTouchMoved(event) {
 }
 
 export function onTouchEnded(event) {
-  if (isOverlayActive() || isUiTarget(event)) {
+  if (isOverlayActive() || isUiTarget(event) || isWalletModalActive() || isWalletModalOpen()) {
     return true;
   }
   if (touches.length < 2) {
@@ -118,6 +130,21 @@ export function applyRotationInertia() {
 function isOverlayActive() {
   const overlay = document.getElementById("overlay");
   return Boolean(overlay && !overlay.classList.contains("is-hidden"));
+}
+
+function isWalletModalActive() {
+  return Boolean(
+    document.querySelector(
+      "wcm-modal, w3m-modal, .wcm-modal, .w3m-modal, .walletconnect-modal, [data-wcm-modal]"
+    )
+  );
+}
+
+function isWalletModalOpen() {
+  if (typeof document === "undefined") {
+    return false;
+  }
+  return document.body.classList.contains("wallet-modal-open");
 }
 
 function isUiTarget(event) {
