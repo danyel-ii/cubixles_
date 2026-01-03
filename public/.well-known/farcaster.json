@@ -1,19 +1,19 @@
 {
   "accountAssociation": {
-    "header": "eyJmaWQiOjEwNzgyNDgsInR5cGUiOiJhdXRoIiwia2V5IjoiMHg1NDgzYTREYWQ2N0EwNzZjRTQ1OWE5RTI4Nzc3MjVDMkE2N0UxQkQwIn0",
-    "payload": "eyJkb21haW4iOiJjdWJpeGxlcy1yZWQudmVyY2VsLmFwcCJ9",
-    "signature": "QHVR9lnvmzswZV8quprXMImIlVyruBXuX741iwqWGuMvnFiwJ7UI/SwqmTp2I0yR+Jo4kmtOlV3IG7GQse+VKBs="
+    "header": "eyJmaWQiOjEwNzgyNDgsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg1RDA5NTVGNjQ0MzZBNjg0MTNhOTQ3MTI1Y2Q1NzM3ZTk1NGZFNWI3In0",
+    "payload": "eyJkb21haW4iOiJjdWJpeGxlcy54eXoifQ",
+    "signature": "TSeKvGfGkD2b8z+BGagvztCMqFlO7khxewAOA4/1NzFgOfycPU4W5wrlu7aTsIJRaE+kl4T2bAqinlvdQXal5hw="
   },
   "miniapp": {
     "version": "1",
     "name": "cubixles_",
-    "iconUrl": "https://cubixles-red.vercel.app/icon.png",
-    "homeUrl": "https://cubixles-red.vercel.app",
-    "splashImageUrl": "https://cubixles-red.vercel.app/splash.png",
+    "iconUrl": "https://www.cubixles.xyz/icon.png",
+    "homeUrl": "https://www.cubixles.xyz",
+    "splashImageUrl": "https://www.cubixles.xyz/splash.png",
     "splashBackgroundColor": "#000000",
     "buttonTitle": "mint cube(less)",
-    "imageUrl": "https://cubixles-red.vercel.app/image.png",
-    "webhookUrl": "https://cubixles-red.vercel.app/api/webhook",
+    "imageUrl": "https://www.cubixles.xyz/image.png",
+    "webhookUrl": "https://www.cubixles.xyz/api/webhook",
     "subtitle": "realm of provenance",
     "description": "cubixles_ is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
     "screenshotUrls": [
@@ -23,23 +23,23 @@
     ],
     "primaryCategory": "art-creativity",
     "tags": ["nft", "art", "remix", "community", "token"],
-    "heroImageUrl": "https://cubixles-red.vercel.app/hero.png",
+    "heroImageUrl": "https://www.cubixles.xyz/hero.png",
     "tagline": "quick, shareable, remixable",
     "ogTitle": "cubixles_",
     "ogDescription": "mint the cube, cube your ownership",
-    "ogImageUrl": "https://cubixles-red.vercel.app/ogImage.png",
-    "castShareUrl": "https://cubixles-red.vercel.app"
+    "ogImageUrl": "https://www.cubixles.xyz/ogImage.png",
+    "castShareUrl": "https://www.cubixles.xyz"
   },
   "frame": {
     "version": "1",
     "name": "cubixles_",
-    "iconUrl": "https://cubixles-red.vercel.app/icon.png",
-    "homeUrl": "https://cubixles-red.vercel.app",
-    "splashImageUrl": "https://cubixles-red.vercel.app/splash.png",
+    "iconUrl": "https://www.cubixles.xyz/icon.png",
+    "homeUrl": "https://www.cubixles.xyz",
+    "splashImageUrl": "https://www.cubixles.xyz/splash.png",
     "splashBackgroundColor": "#000000",
     "buttonTitle": "mint cube(less)",
-    "imageUrl": "https://cubixles-red.vercel.app/image.png",
-    "webhookUrl": "https://cubixles-red.vercel.app/api/webhook",
+    "imageUrl": "https://www.cubixles.xyz/image.png",
+    "webhookUrl": "https://www.cubixles.xyz/api/webhook",
     "subtitle": "realm of provenance",
     "description": "cubixles_ is an ownership-gated minting miniapp: connect your wallet, select 1-6 NFTs, and mint a provenance NFT pointing to an IPFS-hosted p5.js piece.",
     "screenshotUrls": [
@@ -49,11 +49,11 @@
     ],
     "primaryCategory": "art-creativity",
     "tags": ["nft", "art", "remix", "community", "token"],
-    "heroImageUrl": "https://cubixles-red.vercel.app/hero.png",
+    "heroImageUrl": "https://www.cubixles.xyz/hero.png",
     "tagline": "quick, shareable, remixable",
     "ogTitle": "cubixles_",
     "ogDescription": "mint the cube, cube your ownership",
-    "ogImageUrl": "https://cubixles-red.vercel.app/ogImage.png",
-    "castShareUrl": "https://cubixles-red.vercel.app"
+    "ogImageUrl": "https://www.cubixles.xyz/ogImage.png",
+    "castShareUrl": "https://www.cubixles.xyz"
   }
 }
