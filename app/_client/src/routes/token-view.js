@@ -134,12 +134,22 @@ function initTokenShareDialog() {
   shareButton.textContent = "share cube";
   document.body.appendChild(shareButton);
 
-  shareButton.addEventListener("click", () => {
+  function handleShareActivate(event) {
+    if (event?.stopPropagation) {
+      event.stopPropagation();
+    }
+    if (event?.preventDefault) {
+      event.preventDefault();
+    }
     if (!currentUrl) {
       return;
     }
     openModal(currentUrl);
-  });
+  }
+
+  shareButton.addEventListener("click", handleShareActivate);
+  shareButton.addEventListener("pointerdown", handleShareActivate);
+  shareButton.addEventListener("touchstart", handleShareActivate, { passive: false });
 
   return (url) => {
     currentUrl = url;

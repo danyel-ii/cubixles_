@@ -43,7 +43,15 @@ export function initUiRoot() {
 }
 
 function initUiTouchGuards() {
-  const selectors = ["#ui", "#leaderboard", "#preview-bar", "#overlay", "#wallet-picker"];
+  const selectors = [
+    "#ui",
+    "#leaderboard",
+    "#preview-bar",
+    "#overlay",
+    "#wallet-picker",
+    "#share-cube",
+    "#share-modal",
+  ];
   selectors.forEach((selector) => {
     const el = document.querySelector(selector);
     if (!el) {
