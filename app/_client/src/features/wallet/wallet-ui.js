@@ -23,7 +23,15 @@ export function initWalletUi() {
     return;
   }
 
-  connectButton.addEventListener("click", () => connectWallet());
+  connectButton.addEventListener("click", async () => {
+    statusEl.textContent = "Wallet: connecting…";
+    try {
+      await connectWallet();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Connection failed.";
+      statusEl.textContent = `Wallet: ${message}`;
+    }
+  });
   disconnectButton.addEventListener("click", () => disconnectWallet());
   switchButton.addEventListener("click", () => switchToMainnet());
 
