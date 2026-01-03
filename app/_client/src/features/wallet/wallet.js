@@ -40,8 +40,13 @@ export async function connectWallet() {
         ? await sdk.isInMiniApp().catch(() => false)
         : false;
       if (inMiniApp) {
-        provider = await sdk.wallet.getEthereumProvider();
-        providerSource = "farcaster";
+        try {
+          provider = await getWalletConnectProvider();
+          providerSource = "walletconnect";
+        } catch (error) {
+          provider = await sdk.wallet.getEthereumProvider();
+          providerSource = "farcaster";
+        }
       } else {
         provider = await getWalletConnectProvider();
         providerSource = "walletconnect";
