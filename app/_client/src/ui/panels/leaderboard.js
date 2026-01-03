@@ -113,17 +113,13 @@ export function initLeaderboardUi() {
     return ids.map((tokenId) => BigInt(tokenId));
   }
 
-  async function fetchLeaderboard(provider) {
-    const readProvider = getReadProvider(provider);
+  async function fetchLeaderboard() {
+    const readProvider = getReadProvider(null);
     if (!readProvider) {
       return { entries: [], supplyNow: null };
     }
-    const network = await readProvider.getNetwork();
-    if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
-      throw new Error(`Wrong network for leaderboard.`);
-    }
     const contract = new Contract(CUBIXLES_CONTRACT.address, CUBIXLES_CONTRACT.abi, readProvider);
-    const tokenIds = await fetchMintedTokenIds(provider);
+    const tokenIds = await fetchMintedTokenIds(null);
     if (!tokenIds.length) {
       return { entries: [], supplyNow: null };
     }
@@ -210,8 +206,7 @@ export function initLeaderboardUi() {
     }
     statusEl.textContent = "Loading leaderboard...";
     try {
-      const provider = walletState?.status === "connected" ? walletState.provider : null;
-      const { entries, supplyNow } = await fetchLeaderboard(provider);
+      const { entries, supplyNow } = await fetchLeaderboard();
       supplyEl.textContent = supplyNow
         ? `Supply now: ${formatDelta(supplyNow)}`
         : "Supply now: —";

@@ -98,14 +98,11 @@ export function initMintUi() {
 
   function getReadProvider() {
     const rpcUrl = getRpcUrl(CUBIXLES_CONTRACT.chainId);
-    if (walletState?.providerSource === "walletconnect" && rpcUrl) {
+    if (rpcUrl) {
       return new JsonRpcProvider(rpcUrl);
     }
     if (walletState?.provider) {
       return new BrowserProvider(walletState.provider);
-    }
-    if (rpcUrl) {
-      return new JsonRpcProvider(rpcUrl);
     }
     return null;
   }
@@ -524,7 +521,11 @@ export function initMintUi() {
       if (!salt) {
         salt = generateSalt();
       }
-      const previewTokenId = await contract.previewTokenId(salt, refsCanonical);
+      const previewTokenId = await readContract.previewTokenId(
+        salt,
+        refsCanonical,
+        { from: walletState.address }
+      );
       const lessSupplyMint = await fetchLessTotalSupply(CUBIXLES_CONTRACT.chainId);
       const tokenId = BigInt(previewTokenId);
       const selectionSeed = computeGifSeed({
