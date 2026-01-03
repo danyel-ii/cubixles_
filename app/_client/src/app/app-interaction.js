@@ -7,7 +7,7 @@ const ROT_EPSILON = 0.0001;
 const ROT_CLAMP = Math.PI / 2 - 0.08;
 
 export function onMousePressed() {
-  if (isWalletModalOpen()) {
+  if (isWalletModalOpen() || isUiPointed()) {
     return false;
   }
   state.lastMouse = { x: mouseX, y: mouseY };
@@ -15,7 +15,7 @@ export function onMousePressed() {
 }
 
 export function onMouseDragged() {
-  if (isWalletModalOpen()) {
+  if (isWalletModalOpen() || isUiPointed()) {
     return false;
   }
   if (!state.lastMouse) {
@@ -28,7 +28,7 @@ export function onMouseDragged() {
 }
 
 export function onMouseReleased() {
-  if (isWalletModalOpen()) {
+  if (isWalletModalOpen() || isUiPointed()) {
     return false;
   }
   state.lastMouse = null;
@@ -36,7 +36,7 @@ export function onMouseReleased() {
 }
 
 export function onMouseWheel(event) {
-  if (isWalletModalOpen()) {
+  if (isWalletModalOpen() || isUiPointed()) {
     return false;
   }
   state.zoom = constrain(
@@ -157,6 +157,25 @@ function isUiTarget(event) {
       target.closest("#leaderboard") ||
       target.closest("#preview-bar") ||
       target.closest("#overlay")
+  );
+}
+
+function isUiPointed() {
+  if (typeof document === "undefined") {
+    return false;
+  }
+  const el = document.elementFromPoint(mouseX, mouseY);
+  if (!el) {
+    return false;
+  }
+  return Boolean(
+    el.closest("#ui") ||
+      el.closest("#leaderboard") ||
+      el.closest("#preview-bar") ||
+      el.closest("#overlay") ||
+      el.closest(".toast-root") ||
+      el.closest(".eth-hud") ||
+      el.closest(".less-hud")
   );
 }
 

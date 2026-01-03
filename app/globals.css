@@ -393,7 +393,11 @@ body.is-token-view #leaderboard {
   }
 }
 
-canvas {
+canvas,
+.p5Canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
   display: block;
   touch-action: none;
 }
