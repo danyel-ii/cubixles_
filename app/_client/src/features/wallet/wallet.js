@@ -40,17 +40,21 @@ export async function connectWallet() {
       ? await sdk.isInMiniApp().catch(() => false)
       : false;
 
-    try {
-      provider = await getWalletConnectProvider();
-      providerSource = "walletconnect";
-    } catch (error) {
-      if (inMiniApp) {
+    if (inMiniApp) {
+      try {
+        provider = await getWalletConnectProvider();
+        providerSource = "walletconnect";
+      } catch (error) {
         throw new Error(
           "WalletConnect is required in Farcaster. Check NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID."
         );
       }
+    } else if (browserProvider) {
       provider = browserProvider;
-      providerSource = provider ? "browser" : null;
+      providerSource = "browser";
+    } else {
+      provider = await getWalletConnectProvider();
+      providerSource = "walletconnect";
     }
 
     if (!provider) {
@@ -67,17 +71,14 @@ export async function connectWallet() {
     }
 
     let accounts = null;
+    const timeoutMs = providerSource === "walletconnect" ? 20000 : 12000;
     try {
-      accounts = await requestAccountsWithTimeout(provider);
+      accounts = await requestAccountsWithTimeout(provider, timeoutMs);
     } catch (error) {
       if (providerSource === "browser") {
-        provider = await getWalletConnectProvider();
-        providerSource = "walletconnect";
-        await ensureWalletConnectSession(provider);
-        accounts = await requestAccountsWithTimeout(provider);
-      } else {
         throw error;
       }
+      throw error;
     }
     const address = accounts && accounts[0] ? accounts[0] : null;
     if (!address) {

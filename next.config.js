@@ -30,7 +30,7 @@ const nextConfig = {
           "form-action 'self'",
           `frame-ancestors ${frameAncestors}`,
           "object-src 'none'",
-          "frame-src 'self' https://vercel.live",
+          "frame-src 'self' https://vercel.live https://verify.walletconnect.org",
           scriptSrc,
           scriptSrcElem,
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
