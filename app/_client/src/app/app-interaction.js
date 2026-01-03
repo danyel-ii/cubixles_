@@ -168,7 +168,8 @@ function isUiTarget(event) {
     target.closest("#ui") ||
       target.closest("#leaderboard") ||
       target.closest("#preview-bar") ||
-      target.closest("#overlay")
+      target.closest("#overlay") ||
+      target.closest("#wallet-picker")
   );
 }
 
@@ -185,6 +186,7 @@ function isUiPointed() {
       el.closest("#leaderboard") ||
       el.closest("#preview-bar") ||
       el.closest("#overlay") ||
+      el.closest("#wallet-picker") ||
       el.closest(".toast-root") ||
       el.closest(".eth-hud") ||
       el.closest(".less-hud")

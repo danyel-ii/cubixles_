@@ -6,8 +6,7 @@ import { initPreviewUi } from "./panels/preview.js";
 import { initEthHud } from "./hud/eth-hud.js";
 import { initLessSupplyHud } from "./hud/less-hud.js";
 import { initLessDeltaTracking } from "./hud/less-delta.js";
-import { initWalletUi } from "../features/wallet/wallet-ui.js";
-import { connectWallet } from "../features/wallet/wallet.js";
+import { initWalletUi, requestWalletConnection } from "../features/wallet/wallet-ui.js";
 import { initNftPickerUi } from "../features/nft/picker-ui.js";
 import { initMintUi } from "../features/mint/mint-ui.js";
 import { state } from "../app/app-state.js";
@@ -44,7 +43,7 @@ export function initUiRoot() {
 }
 
 function initUiTouchGuards() {
-  const selectors = ["#ui", "#leaderboard", "#preview-bar", "#overlay"];
+  const selectors = ["#ui", "#leaderboard", "#preview-bar", "#overlay", "#wallet-picker"];
   selectors.forEach((selector) => {
     const el = document.querySelector(selector);
     if (!el) {
@@ -84,7 +83,7 @@ function initWalletClickGuard() {
     event.stopPropagation();
     statusEl.textContent = "Wallet: connecting…";
     isConnecting = true;
-    connectWallet()
+    requestWalletConnection()
       .catch((error) => {
         const message = error instanceof Error ? error.message : "Connection failed.";
         statusEl.textContent = `Wallet: ${message}`;
@@ -104,7 +103,14 @@ function initUiPointerGuard() {
     return;
   }
   const root = document.body;
-  const selectors = ["#ui", "#leaderboard", "#preview-bar", "#overlay", ".toast-root"];
+  const selectors = [
+    "#ui",
+    "#leaderboard",
+    "#preview-bar",
+    "#overlay",
+    "#wallet-picker",
+    ".toast-root",
+  ];
 
   function isUiElement(el) {
     if (!(el instanceof Element)) {

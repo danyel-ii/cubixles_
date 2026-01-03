@@ -96,6 +96,21 @@ export default function AppShell() {
       </div>
       <div id="toast-root" className="toast-root" aria-live="polite" aria-atomic="true"></div>
       <div id="confetti-root" className="confetti-root" aria-hidden="true"></div>
+      <div id="wallet-picker" className="wallet-picker is-hidden" role="dialog" aria-modal="true">
+        <div className="wallet-picker-card">
+          <div className="wallet-picker-head">
+            <div className="wallet-picker-title">Choose a wallet</div>
+            <button id="wallet-picker-close" className="wallet-picker-close" type="button">
+              Close
+            </button>
+          </div>
+          <div id="wallet-picker-list" className="wallet-picker-list"></div>
+          <div className="wallet-picker-note">
+            Select a browser wallet to connect. WalletConnect is used when no browser wallets are
+            detected.
+          </div>
+        </div>
+      </div>
       <div id="eth-hud" className="eth-hud" aria-hidden="true">
         <div className="eth-hud-body">
           <svg className="eth-hud-icon" viewBox="0 0 120 180" aria-hidden="true">

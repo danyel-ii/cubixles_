@@ -28,19 +28,30 @@ export function subscribeWallet(listener) {
   return () => listeners.delete(listener);
 }
 
-export async function connectWallet() {
+export async function connectWallet(options = {}) {
   setState({ status: "connecting", error: null });
   try {
     let provider = null;
     let providerSource = null;
     const browserProvider = getBrowserProvider();
+    const preferredProvider = options?.provider || null;
+    const preferredSource = options?.source || null;
 
     const canUseMiniApp = Boolean(sdk?.isInMiniApp && sdk?.wallet?.getEthereumProvider);
     const inMiniApp = canUseMiniApp
       ? await sdk.isInMiniApp().catch(() => false)
       : false;
 
-    if (inMiniApp) {
+    if (preferredProvider) {
+      provider = preferredProvider;
+      if (preferredSource) {
+        providerSource = preferredSource;
+      } else if (isWalletConnectProvider(provider)) {
+        providerSource = "walletconnect";
+      } else {
+        providerSource = "browser";
+      }
+    } else if (inMiniApp) {
       try {
         provider = await getWalletConnectProvider();
         providerSource = "walletconnect";
