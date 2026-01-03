@@ -917,6 +917,9 @@ body.is-minted .preview-bar {
 .nft-title {
   font-size: 12px;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nft-meta {

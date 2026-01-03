@@ -178,9 +178,13 @@ async function ensureWalletConnectSession(provider) {
 
 async function readChainId(provider) {
   if (provider?.request) {
-    const chainIdHex = await provider.request({ method: "eth_chainId" });
-    if (typeof chainIdHex === "string") {
-      return Number.parseInt(chainIdHex, 16);
+    try {
+      const chainIdHex = await provider.request({ method: "eth_chainId" });
+      if (typeof chainIdHex === "string") {
+        return Number.parseInt(chainIdHex, 16);
+      }
+    } catch (error) {
+      return null;
     }
   }
   return null;
@@ -189,6 +193,13 @@ async function readChainId(provider) {
 async function ensureChain(provider, desiredChainId) {
   if (!provider?.request || !desiredChainId) {
     return false;
+  }
+  if (isWalletConnectProvider(provider)) {
+    const hasSession = Boolean(provider.session);
+    const hasAccounts = Array.isArray(provider.accounts) && provider.accounts.length > 0;
+    if (!provider.connected && !hasSession && !hasAccounts) {
+      return false;
+    }
   }
   const current = await readChainId(provider);
   if (current === desiredChainId) {
