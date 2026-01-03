@@ -1,20 +1,20 @@
-# cubixles_ v0 — State of Review (2026-01-02)
+# cubixles_ v0 — State of Review (2026-01-03)
 
-Last updated: 2026-01-02
+Last updated: 2026-01-03
 
 ## Summary
 
-The repo is aligned on the "cubixles_" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `image` + `external_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs). Contracts route mint fees and resale royalties to the RoyaltySplitter (50% ETH to owner + 50% swap to $LESS with a 90% owner / 10% burn split), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The Next.js app router serves the UI, with hardened `/api/*` routes handling Alchemy and Pinata server-side. Coverage gate is enforced at 90% (see `docs/30-SECURITY/SECURITY_AUDIT.md` for latest run).
+The repo is aligned on the "cubixles_" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI builds metadata with `image` + `external_url`. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs), with EIP-6963 wallet picking and a WalletConnect fallback. Contracts route mint fees and resale royalties to the RoyaltySplitter (50% ETH to owner + 50% swap to $LESS with a 90% owner / 10% burn split), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. The Next.js app router serves the UI, with hardened `/api/*` routes handling Alchemy and Pinata server-side. Coverage gate is enforced at 90% (see `docs/30-SECURITY/SECURITY_AUDIT.md` for latest run).
 
 ## What’s working
 
 - **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired; data reads proxy through `/api/nfts` (no client keys), and metadata pinning now requires a signed nonce.
 - **Provenance**: NFT selection -> provenance bundle -> mint metadata pipeline is in place.
-- **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `external_url` (`/m/<tokenId>`), palette/selection traits, and logs diagnostics.
-- **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render.
+- **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `external_url` (`/m/<tokenId>`), palette/selection traits, and logs diagnostics; commit step shows a progress indicator while waiting for confirmation.
+- **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render; share modal is available on token view pages.
 - **Contracts**: Foundry tests cover gating, pricing, and royalty routing; mint price is dynamic from $LESS supply (base `0.0015 ETH`, rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter which swaps to LESS and forwards to the owner/burn splits. Onchain $LESS supply snapshots + delta views are live.
 - **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/30-SECURITY/` (coverage gate 90% via `npm run coverage:contracts`).
-- **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` when unavailable) + Leaderboard ranking by ΔLESS are live.
+- **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` when unavailable) + Leaderboard ranking by ΔLESS are live; leaderboard reads through public RPCs on mobile.
 - **$LESS metrics**: $LESS supply HUD + ΔLESS HUD and leaderboard ranking by `deltaFromLast` are wired.
 - **Server routes**: `/api/nfts`, `/api/pin/metadata`, `/api/nonce`, `/api/identity` are available under Next app router with rate limits, schema validation, and safe logging.
 - **Branding**: UI titles, metadata name, and docs are aligned to "cubixles_".

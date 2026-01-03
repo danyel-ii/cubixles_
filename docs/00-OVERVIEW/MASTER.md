@@ -1,6 +1,6 @@
 # cubixles_ — Master Index
 
-Last updated: 2026-01-01
+Last updated: 2026-01-03
 
 ## Executive Overview
 
@@ -78,6 +78,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 - **refs / NftRef**: A list of NFT references (contractAddress + tokenId) used to texture the cube.
 - **provenance**: Metadata field recording refs and mint context for auditability.
 - **external_url**: Token metadata field that points to the interactive token viewer `/m/<tokenId>`.
+- **opengraph-image**: Server-rendered OG image at `/m/<tokenId>/opengraph-image` for link previews.
 - **RoyaltySplitter**: ERC-2981 receiver that forwards royalties and optionally attempts $LESS purchases.
 - **$LESS**: The ERC-20 token used for dynamic mint pricing and delta metrics.
 - **deltaFromLast**: Current metric used to rank tokens by $LESS supply delta from last transfer snapshot.

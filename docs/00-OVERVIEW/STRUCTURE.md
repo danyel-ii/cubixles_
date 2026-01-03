@@ -22,6 +22,8 @@ are split into smaller modules.
   - Main route (`/`).
 - `app/m/[tokenId]/page.jsx`
   - Token viewer route (`/m/<tokenId>`).
+- `app/m/[tokenId]/opengraph-image.jsx`
+  - OG preview image renderer for token share cards.
 - `app/_client/src/main.js`
   - Bootstraps the p5 lifecycle registration and browser polyfills.
 - `app/_client/src/config/links.js`
@@ -67,7 +69,7 @@ are split into smaller modules.
 - `app/_client/src/features/wallet/wallet.js`
   - Wallet connection state + provider handshake.
 - `app/_client/src/features/wallet/wallet-ui.js`
-  - Wallet connect/disconnect UI binding.
+  - Wallet connect/disconnect UI binding + EIP-6963 wallet picker.
 - `app/_client/src/features/nft/picker-ui.js`
   - NFT selection UI + cube texture application.
 - `app/_client/src/features/mint/mint-ui.js`

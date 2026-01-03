@@ -1,9 +1,14 @@
 # cubixles_
 
-Last updated: 2025-12-31
+Last updated: 2026-01-03
 
-cubixles_ is a miniapp that lets users mint interactive cubes whose provenance is tied to NFTs they already own.
+cubixles_ lets users mint NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs they already own.
 The frontend runs on Next.js, and the contracts are built and tested with Foundry.
+
+## Product snapshot
+- Wallet connect supports EIP-6963 browser wallets and WalletConnect fallback.
+- Token viewer routes live at `/m/<tokenId>` with OG previews at `/m/<tokenId>/opengraph-image`.
+- NFT picker filters spam/airdrops and surfaces purchased/minted ERC-721s.
 
 ## Repository layout
 - `app/` — Next.js app router, API routes, and UI.

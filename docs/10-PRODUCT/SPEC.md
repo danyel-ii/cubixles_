@@ -201,6 +201,7 @@ type MintMetadata = {
 
 - `external_url` resolves to `https://<domain>/m/<tokenId>`.
 - The viewer reads `tokenURI`, extracts `provenance.refs`, and renders the cube with those textures.
+- OG previews are rendered at `/m/<tokenId>/opengraph-image` for link shares.
 
 ## Palette Mapping
 
