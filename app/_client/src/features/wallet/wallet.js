@@ -31,26 +31,35 @@ export function subscribeWallet(listener) {
 export async function connectWallet() {
   setState({ status: "connecting", error: null });
   try {
-    let provider = getBrowserProvider();
-    let providerSource = provider ? "browser" : null;
+    let provider = null;
+    let providerSource = null;
+    const browserProvider = getBrowserProvider();
 
-    if (!provider) {
-      const canUseMiniApp = Boolean(sdk?.isInMiniApp && sdk?.wallet?.getEthereumProvider);
-      const inMiniApp = canUseMiniApp
-        ? await sdk.isInMiniApp().catch(() => false)
-        : false;
-      if (inMiniApp) {
-        try {
-          provider = await getWalletConnectProvider();
-          providerSource = "walletconnect";
-        } catch (error) {
-          provider = await sdk.wallet.getEthereumProvider();
-          providerSource = "farcaster";
-        }
-      } else {
+    const canUseMiniApp = Boolean(sdk?.isInMiniApp && sdk?.wallet?.getEthereumProvider);
+    const inMiniApp = canUseMiniApp
+      ? await sdk.isInMiniApp().catch(() => false)
+      : false;
+
+    if (inMiniApp) {
+      try {
         provider = await getWalletConnectProvider();
         providerSource = "walletconnect";
+      } catch (error) {
+        provider = await sdk.wallet.getEthereumProvider();
+        providerSource = "farcaster";
       }
+    } else {
+      try {
+        provider = await getWalletConnectProvider();
+        providerSource = "walletconnect";
+      } catch (error) {
+        provider = browserProvider;
+        providerSource = provider ? "browser" : null;
+      }
+    }
+
+    if (!provider) {
+      throw new Error("No wallet provider available.");
     }
 
     const needsWalletConnect =
