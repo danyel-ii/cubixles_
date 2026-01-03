@@ -9,17 +9,20 @@ Last updated: 2026-01-01
 2. **ERC-721 heterogeneity**
    - `ownerOf` is assumed to be ERC-721 compliant. Non-compliant contracts may revert or return unexpected owners; mint will revert in those cases.
 
-3. **PoolManager swap assumptions**
+3. **ERC-1155 not supported**
+   - v0 selection and provenance logic assume 1-of-1 ERC-721 tokens; ERC-1155 balances and shared metadata are not handled.
+
+4. **PoolManager swap assumptions**
    - Swap logic uses PoolManager `unlock` + `swap` and relies on a configured slippage cap; outcomes depend on pool liquidity and hook behavior.
 
-4. **$LESS token transfer assumptions**
+5. **$LESS token transfer assumptions**
    - The splitter assumes `IERC20.transfer` returns a boolean and reverts otherwise.
 
-5. **Fork tests require secrets**
+6. **Fork tests require secrets**
    - Mainnet fork tests are skipped unless `MAINNET_RPC_URL` is set.
 
-6. **Sale detection is approximated**
+7. **Sale detection is approximated**
    - The “last sale” snapshot uses any ERC-721 transfer (excluding mint), so gifts and sales are treated identically.
 
-7. **Static analysis**
+8. **Static analysis**
    - Slither currently reports no findings; solhint still reports warnings (mostly NatSpec + import-path-check).

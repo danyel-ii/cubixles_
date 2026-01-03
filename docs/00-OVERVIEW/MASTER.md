@@ -74,7 +74,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 
 ## Glossary
 
-- **cubixles_**: The miniapp + contract system that mints an ERC-721 cube composed of user-selected NFT references.
+- **cubixles_**: The miniapp + contract system that mints an ERC-721 cube composed of user-selected NFT references (ERC-1155 is excluded in v0).
 - **refs / NftRef**: A list of NFT references (contractAddress + tokenId) used to texture the cube.
 - **provenance**: Metadata field recording refs and mint context for auditability.
 - **external_url**: Token metadata field that points to the interactive token viewer `/m/<tokenId>`.

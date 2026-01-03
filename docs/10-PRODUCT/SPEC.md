@@ -27,7 +27,8 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
    - Parse raw IDs as `BigInt` first.
    - Store as base-10 string to support large token IDs.
 3. **token standard**: only allow ERC-721 (`ownerOf` gating).
-   - Skip/ignore non-ERC-721 items.
+   - Skip/ignore non-ERC-721 items (ERC-1155 is intentionally unsupported in v0).
+   - Rationale: ERC-1155 introduces balances and shared metadata that do not map cleanly to the 1-of-1 provenance flow.
 4. **contractAddress**: must be **EIP-55 checksum** string.
 5. **URI normalization**: store `{ original, resolved }` for both `tokenUri` and `image`.
    - `original` is the exact value returned by the source.
