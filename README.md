@@ -1,6 +1,6 @@
 # cubixles_
 
-Last updated: 2026-01-03
+Last updated: 2026-01-04
 
 cubixles_ lets users mint NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs they already own.
 The frontend runs on Next.js, and the contracts are built and tested with Foundry.
@@ -9,6 +9,7 @@ The frontend runs on Next.js, and the contracts are built and tested with Foundr
 - Wallet connect supports EIP-6963 browser wallets and WalletConnect fallback.
 - Token viewer routes live at `/m/<tokenId>` with OG previews at `/m/<tokenId>/opengraph-image`.
 - NFT picker filters spam/airdrops and surfaces purchased/minted ERC-721s.
+- Multi-chain UI supports mainnet + Base; Base runs in ETH-only mode with fixed mint pricing.
 
 ## Repository layout
 - `app/` — Next.js app router, API routes, and UI.
@@ -51,6 +52,11 @@ npm run fork-test
 
 ## Configuration
 Copy `.env.example` to `.env` for non-secret defaults. Put secrets and mainnet-only settings in `.env.local` (git-ignored). The Next.js server reads server-only keys and exposes only what is required to the client.
+
+Base mint price updater:
+```sh
+npm run update:base-mint-price -- --dry-run
+```
 
 ## Documentation
 Start with:

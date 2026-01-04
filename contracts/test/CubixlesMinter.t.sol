@@ -23,7 +23,11 @@ contract MockERC721 is ERC721 {
 }
 
 contract CubixlesMinterHarness is CubixlesMinter {
-    constructor(address splitter, address lessToken, uint96 bps) CubixlesMinter(splitter, lessToken, bps) {}
+    constructor(
+        address splitter,
+        address lessToken,
+        uint96 bps
+    ) CubixlesMinter(splitter, lessToken, bps, 0) {}
 
     function exposedRoundUp(uint256 value, uint256 step) external pure returns (uint256) {
         return _roundUp(value, step);
@@ -49,7 +53,7 @@ contract CubixlesMinterTest is Test {
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500);
+        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0);
         vm.stopPrank();
 
         nftA = new MockERC721("NFT A", "NFTA");
@@ -366,17 +370,24 @@ contract CubixlesMinterTest is Test {
 
     function testConstructorRevertsOnZeroResaleSplitter() public {
         vm.expectRevert(CubixlesMinter.ResaleSplitterRequired.selector);
-        new CubixlesMinter(address(0), address(lessToken), 500);
+        new CubixlesMinter(address(0), address(lessToken), 500, 0);
     }
 
     function testConstructorRevertsOnZeroLessToken() public {
-        vm.expectRevert(CubixlesMinter.LessTokenRequired.selector);
-        new CubixlesMinter(resaleSplitter, address(0), 500);
+        vm.expectRevert(CubixlesMinter.FixedPriceRequired.selector);
+        new CubixlesMinter(resaleSplitter, address(0), 500, 0);
     }
 
     function testConstructorRevertsOnRoyaltyTooHigh() public {
         vm.expectRevert(CubixlesMinter.RoyaltyTooHigh.selector);
-        new CubixlesMinter(resaleSplitter, address(lessToken), 1001);
+        new CubixlesMinter(resaleSplitter, address(lessToken), 1001, 0);
+    }
+
+    function testFixedPriceWhenLessDisabled() public {
+        uint256 fixedPrice = 2_000_000_000_000_000;
+        CubixlesMinter fixedMinter = new CubixlesMinter(resaleSplitter, address(0), 500, fixedPrice);
+        assertEq(fixedMinter.currentMintPrice(), fixedPrice);
+        assertEq(fixedMinter.lessSupplyNow(), 0);
     }
 
     function testLastSnapshotUpdatesOnTransfer() public {

@@ -22,6 +22,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
 
   await page.addInitScript(({ selectors, responses }) => {
     window.__CUBIXLES_TEST_HOOKS__ = true;
+    window.localStorage?.setItem("cubixles:chainId", "1");
     const mockBlock = {
       number: "0x1",
       hash: "0x" + "11".repeat(32),
@@ -191,7 +192,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await page.getByRole("button", { name: /mint nft/i }).click();
 
   await expect(page.locator("#mint-status")).toContainText(
-    /step 2\/2: confirm mint|submitting mint transaction|waiting for confirmation|mint confirmed/i,
+    /step 1\/2: confirm commit|step 2\/2: confirm mint|submitting mint transaction|waiting for confirmation|mint confirmed/i,
     {
       timeout: 5000,
     }

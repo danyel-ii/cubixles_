@@ -1,6 +1,6 @@
 import { getAddress } from "ethers";
 import { alchemyGet } from "../chain/alchemy-client";
-import { CUBIXLES_CONTRACT } from "../../config/contracts";
+import { getActiveChainId, isSupportedChainId } from "../../config/chains.js";
 import type {
   NftItem,
   ProvenanceBundle,
@@ -30,8 +30,11 @@ type AlchemyMetadataResponse = AlchemyNft & {
 };
 
 function assertConfiguredChain(chainId: number) {
-  if (chainId !== CUBIXLES_CONTRACT.chainId) {
-    throw new Error(`Configured for chain ${CUBIXLES_CONTRACT.chainId}.`);
+  if (!isSupportedChainId(chainId)) {
+    throw new Error("Unsupported chain for NFT indexer.");
+  }
+  if (chainId !== getActiveChainId()) {
+    throw new Error(`Active chain is ${getActiveChainId()}.`);
   }
 }
 

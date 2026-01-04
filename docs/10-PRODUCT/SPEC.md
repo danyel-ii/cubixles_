@@ -177,6 +177,10 @@ type MintMetadata = {
 - Mint fee is forwarded to RoyaltySplitter (same split logic as royalties).
 - Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn).
 
+Base ETH-only mode:
+- When `LESS_TOKEN` is disabled on deployment, mint price is fixed (`fixedMintPriceWei`) and can be updated by the owner.
+- $LESS snapshots and delta metrics are disabled (stored as `0`) on Base.
+
 ## Deterministic TokenId
 
 - `tokenId = keccak256("cubixles_:tokenid:v1", minter, salt, refsHash)`
@@ -197,6 +201,7 @@ type MintMetadata = {
 - The contract snapshots $LESS totalSupply at mint and on transfer (totalSupply is treated as remaining supply).
 - The canonical UI/leaderboard metric is `deltaFromLast(tokenId)` (snapshot minus current supply, clamped to 0).
 - The UI “$LESS supply” HUD displays remaining supply as `totalSupply - balanceOf(BURN_ADDRESS)` using the server-side RPC proxy.
+- On Base, the HUD and leaderboard do not use $LESS deltas.
 
 ## Token Viewer Route
 

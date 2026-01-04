@@ -26,6 +26,9 @@ function getNftBaseUrl(chainId, apiKey) {
   if (chainId === 1) {
     return `https://eth-mainnet.g.alchemy.com/nft/${NFT_API_VERSION}/${apiKey}`;
   }
+  if (chainId === 8453) {
+    return `https://base-mainnet.g.alchemy.com/nft/${NFT_API_VERSION}/${apiKey}`;
+  }
   if (chainId === 11155111) {
     return `https://eth-sepolia.g.alchemy.com/nft/${NFT_API_VERSION}/${apiKey}`;
   }
@@ -35,6 +38,9 @@ function getNftBaseUrl(chainId, apiKey) {
 function getRpcUrl(chainId, apiKey) {
   if (chainId === 1) {
     return `https://eth-mainnet.g.alchemy.com/v2/${apiKey}`;
+  }
+  if (chainId === 8453) {
+    return process.env.BASE_RPC_URL || `https://base-mainnet.g.alchemy.com/v2/${apiKey}`;
   }
   if (chainId === 11155111) {
     return `https://eth-sepolia.g.alchemy.com/v2/${apiKey}`;

@@ -70,22 +70,24 @@ are split into smaller modules.
   - Wallet connection state + provider handshake.
 - `app/_client/src/features/wallet/wallet-ui.js`
   - Wallet connect/disconnect UI binding + EIP-6963 wallet picker.
+- `app/_client/src/features/network/network-ui.js`
+  - Network selection UI + persisted chain preference.
 - `app/_client/src/features/nft/picker-ui.js`
   - NFT selection UI + cube texture application.
 - `app/_client/src/features/mint/mint-ui.js`
-  - Mint flow, floor snapshot UI, and diagnostics.
+  - Mint flow, floor snapshot UI (mainnet only), and diagnostics.
 - `app/_client/src/features/mint/mint-metadata.js`
   - Mint metadata + provenance shaping.
 - `app/_client/src/features/mint/token-uri-provider.js`
   - Token URI pinning helper.
 - `app/_client/src/data/chain/alchemy-client.ts`
-  - Alchemy NFT API wrapper via `/api/nfts` (mainnet; optional Sepolia via env).
+  - Alchemy NFT API wrapper via `/api/nfts` (mainnet + Base; optional Sepolia via env).
 - `app/_client/src/data/chain/cubixles-reader.js`
   - Reads tokenURI via `/api/nfts` JSON-RPC (no wallet required).
 - `app/_client/src/data/chain/less-supply.js`
   - Mainnet $LESS remaining supply fetcher via `/api/nfts` (totalSupply minus burn address).
 - `app/_client/src/data/chain/less-delta.js`
-  - Onchain ΔLESS fetcher (deltaFromLast/deltaFromMint).
+  - Onchain ΔLESS fetcher (deltaFromLast/deltaFromMint; mainnet only).
 - `app/_client/src/data/nft/indexer.ts`
   - Inventory + provenance fetchers.
 - `app/_client/src/data/nft/floor.js`
@@ -106,11 +108,11 @@ are split into smaller modules.
 - `contracts/src/cubixles/CubixlesMinter.sol`
   - ERC-721 minting contract with ownership gating + ERC-2981.
 - `contracts/src/royalties/RoyaltySplitter.sol`
-  - Royalty receiver that can swap for $LESS and forward proceeds.
+  - Royalty receiver that can swap for $LESS and forward proceeds (ETH-only mode when swaps disabled).
 - `contracts/src/mocks/Counter.sol`
   - Foundry sample contract used by tests/scripts.
 - `contracts/script/DeployCubixles.s.sol`
-  - Deploys RoyaltySplitter + CubixlesMinter and writes deployment JSON (path via `CUBIXLES_DEPLOYMENT_PATH`).
+  - Deploys RoyaltySplitter + CubixlesMinter and writes deployment JSON (chain-specific default path, override via `CUBIXLES_DEPLOYMENT_PATH`).
 - `contracts/scripts/export-abi.mjs`
   - Exports CubixlesMinter ABI from the Foundry output directory.
 - `contracts/test/*.t.sol`

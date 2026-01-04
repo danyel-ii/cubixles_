@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2026-01-02
+Last updated: 2026-01-04
 
 ## 0) Pre-flight (local)
 
@@ -52,15 +52,11 @@ npm run fork-test
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid` in the deploy script)
-- `CUBIXLES_DEPLOYMENT_PATH` (optional; recommended: `deployments/mainnet.json` when running from `contracts/`)
+- `CUBIXLES_FIXED_MINT_PRICE_WEI` (required only when LESS is disabled)
 
 ### Deploy
 ```sh
-cd contracts
-forge script script/DeployCubixles.s.sol \
-  --rpc-url "$MAINNET_RPC_URL" \
-  --private-key "$MAINNET_DEPLOYER_KEY" \
-  --broadcast
+npm run deploy:mainnet
 ```
 
 Optional Sepolia rehearsal:
@@ -126,11 +122,7 @@ npm run check:no-client-secrets
 
 1) Deploy on mainnet:
 ```sh
-cd contracts
-forge script script/DeployCubixles.s.sol \
-  --rpc-url "$MAINNET_RPC_URL" \
-  --private-key "$MAINNET_DEPLOYER_KEY" \
-  --broadcast
+npm run deploy:mainnet
 ```
 
 2) Export ABI + update frontend config with mainnet address.
@@ -153,3 +145,18 @@ forge script script/DeployCubixles.s.sol \
    - token viewer renders
    - royalties route to splitter
    - $LESS swap output lands in the owner wallet
+
+## Appendix: Base ETH-only deploy (no LESS)
+
+- Set `CUBIXLES_LESS_TOKEN=0x0000000000000000000000000000000000000000`.
+- Set `CUBIXLES_FIXED_MINT_PRICE_WEI` (required in ETH-only mode).
+- Disable swaps by leaving `CUBIXLES_POOL_MANAGER` unset (or `0x0`).
+- Deploy:
+```sh
+npm run deploy:base
+```
+
+To update Base pricing from Punkology floor, run:
+```sh
+npm run update:base-mint-price
+```

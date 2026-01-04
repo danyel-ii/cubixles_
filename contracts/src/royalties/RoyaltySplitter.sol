@@ -104,14 +104,17 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         if (burnAddress_ == address(0)) {
             revert BurnAddressRequired();
         }
-        if (lessToken_ == address(0)) {
-            revert LessTokenRequired();
-        }
-        if (Currency.unwrap(poolKey_.currency0) != address(0)) {
-            revert InvalidPoolKey();
-        }
-        if (Currency.unwrap(poolKey_.currency1) != lessToken_) {
-            revert InvalidPoolKey();
+        bool swapReady = address(poolManager_) != address(0);
+        if (swapReady) {
+            if (lessToken_ == address(0)) {
+                revert LessTokenRequired();
+            }
+            if (Currency.unwrap(poolKey_.currency0) != address(0)) {
+                revert InvalidPoolKey();
+            }
+            if (Currency.unwrap(poolKey_.currency1) != lessToken_) {
+                revert InvalidPoolKey();
+            }
         }
         if (swapMaxSlippageBps_ > MAX_SWAP_SLIPPAGE_BPS) {
             revert InvalidSlippageBps();
@@ -120,7 +123,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         POOL_MANAGER = poolManager_;
         poolKey = poolKey_;
         BURN_ADDRESS = burnAddress_;
-        swapEnabled = address(poolManager_) != address(0);
+        swapEnabled = swapReady;
         swapMaxSlippageBps = swapMaxSlippageBps_;
     }
 

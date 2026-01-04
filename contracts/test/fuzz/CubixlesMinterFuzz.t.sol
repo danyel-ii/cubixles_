@@ -28,7 +28,7 @@ contract CubixlesMinterFuzzTest is Test {
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500);
+        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0);
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
     }

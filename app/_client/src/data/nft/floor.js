@@ -1,7 +1,5 @@
 import { alchemyGet } from "../chain/alchemy-client";
 
-const MAINNET_CHAIN_ID = 1;
-
 function extractFloorValue(payload) {
   if (!payload || typeof payload !== "object") {
     return 0;
@@ -54,9 +52,6 @@ function extractRetrievedAt(payload) {
 }
 
 export async function getCollectionFloorSnapshot(contractAddress, chainId) {
-  if (chainId !== MAINNET_CHAIN_ID) {
-    return { floorEth: 0, retrievedAt: null };
-  }
   try {
     const response = await alchemyGet(chainId, "getFloorPrice", {
       contractAddress,

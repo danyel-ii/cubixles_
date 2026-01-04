@@ -12,9 +12,14 @@
     "test:ui": "playwright test",
     "coverage:contracts": "cd contracts && python3 scripts/check_coverage.py",
     "check:no-client-secrets": "npm run build && node scripts/check-client-secrets.mjs",
+    "deploy:base": "cd contracts && CUBIXLES_CHAIN_ID=8453 forge script script/DeployCubixles.s.sol --rpc-url \"$BASE_RPC_URL\" --private-key \"$BASE_DEPLOYER_KEY\" --broadcast",
+    "deploy:base:dry": "cd contracts && CUBIXLES_CHAIN_ID=8453 forge script script/DeployCubixles.s.sol --rpc-url \"$BASE_RPC_URL\" --private-key \"$BASE_DEPLOYER_KEY\"",
+    "deploy:mainnet": "cd contracts && CUBIXLES_CHAIN_ID=1 forge script script/DeployCubixles.s.sol --rpc-url \"$MAINNET_RPC_URL\" --private-key \"$MAINNET_DEPLOYER_KEY\" --broadcast",
+    "deploy:mainnet:dry": "cd contracts && CUBIXLES_CHAIN_ID=1 forge script script/DeployCubixles.s.sol --rpc-url \"$MAINNET_RPC_URL\" --private-key \"$MAINNET_DEPLOYER_KEY\"",
     "fork-test": "bash scripts/fork-test.sh",
     "bench:api": "node scripts/bench-api.mjs",
-    "monitor:swaps": "node scripts/monitor-swaps.mjs"
+    "monitor:swaps": "node scripts/monitor-swaps.mjs",
+    "update:base-mint-price": "node scripts/update-base-mint-price.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",

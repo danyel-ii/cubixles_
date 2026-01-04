@@ -7,6 +7,7 @@ import { initEthHud } from "./hud/eth-hud.js";
 import { initLessSupplyHud } from "./hud/less-hud.js";
 import { initLessDeltaTracking } from "./hud/less-delta.js";
 import { initWalletUi, requestWalletConnection } from "../features/wallet/wallet-ui.js";
+import { initNetworkUi } from "../features/network/network-ui.js";
 import { initNftPickerUi } from "../features/nft/picker-ui.js";
 import { initMintUi } from "../features/mint/mint-ui.js";
 import { state } from "../app/app-state.js";
@@ -25,6 +26,7 @@ export function initUiRoot() {
   initOverlay();
   initLocalTextureUi();
   initExportUi();
+  initNetworkUi();
   initWalletUi();
   initNftPickerUi();
   initMintUi();
@@ -49,6 +51,7 @@ function initUiTouchGuards() {
     "#preview-bar",
     "#overlay",
     "#wallet-picker",
+    "#network-picker",
     "#share-cube",
     "#share-modal",
   ];
@@ -117,6 +120,7 @@ function initUiPointerGuard() {
     "#preview-bar",
     "#overlay",
     "#wallet-picker",
+    "#network-picker",
     "#share-cube",
     "#share-modal",
     ".toast-root",

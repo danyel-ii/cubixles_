@@ -30,6 +30,10 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     error ResaleSplitterRequired();
     /// @notice LESS token is required.
     error LessTokenRequired();
+    /// @notice Fixed mint price is required for ETH-only mode.
+    error FixedPriceRequired();
+    /// @notice Fixed price updates are not allowed when LESS is enabled.
+    error FixedPriceNotAllowed();
     /// @notice Royalty rate is too high.
     error RoyaltyTooHigh();
     /// @notice Mint commit is required.
@@ -94,6 +98,10 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
 
     /// @notice LESS token address.
     address public immutable LESS_TOKEN;
+    /// @notice Whether LESS pricing + snapshots are enabled.
+    bool public immutable lessEnabled;
+    /// @notice Fixed mint price when LESS is disabled.
+    uint256 public fixedMintPriceWei;
     /// @notice Royalty receiver for ERC-2981.
     address public resaleSplitter;
     /// @notice Total minted count (monotonic).
@@ -135,26 +143,41 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Emitted when royalty receiver changes.
     /// @param resaleSplitter New royalty receiver.
     event RoyaltyReceiverUpdated(address indexed resaleSplitter);
+    /// @notice Emitted when fixed mint price is updated.
+    /// @param price New fixed mint price in wei.
+    event FixedMintPriceUpdated(uint256 price);
 
     /// @notice Create a new minter instance.
     /// @param resaleSplitter_ Royalty receiver for ERC-2981.
     /// @param lessToken_ LESS token address.
     /// @param resaleRoyaltyBps Royalty rate in basis points.
-    constructor(address resaleSplitter_, address lessToken_, uint96 resaleRoyaltyBps)
+    /// @param fixedMintPriceWei_ Fixed mint price when LESS is disabled.
+    constructor(
+        address resaleSplitter_,
+        address lessToken_,
+        uint96 resaleRoyaltyBps,
+        uint256 fixedMintPriceWei_
+    )
         ERC721("cubixles_", "cubixles_")
         Ownable(msg.sender)
     {
         if (resaleSplitter_ == address(0)) {
             revert ResaleSplitterRequired();
         }
-        if (lessToken_ == address(0)) {
-            revert LessTokenRequired();
-        }
         if (resaleRoyaltyBps > 1000) {
             revert RoyaltyTooHigh();
         }
         resaleSplitter = resaleSplitter_;
         LESS_TOKEN = lessToken_;
+        if (lessToken_ == address(0)) {
+            if (fixedMintPriceWei_ == 0) {
+                revert FixedPriceRequired();
+            }
+            lessEnabled = false;
+            fixedMintPriceWei = fixedMintPriceWei_;
+        } else {
+            lessEnabled = true;
+        }
 
         _setDefaultRoyalty(resaleSplitter_, resaleRoyaltyBps);
     }
@@ -241,6 +264,9 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @dev Price scales from 1x to 2x as LESS supply decreases, then rounds up.
     /// @return Current mint price in wei.
     function currentMintPrice() public view returns (uint256) {
+        if (!lessEnabled) {
+            return fixedMintPriceWei;
+        }
         uint256 supply = IERC20Minimal(LESS_TOKEN).totalSupply();
         if (supply > ONE_BILLION) {
             supply = ONE_BILLION;
@@ -267,6 +293,9 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Current LESS total supply.
     /// @return Current total supply from LESS token.
     function lessSupplyNow() public view returns (uint256) {
+        if (!lessEnabled) {
+            return 0;
+        }
         return IERC20Minimal(LESS_TOKEN).totalSupply();
     }
 
@@ -331,6 +360,19 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
             revert RoyaltyTooHigh();
         }
         _setDefaultRoyalty(receiver, bps);
+    }
+
+    /// @notice Update the fixed mint price (ETH-only mode).
+    /// @param price New fixed mint price in wei.
+    function setFixedMintPrice(uint256 price) external onlyOwner {
+        if (lessEnabled) {
+            revert FixedPriceNotAllowed();
+        }
+        if (price == 0) {
+            revert FixedPriceRequired();
+        }
+        fixedMintPriceWei = price;
+        emit FixedMintPriceUpdated(price);
     }
 
     /// @notice ERC-165 support for ERC721URIStorage + ERC2981.
@@ -416,7 +458,10 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
 
     /// @dev Record LESS supply snapshots and emit events.
     function _snapshotSupply(uint256 tokenId, bool isMint) internal {
-        uint256 supply = IERC20Minimal(LESS_TOKEN).totalSupply();
+        uint256 supply = 0;
+        if (lessEnabled) {
+            supply = IERC20Minimal(LESS_TOKEN).totalSupply();
+        }
         if (isMint) {
             _mintSupply[tokenId] = supply;
             _lastSupply[tokenId] = supply;

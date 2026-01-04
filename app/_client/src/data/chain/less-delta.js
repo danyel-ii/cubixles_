@@ -1,5 +1,6 @@
 import { BrowserProvider, Contract, Interface } from "ethers";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
+import { getChainConfig } from "../../config/chains.js";
 
 function isZeroAddress(address) {
   return !address || address === "0x0000000000000000000000000000000000000000";
@@ -7,6 +8,10 @@ function isZeroAddress(address) {
 
 export async function fetchLessDelta(provider, tokenId) {
   if (tokenId === null || tokenId === undefined) {
+    return null;
+  }
+  const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+  if (!chain?.supportsLess) {
     return null;
   }
   if (isZeroAddress(CUBIXLES_CONTRACT.address) || !CUBIXLES_CONTRACT.abi?.length) {

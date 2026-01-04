@@ -353,12 +353,14 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testConstructorRevertsOnZeroLessToken() public {
+        MockLess less = new MockLess();
+        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
         vm.expectRevert(RoyaltySplitter.LessTokenRequired.selector);
         new RoyaltySplitter(
             owner,
             address(0),
-            IPoolManager(address(0)),
-            _poolKey(address(0xBEEF)),
+            IPoolManager(address(poolManager)),
+            _poolKey(address(0)),
             0,
             burn
         );
@@ -489,6 +491,7 @@ contract RoyaltySplitterTest is Test {
 
     function testConstructorRevertsOnInvalidCurrency0() public {
         MockLess less = new MockLess();
+        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
         PoolKey memory badKey = PoolKey({
             currency0: Currency.wrap(address(less)),
             currency1: Currency.wrap(address(less)),
@@ -501,7 +504,7 @@ contract RoyaltySplitterTest is Test {
         new RoyaltySplitter(
             owner,
             address(less),
-            IPoolManager(address(0)),
+            IPoolManager(address(poolManager)),
             badKey,
             0,
             burn
@@ -510,6 +513,7 @@ contract RoyaltySplitterTest is Test {
 
     function testConstructorRevertsOnInvalidCurrency1() public {
         MockLess less = new MockLess();
+        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
         PoolKey memory badKey = PoolKey({
             currency0: Currency.wrap(address(0)),
             currency1: Currency.wrap(address(0xBEEF)),
@@ -522,11 +526,24 @@ contract RoyaltySplitterTest is Test {
         new RoyaltySplitter(
             owner,
             address(less),
-            IPoolManager(address(0)),
+            IPoolManager(address(poolManager)),
             badKey,
             0,
             burn
         );
+    }
+
+    function testConstructorAllowsZeroLessTokenWhenSwapDisabled() public {
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(0),
+            IPoolManager(address(0)),
+            _poolKey(address(0)),
+            0,
+            burn
+        );
+        assertEq(address(splitter.LESS_TOKEN()), address(0));
+        assertEq(address(splitter.POOL_MANAGER()), address(0));
     }
 
     function testSlippageLimitReturnsInputWhenZeroBps() public {

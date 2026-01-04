@@ -1,10 +1,12 @@
 import {
   connectWallet,
   disconnectWallet,
+  getWalletState,
   subscribeWallet,
-  switchToMainnet,
+  switchToActiveChain,
 } from "./wallet.js";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
+import { formatChainName, subscribeActiveChain } from "../../config/chains.js";
 
 const providerRegistry = new Map();
 let discoveryStarted = false;
@@ -153,7 +155,7 @@ export function initWalletUi() {
   connectButton.addEventListener("click", () => requestWalletConnection());
   disconnectButton.addEventListener("click", () => disconnectWallet());
   if (switchButton) {
-    switchButton.addEventListener("click", () => switchToMainnet());
+    switchButton.addEventListener("click", () => switchToActiveChain());
   }
   if (pickerClose) {
     pickerClose.addEventListener("click", hideWalletPicker);
@@ -166,17 +168,7 @@ export function initWalletUi() {
     });
   }
 
-  function formatChainName(chainId) {
-    if (chainId === 1) {
-      return "Ethereum Mainnet";
-    }
-    if (chainId === 11155111) {
-      return "Sepolia";
-    }
-    return `Chain ${chainId}`;
-  }
-
-  subscribeWallet((state) => {
+  function updateWalletStatus(state) {
     const safeState = state || {
       status: "error",
       error: "Wallet state unavailable.",
@@ -248,5 +240,13 @@ export function initWalletUi() {
       switchButton.classList.add("is-hidden");
       switchButton.disabled = true;
     }
+  }
+
+  subscribeWallet((state) => {
+    updateWalletStatus(state);
+  });
+
+  subscribeActiveChain(() => {
+    updateWalletStatus(getWalletState());
   });
 }

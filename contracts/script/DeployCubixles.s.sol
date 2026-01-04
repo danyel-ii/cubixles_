@@ -26,6 +26,7 @@ contract DeployCubixles is Script {
         address hooks = vm.envOr("CUBIXLES_POOL_HOOKS", address(0));
         uint96 resaleRoyaltyBps = uint96(vm.envOr("CUBIXLES_RESALE_BPS", uint256(500)));
         uint16 swapMaxSlippageBps = uint16(vm.envOr("CUBIXLES_SWAP_MAX_SLIPPAGE_BPS", uint256(0)));
+        uint256 fixedMintPriceWei = vm.envOr("CUBIXLES_FIXED_MINT_PRICE_WEI", uint256(0));
         if (poolManager != address(0)) {
             require(tickSpacing != 0, "CUBIXLES_POOL_TICK_SPACING required");
         }
@@ -49,7 +50,8 @@ contract DeployCubixles is Script {
         CubixlesMinter minter = new CubixlesMinter(
             address(splitter),
             lessToken,
-            resaleRoyaltyBps
+            resaleRoyaltyBps,
+            fixedMintPriceWei
         );
         if (owner != msg.sender) {
             minter.transferOwnership(owner);
@@ -60,7 +62,9 @@ contract DeployCubixles is Script {
         uint256 chainId = vm.envOr("CUBIXLES_CHAIN_ID", block.chainid);
         string memory defaultPath = chainId == 1
             ? string.concat(root, "/contracts/deployments/mainnet.json")
-            : string.concat(root, "/contracts/deployments/sepolia.json");
+            : chainId == 8453
+                ? string.concat(root, "/contracts/deployments/base.json")
+                : string.concat(root, "/contracts/deployments/sepolia.json");
         string memory path = vm.envOr("CUBIXLES_DEPLOYMENT_PATH", defaultPath);
         string memory obj = "deployment";
         vm.serializeUint(obj, "chainId", chainId);

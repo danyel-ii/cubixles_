@@ -1,5 +1,10 @@
 import { state } from "../../app/app-state.js";
 import { fetchLessTotalSupply } from "../../data/chain/less-supply.js";
+import {
+  getActiveChainId,
+  getChainConfig,
+  subscribeActiveChain,
+} from "../../config/chains.js";
 
 const WAD = 1_000_000_000_000_000_000n;
 const THOUSAND = 1_000n * WAD;
@@ -33,21 +38,27 @@ export function initLessSupplyHud() {
   if (!valueEl) {
     return;
   }
+  let activeChainId = getActiveChainId();
 
   async function refresh() {
     try {
-      const supply = await fetchLessTotalSupply();
+      const supply = await fetchLessTotalSupply(activeChainId);
       state.lessTotalSupply = supply;
       state.lessUpdatedAt = new Date().toISOString();
     } catch (error) {
       state.lessTotalSupply = null;
       state.lessUpdatedAt = null;
     } finally {
+      const chain = getChainConfig(activeChainId);
       valueEl.textContent = formatSupply(state.lessTotalSupply);
       if (timeEl) {
-        timeEl.textContent = state.lessUpdatedAt
-          ? `updated ${state.lessUpdatedAt.slice(11, 19)}`
-          : "updated —";
+        if (!chain?.supportsLess) {
+          timeEl.textContent = "updated — (mainnet only)";
+        } else {
+          timeEl.textContent = state.lessUpdatedAt
+            ? `updated ${state.lessUpdatedAt.slice(11, 19)}`
+            : "updated —";
+        }
       }
       document.dispatchEvent(new CustomEvent("less-supply-change"));
     }
@@ -55,4 +66,9 @@ export function initLessSupplyHud() {
 
   refresh();
   setInterval(refresh, REFRESH_MS);
+
+  subscribeActiveChain((chainId) => {
+    activeChainId = chainId;
+    refresh();
+  });
 }

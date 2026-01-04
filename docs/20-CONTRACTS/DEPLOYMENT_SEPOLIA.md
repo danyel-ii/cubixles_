@@ -64,7 +64,8 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 
 - Note: env var names use `CUBIXLES_*` for compatibility with existing deploy tooling.
 - `CUBIXLES_OWNER`
-- `CUBIXLES_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
+- `CUBIXLES_LESS_TOKEN` (optional; use `0x0` to disable LESS pricing)
+- `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS is disabled)
 - `CUBIXLES_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
 - `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
 - `CUBIXLES_POOL_FEE` (optional, defaults to 0)
@@ -73,4 +74,4 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
-- `CUBIXLES_DEPLOYMENT_PATH` (optional; recommended: `deployments/mainnet.json` when running from `contracts/`)
+- `CUBIXLES_DEPLOYMENT_PATH` (optional; defaults to chain-specific deployment JSON)

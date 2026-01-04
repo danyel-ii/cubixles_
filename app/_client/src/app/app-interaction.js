@@ -159,7 +159,10 @@ function isWalletModalOpen() {
   if (typeof document === "undefined") {
     return false;
   }
-  return document.body.classList.contains("wallet-modal-open");
+  return (
+    document.body.classList.contains("wallet-modal-open") ||
+    document.body.classList.contains("network-modal-open")
+  );
 }
 
 function isUiTarget(event) {
@@ -173,6 +176,7 @@ function isUiTarget(event) {
       target.closest("#preview-bar") ||
       target.closest("#overlay") ||
       target.closest("#wallet-picker") ||
+      target.closest("#network-picker") ||
       target.closest("#share-cube") ||
       target.closest("#share-modal")
   );
@@ -192,6 +196,7 @@ function isUiPointed() {
       el.closest("#preview-bar") ||
       el.closest("#overlay") ||
       el.closest("#wallet-picker") ||
+      el.closest("#network-picker") ||
       el.closest("#share-cube") ||
       el.closest("#share-modal") ||
       el.closest(".toast-root") ||

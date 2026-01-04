@@ -29,7 +29,7 @@ export default function AppShell() {
               <li>Select 1–6 NFTs from your wallet.</li>
               <li>We snapshot key metadata (and collection floors when available).</li>
               <li>We publish the interactive artwork + metadata to IPFS.</li>
-              <li>You sign a direct mint on Ethereum.</li>
+              <li>You sign a direct mint on the selected network.</li>
             </ol>
           </div>
           <div className="overlay-section">
@@ -112,6 +112,25 @@ export default function AppShell() {
           </div>
         </div>
       </div>
+      <div
+        id="network-picker"
+        className="network-picker is-hidden"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="network-picker-card">
+          <div className="network-picker-head">
+            <div className="network-picker-title">Choose a network</div>
+            <button id="network-picker-close" className="network-picker-close" type="button">
+              Close
+            </button>
+          </div>
+          <div id="network-picker-list" className="network-picker-list"></div>
+          <div className="network-picker-note">
+            Your selection controls which chain is used for NFTs, minting, and metadata.
+          </div>
+        </div>
+      </div>
       <div id="eth-hud" className="eth-hud" aria-hidden="true">
         <div className="eth-hud-body">
           <svg className="eth-hud-icon" viewBox="0 0 120 180" aria-hidden="true">
@@ -156,6 +175,14 @@ export default function AppShell() {
         <div id="wallet-status" className="ui-hint">
           Wallet: not connected.
         </div>
+        <div id="network-status" className="ui-hint">
+          Network: —
+        </div>
+        <div className="ui-row">
+          <button id="network-select" className="ui-button is-ghost" type="button">
+            Choose network
+          </button>
+        </div>
         <div className="ui-row">
           <button id="leaderboard-open" className="ui-button is-ghost" type="button">
             Leaderboard
@@ -164,7 +191,7 @@ export default function AppShell() {
         <div className="ui-section">
           <div className="ui-section-title">NFT picker</div>
           <div id="nft-status" className="ui-hint">
-            Connect your wallet to load Ethereum Mainnet NFTs.
+            Connect your wallet to load NFTs.
           </div>
           <div className="ui-row">
             <button id="nft-refresh" className="ui-button is-ghost" type="button">

@@ -72,7 +72,7 @@ contract CubixlesMinterEdgeTest is Test {
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500);
+        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0);
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
     }
@@ -80,7 +80,7 @@ contract CubixlesMinterEdgeTest is Test {
     function testMintRevertsWhenOwnerReceiveFails() public {
         ReceiverRevertsOnReceive receiver = new ReceiverRevertsOnReceive();
         vm.prank(owner);
-        minter = new CubixlesMinter(address(receiver), address(lessToken), 500);
+        minter = new CubixlesMinter(address(receiver), address(lessToken), 500, 0);
 
         address minterAddr = makeAddr("minter");
         uint256 tokenId = nft.mint(minterAddr);
@@ -167,7 +167,7 @@ contract CubixlesMinterEdgeTest is Test {
     function testMintSucceedsWithGasHeavyOwner() public {
         ReceiverConsumesGasOnReceive gasOwner = new ReceiverConsumesGasOnReceive();
         vm.prank(owner);
-        minter = new CubixlesMinter(address(gasOwner), address(lessToken), 500);
+        minter = new CubixlesMinter(address(gasOwner), address(lessToken), 500, 0);
 
         address minterAddr = makeAddr("minter");
         uint256 tokenId = nft.mint(minterAddr);

@@ -1,6 +1,7 @@
 const TOTAL_SUPPLY_SELECTOR = "0x18160ddd";
 const BALANCE_OF_SELECTOR = "0x70a08231";
 import { readEnvValue } from "../../shared/utils/env.js";
+import { getChainConfig } from "../../config/chains.js";
 
 const BURN_ADDRESS =
   readEnvValue("NEXT_PUBLIC_LESS_BURN_ADDRESS") ||
@@ -14,6 +15,10 @@ function getLessTokenAddress() {
 }
 
 export async function fetchLessTotalSupply(chainId = 1) {
+  const chain = getChainConfig(chainId);
+  if (!chain?.supportsLess) {
+    return null;
+  }
   const token = getLessTokenAddress();
   const payload = {
     to: "",

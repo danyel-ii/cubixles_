@@ -1,6 +1,11 @@
 import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import { subscribeWallet } from "../../features/wallet/wallet.js";
+import {
+  formatChainName,
+  getChainConfig,
+  subscribeActiveChain,
+} from "../../config/chains.js";
 
 const MAX_ENTRIES = 50;
 const WAD = 1_000_000_000_000_000_000n;
@@ -65,25 +70,9 @@ export function initLeaderboardUi() {
 
   let walletState = null;
   let readProviderPromise = null;
-  const MAINNET_RPC_URLS = [
-    "https://cloudflare-eth.com",
-    "https://eth.llamarpc.com",
-    "https://rpc.ankr.com/eth",
-  ];
-
-  function formatChain(chainId) {
-    if (chainId === 11155111) {
-      return "Sepolia";
-    }
-    if (chainId === 1) {
-      return "Ethereum Mainnet";
-    }
-    return `Chain ${chainId}`;
-  }
-
   function updateLeaderboardDetails() {
     contractEl.textContent = `Contract: ${CUBIXLES_CONTRACT.address}`;
-    chainEl.textContent = `Chain: ${formatChain(CUBIXLES_CONTRACT.chainId)}`;
+    chainEl.textContent = `Chain: ${formatChainName(CUBIXLES_CONTRACT.chainId)}`;
     updatedEl.textContent = `Last updated: ${new Date().toISOString()}`;
   }
 
@@ -92,13 +81,19 @@ export function initLeaderboardUi() {
     listEl.innerHTML = "";
   }
 
+  function isLeaderboardSupported() {
+    const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+    return Boolean(chain?.supportsLess && chain?.id === 1);
+  }
+
   async function getReadProvider(provider) {
-    if (CUBIXLES_CONTRACT.chainId === 1) {
+    const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+    if (chain?.rpcUrls?.length) {
       if (readProviderPromise) {
         return readProviderPromise;
       }
       readProviderPromise = (async () => {
-        for (const url of MAINNET_RPC_URLS) {
+        for (const url of chain.rpcUrls) {
           const candidate = new JsonRpcProvider(url);
           try {
             await candidate.getBlockNumber();
@@ -199,8 +194,11 @@ export function initLeaderboardUi() {
         link.className = "ui-link";
         identitySpan.appendChild(link);
       } else if (entry.minter) {
+        const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
         const link = document.createElement("a");
-        link.href = `https://etherscan.io/address/${entry.minter}`;
+        link.href = chain?.explorer
+          ? `${chain.explorer}/address/${entry.minter}`
+          : `https://etherscan.io/address/${entry.minter}`;
         link.textContent = shortenAddress(entry.minter);
         link.className = "ui-link";
         identitySpan.appendChild(link);
@@ -220,6 +218,11 @@ export function initLeaderboardUi() {
 
   async function refreshLeaderboard() {
     updateLeaderboardDetails();
+    if (!isLeaderboardSupported()) {
+      resetList("Leaderboard is available on Ethereum Mainnet only.");
+      supplyEl.textContent = "Supply now: —";
+      return;
+    }
     if (isZeroAddress(CUBIXLES_CONTRACT.address) || !CUBIXLES_CONTRACT.abi?.length) {
       resetList("Contract not configured.");
       supplyEl.textContent = "Supply now: —";
@@ -265,5 +268,12 @@ export function initLeaderboardUi() {
 
   subscribeWallet((next) => {
     walletState = next;
+  });
+
+  subscribeActiveChain(() => {
+    readProviderPromise = null;
+    if (!leaderboardPanel.classList.contains("is-hidden")) {
+      refreshLeaderboard();
+    }
   });
 }

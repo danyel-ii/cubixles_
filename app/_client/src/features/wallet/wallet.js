@@ -1,5 +1,11 @@
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
+import {
+  getActiveChain,
+  getActiveChainId,
+  getChainConfig,
+  subscribeActiveChain,
+} from "../../config/chains.js";
 
 const walletState = {
   status: "idle",
@@ -97,7 +103,7 @@ export async function connectWallet(options = {}) {
     }
     const chainId = await readChainId(provider);
     setState({ status: "connected", address, provider, providerSource, chainId });
-    await ensureChain(provider, CUBIXLES_CONTRACT.chainId);
+    await ensureChain(provider, getActiveChainId());
     attachProviderListeners(provider);
   } catch (error) {
     if (typeof document !== "undefined") {
@@ -201,6 +207,24 @@ async function readChainId(provider) {
   return null;
 }
 
+function buildAddChainParams(chainId) {
+  const chain = getChainConfig(chainId);
+  if (!chain) {
+    return null;
+  }
+  return {
+    chainId: `0x${chainId.toString(16)}`,
+    chainName: chain.name,
+    rpcUrls: chain.rpcUrls,
+    nativeCurrency: {
+      name: chain.shortName,
+      symbol: chain.shortName === "Base" ? "ETH" : "ETH",
+      decimals: 18,
+    },
+    blockExplorerUrls: chain.explorer ? [chain.explorer] : undefined,
+  };
+}
+
 async function ensureChain(provider, desiredChainId) {
   if (!provider?.request || !desiredChainId) {
     return false;
@@ -217,16 +241,35 @@ async function ensureChain(provider, desiredChainId) {
     setState({ chainId: current });
     return true;
   }
-  const chainHex = `0x${desiredChainId.toString(16)}`;
   try {
     await provider.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: chainHex }],
+      params: [{ chainId: `0x${desiredChainId.toString(16)}` }],
     });
     const updated = await readChainId(provider);
     setState({ chainId: updated });
     return updated === desiredChainId;
   } catch (error) {
+    const code = error?.code ?? error?.data?.originalError?.code;
+    if (code === 4902) {
+      const params = buildAddChainParams(desiredChainId);
+      if (!params) {
+        setState({ chainId: current });
+        return false;
+      }
+      try {
+        await provider.request({
+          method: "wallet_addEthereumChain",
+          params: [params],
+        });
+        const updated = await readChainId(provider);
+        setState({ chainId: updated });
+        return updated === desiredChainId;
+      } catch (addError) {
+        setState({ chainId: current });
+        return false;
+      }
+    }
     setState({ chainId: current });
     return false;
   }
@@ -275,12 +318,16 @@ async function getWalletConnectProvider() {
     url: window.location.origin,
     icons: [`${window.location.origin}/icon.png`],
   };
+  const activeChainId = getActiveChainId();
+  const optionalChains = getActiveChain()
+    ? [1, 8453].filter((id) => id !== activeChainId)
+    : [1, 8453];
   walletConnectProviderPromise = import("@walletconnect/ethereum-provider").then(
     ({ EthereumProvider }) =>
       EthereumProvider.init({
         projectId,
-        chains: [CUBIXLES_CONTRACT.chainId],
-        optionalChains: [11155111],
+        chains: [activeChainId],
+        optionalChains,
         showQrModal: true,
         metadata,
       })
@@ -288,12 +335,16 @@ async function getWalletConnectProvider() {
   return walletConnectProviderPromise;
 }
 
-export async function switchToMainnet() {
+export async function switchToActiveChain() {
   if (!walletState.provider) {
     return false;
   }
-  return ensureChain(walletState.provider, CUBIXLES_CONTRACT.chainId);
+  return ensureChain(walletState.provider, getActiveChainId());
 }
+
+subscribeActiveChain(() => {
+  walletConnectProviderPromise = null;
+});
 
 if (typeof window !== "undefined" && window.__CUBIXLES_TEST_HOOKS__) {
   window.__CUBIXLES_WALLET__ = {

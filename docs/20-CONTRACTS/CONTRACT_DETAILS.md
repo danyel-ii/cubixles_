@@ -1,6 +1,6 @@
 # cubixles_ Contract Details (CubixlesMinter)
 
-Last updated: 2026-01-02
+Last updated: 2026-01-04
 
 ## Review Status
 
@@ -11,6 +11,7 @@ Last updated: 2026-01-02
 ## Executive Summary
 
 CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0015 ETH`, scaled by a 1.0–2.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps half the royalty via the v4 PoolManager; on successful swap, 50% of the ETH is forwarded to the owner, the remaining ETH is swapped to $LESS, 90% of $LESS goes to the owner and 10% to the burn address, and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubixles_ miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `external_url`.
+An ETH-only mode is supported when `LESS_TOKEN` is set to `0x0` on deployment; in that case mint pricing uses a fixed `fixedMintPriceWei`, and LESS snapshots/deltas remain `0`.
 Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. ETH transfers use `Address.sendValue` and revert on failure, and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
 
 ## Contract Overview
@@ -38,7 +39,7 @@ Key steps:
 0. **Commit required**: `commitMint(salt, refsHash)` must be called first (commit window is 256 blocks).
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
-3. **Pricing**: requires `currentMintPrice()` (dynamic price based on $LESS totalSupply).
+3. **Pricing**: `currentMintPrice()` returns either the dynamic $LESS price or a fixed ETH price when LESS is disabled.
    - `base = 0.0015 ETH`
    - `factor = 1 + (1B - supply) / 1B`, clamped at 1.0 when supply ≥ 1B
    - `price = base * factor`
@@ -58,7 +59,7 @@ Mint payment uses a direct ETH transfer to the RoyaltySplitter. If the payout tr
 - `lessSupplyNow()` exposes the current totalSupply (onchain supply as reported by the token).
 - `deltaFromMint(tokenId)` and `deltaFromLast(tokenId)` return snapshot minus current supply (clamped to 0).
 
-These values power the in-app ΔLESS HUD and the leaderboard ranking (canonical metric: `deltaFromLast`).
+These values power the in-app ΔLESS HUD and the leaderboard ranking (canonical metric: `deltaFromLast`). When LESS is disabled, snapshots remain `0` and the Base UI hides the delta metrics.
 
 Note: the UI “$LESS supply” HUD displays remaining supply as `totalSupply - balanceOf(BURN_ADDRESS)` via the server RPC proxy, which can differ from onchain `totalSupply` if burns do not reduce totalSupply.
 
@@ -81,6 +82,7 @@ Royalty splitter: `contracts/src/royalties/RoyaltySplitter.sol`
 
 - `setRoyaltyReceiver(resaleSplitter)` updates ERC-2981 receiver and resets bps to 5%.
 - `setResaleRoyalty(bps, receiver)` updates ERC-2981 receiver + rate (bps capped at 10%).
+- `setFixedMintPrice(price)` updates fixed pricing when LESS is disabled (ETH-only mode).
 - Mint uses a `nonReentrant` guard to protect the payable transfers.
 
 ## Tests
@@ -99,14 +101,15 @@ File: `contracts/test/CubixlesMinter.t.sol`
   - Reads:
     - Note: env var names use `CUBIXLES_*` for compatibility with existing deploy tooling.
     - `CUBIXLES_OWNER`
-    - `CUBIXLES_LESS_TOKEN` (optional; defaults to mainnet $LESS address)
+  - `CUBIXLES_LESS_TOKEN` (optional; use `0x0` to disable LESS pricing)
+  - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS is disabled)
     - `CUBIXLES_POOL_MANAGER` (optional)
     - `CUBIXLES_POOL_FEE` (optional)
     - `CUBIXLES_POOL_TICK_SPACING` (optional)
     - `CUBIXLES_POOL_HOOKS` (optional)
     - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, max 1000)
     - `CUBIXLES_RESALE_BPS` (optional)
-  - Writes deployment JSON to `CUBIXLES_DEPLOYMENT_PATH` (recommended: `deployments/mainnet.json` when running from `contracts/`).
+  - Writes deployment JSON to a chain-specific default path (mainnet → `contracts/deployments/mainnet.json`, base → `contracts/deployments/base.json`) unless `CUBIXLES_DEPLOYMENT_PATH` is set.
 
 - ABI export:
   - Run `node contracts/scripts/export-abi.mjs`.

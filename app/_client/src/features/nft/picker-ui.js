@@ -1,5 +1,6 @@
 import { getNftsForOwner } from "../../data/nft/indexer";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
+import { formatChainName, subscribeActiveChain } from "../../config/chains.js";
 import { subscribeWallet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
 import {
@@ -10,16 +11,6 @@ import {
 } from "../../app/app-utils.js";
 
 const MAX_SELECTION = 6;
-
-function formatChainName(chainId) {
-  if (chainId === 1) {
-    return "Ethereum Mainnet";
-  }
-  if (chainId === 11155111) {
-    return "Sepolia";
-  }
-  return `Chain ${chainId}`;
-}
 
 function buildKey(nft) {
   return `${nft.contractAddress}:${nft.tokenId}`;
@@ -58,6 +49,7 @@ export function initNftPickerUi() {
   let isLoading = false;
   let appliedSelectionKey = null;
   let isWalletConnected = false;
+  let activeChainId = CUBIXLES_CONTRACT.chainId;
 
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
@@ -259,6 +251,27 @@ export function initNftPickerUi() {
     if (currentAddress && !isLoading) {
       loadInventory(currentAddress);
     }
+  });
+
+  subscribeActiveChain((chainId) => {
+    if (chainId === activeChainId) {
+      return;
+    }
+    activeChainId = chainId;
+    inventory = [];
+    selectedKeys = new Set();
+    selectedOrder = [];
+    appliedSelectionKey = null;
+    state.nftInventory = [];
+    state.nftSelection = [];
+    state.nftStatus = "idle";
+    renderInventory();
+    updateSelection();
+    if (currentAddress) {
+      void loadInventory(currentAddress);
+      return;
+    }
+    setStatus(`Connect your wallet to load ${formatChainName(chainId)} NFTs.`);
   });
 
   clearButton.addEventListener("click", () => {

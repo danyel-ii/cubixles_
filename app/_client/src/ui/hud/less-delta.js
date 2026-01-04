@@ -1,6 +1,7 @@
 import { state } from "../../app/app-state.js";
 import { subscribeWallet } from "../../features/wallet/wallet.js";
 import { fetchLessDelta } from "../../data/chain/less-delta.js";
+import { subscribeActiveChain } from "../../config/chains.js";
 
 export function initLessDeltaTracking() {
   let walletState = null;
@@ -43,6 +44,10 @@ export function initLessDeltaTracking() {
   });
 
   document.addEventListener("cube-token-change", () => {
+    refresh();
+  });
+
+  subscribeActiveChain(() => {
     refresh();
   });
 

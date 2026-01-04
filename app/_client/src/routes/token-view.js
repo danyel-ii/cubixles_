@@ -6,6 +6,7 @@ import {
 } from "../app/app-utils.js";
 import { fetchTokenUri } from "../data/chain/cubixles-reader.js";
 import { getProvenance } from "../data/nft/indexer";
+import { getCollectionFloorSnapshot } from "../data/nft/floor.js";
 import { resolveUri } from "../shared/utils/uri";
 import { CUBIXLES_CONTRACT } from "../config/contracts";
 import { fetchWithGateways } from "../../../../src/shared/ipfs-fetch.js";
@@ -28,6 +29,118 @@ function setStatus(message, tone = "neutral") {
   statusEl.classList.remove("is-hidden");
   statusEl.textContent = message;
   statusEl.classList.toggle("is-error", tone === "error");
+}
+
+function formatEth(value) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "0.0000";
+  }
+  return value.toFixed(4);
+}
+
+function floorKey(contractAddress, tokenId) {
+  const address = typeof contractAddress === "string" ? contractAddress.toLowerCase() : "";
+  return `${address}:${String(tokenId)}`;
+}
+
+function buildOpenSeaAssetUrl(contractAddress, tokenId, chainId) {
+  const address = typeof contractAddress === "string" ? contractAddress : "";
+  const token = String(tokenId ?? "");
+  if (!address || !token) {
+    return "";
+  }
+  const network = chainId === 8453 ? "base" : "ethereum";
+  return `https://opensea.io/assets/${network}/${address}/${token}`;
+}
+
+function normalizeSnapshotEntries(metadata, refs) {
+  const provenanceNfts = metadata?.provenance?.nfts ?? metadata?.references ?? [];
+  const byKey = new Map();
+  provenanceNfts.forEach((nft) => {
+    const key = floorKey(nft?.contractAddress, nft?.tokenId);
+    if (!key) {
+      return;
+    }
+    const floorEth =
+      typeof nft?.collectionFloorEth === "number" ? nft.collectionFloorEth : 0;
+    byKey.set(key, {
+      floorEth,
+      retrievedAt: nft?.collectionFloorRetrievedAt ?? null,
+    });
+  });
+  return refs.map((ref) => {
+    const key = floorKey(ref?.contractAddress, ref?.tokenId);
+    const snapshot = byKey.get(key) ?? { floorEth: 0, retrievedAt: null };
+    return {
+      contractAddress: ref.contractAddress,
+      tokenId: ref.tokenId,
+      floorEth: snapshot.floorEth,
+      retrievedAt: snapshot.retrievedAt,
+    };
+  });
+}
+
+function initFloorPanel() {
+  const panel = document.createElement("div");
+  panel.id = "token-floor-panel";
+  panel.className = "token-floor-panel";
+  panel.innerHTML = `
+    <div class="token-floor-title">Floor snapshot (mint)</div>
+    <div id="token-floor-summary" class="token-floor-summary">Snapshot: 0.0000 ETH</div>
+    <div id="token-floor-list" class="ui-floor-list"></div>
+    <div class="token-floor-title">Feingehalt (live)</div>
+    <div id="token-feingehalt" class="token-floor-summary">Feingehalt: --</div>
+    <div id="token-feingehalt-note" class="token-floor-note">Fetching live floors…</div>
+  `;
+  document.body.appendChild(panel);
+  return {
+    panel,
+    summaryEl: panel.querySelector("#token-floor-summary"),
+    listEl: panel.querySelector("#token-floor-list"),
+    feingehaltEl: panel.querySelector("#token-feingehalt"),
+    feingehaltNoteEl: panel.querySelector("#token-feingehalt-note"),
+  };
+}
+
+function renderSnapshotFloor(panel, entries, chainId) {
+  if (!panel?.summaryEl || !panel?.listEl) {
+    return;
+  }
+  panel.listEl.innerHTML = "";
+  let sum = 0;
+  entries.forEach((entry) => {
+    const row = document.createElement("div");
+    row.className = "ui-floor-row";
+    const label = document.createElement("span");
+    const addr = entry.contractAddress
+      ? `${entry.contractAddress.slice(0, 6)}…${entry.contractAddress.slice(-4)}`
+      : "unknown";
+    label.textContent = `${addr} #${entry.tokenId}`;
+    const value = document.createElement("a");
+    const href = buildOpenSeaAssetUrl(entry.contractAddress, entry.tokenId, chainId);
+    value.className = "token-floor-link";
+    value.href = href || "#";
+    value.target = "_blank";
+    value.rel = "noreferrer";
+    value.textContent = `${formatEth(entry.floorEth)} ETH`;
+    row.appendChild(label);
+    row.appendChild(value);
+    panel.listEl.appendChild(row);
+    sum += entry.floorEth;
+  });
+  panel.summaryEl.textContent = `Snapshot total: ${formatEth(sum)} ETH`;
+}
+
+function renderFeingehalt(panel, sum, retrievedAt) {
+  if (!panel?.feingehaltEl) {
+    return;
+  }
+  panel.feingehaltEl.textContent = `Feingehalt: ${formatEth(sum)} ETH`;
+  if (panel.feingehaltNoteEl) {
+    panel.feingehaltNoteEl.textContent = retrievedAt
+      ? `Live floors updated ${new Date(retrievedAt).toLocaleString()}`
+      : "Live floors unavailable.";
+  }
 }
 
 async function loadImages(urlSets) {
@@ -264,6 +377,7 @@ export async function initTokenViewRoute() {
   }
   document.body.classList.add("is-token-view");
   setStatus("Loading token metadata...");
+  const floorPanel = initFloorPanel();
   const setShareUrl = initTokenShareDialog();
 
   let tokenId;
@@ -300,6 +414,12 @@ export async function initTokenViewRoute() {
     if (!refs.length) {
       throw new Error("No provenance refs found in metadata.");
     }
+    const provenanceChainId =
+      typeof validation.data?.provenance?.chainId === "number"
+        ? validation.data.provenance.chainId
+        : CUBIXLES_CONTRACT.chainId;
+    const snapshotEntries = normalizeSnapshotEntries(validation.data, refs);
+    renderSnapshotFloor(floorPanel, snapshotEntries, provenanceChainId);
 
     setStatus("Loading referenced NFTs...");
     const nfts = await Promise.all(
@@ -332,6 +452,27 @@ export async function initTokenViewRoute() {
     state.faceTextures = mapSelectionToFaceTextures(filled, state.frostedTexture);
     state.nftSelection = nfts;
     setStatus("Loaded.", "success");
+
+    try {
+      const floorCache = new Map();
+      const liveFloors = await Promise.all(
+        refs.map(async (ref) => {
+          const key = String(ref.contractAddress).toLowerCase();
+          if (floorCache.has(key)) {
+            return floorCache.get(key);
+          }
+          const result = await getCollectionFloorSnapshot(ref.contractAddress, provenanceChainId);
+          floorCache.set(key, result);
+          return result;
+        })
+      );
+      const liveSum = liveFloors.reduce((total, entry) => total + (entry?.floorEth || 0), 0);
+      const retrievedAt =
+        liveFloors.find((entry) => entry?.retrievedAt)?.retrievedAt ?? null;
+      renderFeingehalt(floorPanel, liveSum, retrievedAt);
+    } catch (error) {
+      renderFeingehalt(floorPanel, 0, null);
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load token.";
     setStatus(message, "error");

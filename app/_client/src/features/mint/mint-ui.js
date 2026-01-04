@@ -1,5 +1,10 @@
 import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
+import {
+  formatChainName,
+  getChainConfig,
+  subscribeActiveChain,
+} from "../../config/chains.js";
 import { buildPalettePreviewGifUrl, buildTokenViewUrl } from "../../config/links.js";
 import { buildProvenanceBundle } from "../../data/nft/indexer";
 import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
@@ -38,26 +43,6 @@ function formatError(error) {
 
 function isZeroAddress(address) {
   return !address || address === "0x0000000000000000000000000000000000000000";
-}
-
-function formatChainName(chainId) {
-  if (chainId === 1) {
-    return "Ethereum Mainnet";
-  }
-  if (chainId === 11155111) {
-    return "Sepolia";
-  }
-  return `Chain ${chainId}`;
-}
-
-function getRpcUrl(chainId) {
-  if (chainId === 1) {
-    return "https://cloudflare-eth.com";
-  }
-  if (chainId === 11155111) {
-    return "https://rpc.sepolia.org";
-  }
-  return null;
 }
 
 function generateSalt() {
@@ -99,12 +84,13 @@ export function initMintUi() {
   let readProviderPromise = null;
 
   async function getReadProvider() {
-    const rpcUrl = getRpcUrl(CUBIXLES_CONTRACT.chainId);
-    if (rpcUrl) {
+    const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+    const rpcUrls = chain?.rpcUrls ?? [];
+    if (rpcUrls.length) {
       if (readProviderPromise) {
         return readProviderPromise;
       }
-      const fallbacks = [rpcUrl, "https://eth.llamarpc.com", "https://rpc.ankr.com/eth"];
+      const fallbacks = rpcUrls;
       readProviderPromise = (async () => {
         for (const url of fallbacks) {
           const candidate = new JsonRpcProvider(url);
@@ -153,14 +139,9 @@ export function initMintUi() {
     if (!hash) {
       return "";
     }
-    const chainId = CUBIXLES_CONTRACT.chainId;
-    const base =
-      chainId === 1
-        ? "https://etherscan.io"
-        : chainId === 11155111
-        ? "https://sepolia.etherscan.io"
-        : "";
-    return base ? `${base}/tx/${hash}` : "";
+    const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+    const explorer = chain?.explorer || "";
+    return explorer ? `${explorer}/tx/${hash}` : "";
   }
 
   function showToast({ title, message, tone = "neutral", links = [] }) {
@@ -544,7 +525,10 @@ export function initMintUi() {
         refsCanonical,
         { from: walletState.address }
       );
-      const lessSupplyMint = await fetchLessTotalSupply(CUBIXLES_CONTRACT.chainId);
+      const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+      const lessSupplyMint = chain?.supportsLess
+        ? await fetchLessTotalSupply(CUBIXLES_CONTRACT.chainId)
+        : null;
       const tokenId = BigInt(previewTokenId);
       const selectionSeed = computeGifSeed({
         tokenId,
@@ -632,7 +616,7 @@ export function initMintUi() {
         paletteEntry,
         paletteIndex,
         paletteImageUrl,
-        lessSupplyMint: lessSupplyMint.toString(),
+        lessSupplyMint: lessSupplyMint ? lessSupplyMint.toString() : "N/A",
       });
       setStatus("Pinning metadata...");
       const tokenUri = await pinTokenMetadata({
@@ -705,6 +689,14 @@ export function initMintUi() {
 
   updateEligibility();
   refreshFloorSnapshot();
+
+  subscribeActiveChain(() => {
+    floorCache.clear();
+    readProviderPromise = null;
+    refreshMintPrice();
+    refreshFloorSnapshot();
+    updateEligibility();
+  });
 }
 
 function buildDiagnostics({
