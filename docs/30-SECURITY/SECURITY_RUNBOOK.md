@@ -90,6 +90,7 @@ python3 -m slither .
 - Enforce CSP with `frame-ancestors` allowlist to support Farcaster embedding.
 - Configure the allowlist via `FRAME_ANCESTORS` (see `.env.example`).
 - CSP uses per-request nonces; production script-src disallows `unsafe-inline`.
+- CSP Report-Only telemetry posts to `POST /api/csp-report`.
 
 ## Circuit breakers
 - `DISABLE_PINNING` or `DISABLE_MINTING` to pause pinning/mints.

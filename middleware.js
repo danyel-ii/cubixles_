@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 const DEFAULT_FRAME_ANCESTORS =
   "'self' https://warpcast.com https://*.warpcast.com https://farcaster.xyz https://*.farcaster.xyz";
+const CSP_REPORT_GROUP = "csp-endpoint";
+const CSP_REPORT_MAX_AGE = 10886400;
 
 function createNonce() {
   const bytes = new Uint8Array(16);
@@ -13,7 +15,7 @@ function createNonce() {
   return btoa(binary);
 }
 
-function buildCsp({ nonce, frameAncestors, isProd }) {
+function buildCsp({ nonce, frameAncestors, isProd, reportUri, reportTo }) {
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
@@ -25,7 +27,7 @@ function buildCsp({ nonce, frameAncestors, isProd }) {
   }
   const scriptSrcElem = [...scriptSrc];
 
-  return [
+  const directives = [
     "default-src 'self'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -40,20 +42,57 @@ function buildCsp({ nonce, frameAncestors, isProd }) {
     "font-src 'self' data: https://fonts.gstatic.com https:",
     "connect-src 'self' https: wss:",
     "upgrade-insecure-requests",
-  ].join("; ");
+  ];
+
+  if (reportTo) {
+    directives.push(`report-to ${reportTo}`);
+  }
+  if (reportUri) {
+    directives.push(`report-uri ${reportUri}`);
+  }
+
+  return directives.join("; ");
 }
 
-export function middleware() {
+function buildReportTo(url) {
+  return JSON.stringify({
+    group: CSP_REPORT_GROUP,
+    max_age: CSP_REPORT_MAX_AGE,
+    endpoints: [{ url }],
+  });
+}
+
+export function middleware(request) {
   const nonce = createNonce();
   const frameAncestors = process.env.FRAME_ANCESTORS || DEFAULT_FRAME_ANCESTORS;
+  const reportUri = "/api/csp-report";
+  const reportUrl = new URL(reportUri, request.nextUrl.origin).toString();
   const csp = buildCsp({
     nonce,
     frameAncestors,
     isProd: process.env.NODE_ENV === "production",
   });
+  const reportOnlyCsp = buildCsp({
+    nonce,
+    frameAncestors,
+    isProd: process.env.NODE_ENV === "production",
+    reportUri,
+    reportTo: CSP_REPORT_GROUP,
+  });
 
-  const response = NextResponse.next();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("content-security-policy", csp);
+  requestHeaders.set("content-security-policy-report-only", reportOnlyCsp);
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
   response.headers.set("Content-Security-Policy", csp);
+  response.headers.set("Content-Security-Policy-Report-Only", reportOnlyCsp);
+  response.headers.set("Reporting-Endpoints", `${CSP_REPORT_GROUP}="${reportUrl}"`);
+  response.headers.set("Report-To", buildReportTo(reportUrl));
   return response;
 }
 
