@@ -41,6 +41,7 @@ python3 -m slither .
 ```
 
 ## Fork tests (release gate)
+`scripts/fork-test.sh` loads `.env` and `.env.local` if present, or you can export the RPC URLs directly.
 ```sh
 export MAINNET_RPC_URL=...
 export FORK_BLOCK_NUMBER=19000000

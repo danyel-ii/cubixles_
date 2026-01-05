@@ -8,6 +8,7 @@ Validate `ownerOf` and optional `royaltyInfo` behavior against real mainnet and 
 ## Requirements
 - `MAINNET_RPC_URL` environment variable (mainnet fork)
 - `BASE_RPC_URL` environment variable (Base fork)
+- `scripts/fork-test.sh` sources `.env` and `.env.local` if present.
 - Optional `FORK_BLOCK_NUMBER` or `BASE_FORK_BLOCK` (defaults to pinned block in test)
 - On macOS, disable system proxy detection to avoid Foundry crashes:
   - `NO_PROXY="*"`
