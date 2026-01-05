@@ -115,6 +115,14 @@ body.is-token-view #leaderboard {
   color: rgba(230, 233, 239, 0.85);
 }
 
+#token-feingehalt {
+  color: rgba(227, 233, 240, 0.98);
+  text-shadow:
+    0 0 6px rgba(220, 230, 238, 0.55),
+    0 0 14px rgba(180, 200, 214, 0.35),
+    0 0 24px rgba(140, 160, 176, 0.28);
+}
+
 .token-floor-note {
   font-size: 10px;
   color: rgba(230, 233, 239, 0.45);
@@ -778,6 +786,7 @@ button.ui-button {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.02em;
+  color: rgba(244, 247, 255, 0.95);
 }
 
 .network-picker-close {
@@ -805,7 +814,7 @@ button.ui-button {
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(24, 30, 44, 0.9);
-  color: inherit;
+  color: rgba(240, 244, 255, 0.95);
   font-size: 12px;
   text-align: left;
   cursor: pointer;
@@ -813,7 +822,7 @@ button.ui-button {
 
 .network-picker-note {
   font-size: 11px;
-  color: rgba(230, 233, 239, 0.6);
+  color: rgba(230, 236, 248, 0.75);
   line-height: 1.4;
 }
 

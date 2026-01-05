@@ -65,6 +65,8 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     error PoolManagerOnly();
     /// @notice Recipient is required.
     error RecipientRequired();
+    /// @notice WETH transfer failed.
+    error WethTransferFailed();
 
     /// @notice Emitted when swap enabled toggles.
     /// @param enabled Whether swap is enabled.
@@ -169,14 +171,16 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             revert RecipientRequired();
         }
         uint256 amount = IWETH(weth).balanceOf(address(this));
-        if (amount == 0) {
+        if (amount < 1) {
             return;
         }
         if (unwrap) {
             IWETH(weth).withdraw(amount);
             _send(recipient, amount);
         } else {
-            IWETH(weth).transfer(recipient, amount);
+            if (!IWETH(weth).transfer(recipient, amount)) {
+                revert WethTransferFailed();
+            }
         }
         emit WethSwept(weth, recipient, amount, unwrap);
     }
@@ -224,7 +228,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
 
     /// @dev Send ETH and revert on failure.
     function _send(address recipient, uint256 amount) internal {
-        if (amount == 0) {
+        if (amount < 1) {
             return;
         }
         Address.sendValue(payable(recipient), amount);

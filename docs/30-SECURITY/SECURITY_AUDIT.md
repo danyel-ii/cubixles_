@@ -1,7 +1,7 @@
 # cubixles_ — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2026-01-01
-Date: 2026-01-01
+Last updated: 2026-01-03
+Date: 2026-01-03
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -16,7 +16,7 @@ Date: 2026-01-01
 - Edge tests: `contracts/test/CubixlesMinterEdge.t.sol`, updates to `contracts/test/RoyaltySplitter.t.sol`
 - Fuzz tests: `contracts/test/fuzz/CubixlesMinterFuzz.t.sol`
 - Invariants: `contracts/test/invariants/CubixlesMinterInvariants.t.sol`
-- Fork tests: `contracts/test/fork/MainnetFork.t.sol`
+- Fork tests: `contracts/test/fork/MainnetFork.t.sol`, `contracts/test/fork/BaseFork.t.sol`
 - Endpoint hardening: nonce + signature auth, rate limits, Zod validation, size caps, safe logging
 - Client secret scan: `scripts/check-client-secrets.mjs`
 
@@ -71,6 +71,19 @@ Result: PASS (2 tests; latest local run 2026-01-01 with `MAINNET_RPC_URL` set)
 - `ownerOf` reverted (non-standard or restricted), logged and allowed.
 - `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
 
+### Fork tests (Base)
+Command:
+```sh
+export BASE_RPC_URL="https://your-base-rpc"
+export BASE_FORK_BLOCK=10000000
+export NO_PROXY="*"
+export HTTP_PROXY=""
+export HTTPS_PROXY=""
+FORK_RPC_URL="$BASE_RPC_URL" npm run fork-test
+```
+Result: PASS (2 tests; latest local run 2026-01-03 with `BASE_RPC_URL` set)
+- Punkology `ownerOf`/`royaltyInfo` checks logged as expected.
+
 ### Frontend tests
 Command:
 ```sh
@@ -116,13 +129,23 @@ Results (local):
   - Result: 0 errors, 0 warnings (latest local run 2026-01-01).
   - Note: update check failed (`registry.npmjs.org` not reachable), but lint executed successfully.
 - Local slither run (venv):
-  - Command: `. .venv-slither/bin/activate && cd contracts && slither .`
-  - Result: **8 findings**:
+  - Command: `. .venv-slither/bin/activate && slither contracts`
+  - Result: **project findings**:
     - Weak PRNG in palette index selection (blockhash-derived).
-    - Strict equality check in `RoyaltySplitter._send` (amount == 0).
     - Unused return values from `POOL_MANAGER.getSlot0` in `_sqrtPriceLimit` and `_poolInitialized`.
-    - Naming convention warnings for immutable constants (LESS_TOKEN, BURN_ADDRESS, POOL_MANAGER).
-  - Note: The PRNG is used for art variation; the strict equality and unused-return warnings are intentional for control flow checks.
+    - Local variable shadowing of `tokenURI` inside `CubixlesMinter.mint`.
+    - Missing zero-check on `LESS_TOKEN` (intentional: fixed-price mode when address is zero).
+  - Dependency noise: OpenZeppelin + Uniswap v4 math/assembly/pragma warnings.
+
+## Formal verification
+No formal verification has been performed. The current posture is unit/fuzz/invariant coverage
+plus fork checks and manual review; formal proofs are a pending work item.
+
+## Attack-surface review (manual)
+- `_safeMint` is the only external callback path in mint; state is committed before it to reduce reentrancy risk.
+- External `ownerOf`/`royaltyInfo` calls are treated as untrusted and are allowed to revert.
+- Royalty swap path depends on PoolManager liquidity and hook behavior; failures revert to avoid partial state.
+- Base price updates are owner-set; trust is centralized to the owner and visible on-chain.
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` is provided.

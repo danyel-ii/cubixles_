@@ -43,6 +43,14 @@ function floorKey(contractAddress, tokenId) {
   return `${address}:${String(tokenId)}`;
 }
 
+function formatTokenId(tokenId) {
+  const raw = tokenId == null ? "" : String(tokenId);
+  if (raw.length > 8) {
+    return `${raw.slice(0, 5)}...${raw.slice(-3)}`;
+  }
+  return raw || "unknown";
+}
+
 function buildOpenSeaAssetUrl(contractAddress, tokenId, chainId) {
   const address = typeof contractAddress === "string" ? contractAddress : "";
   const token = String(tokenId ?? "");
@@ -115,7 +123,7 @@ function renderSnapshotFloor(panel, entries, chainId) {
     const addr = entry.contractAddress
       ? `${entry.contractAddress.slice(0, 6)}…${entry.contractAddress.slice(-4)}`
       : "unknown";
-    label.textContent = `${addr} #${entry.tokenId}`;
+    label.textContent = `${addr} #${formatTokenId(entry.tokenId)}`;
     const value = document.createElement("a");
     const href = buildOpenSeaAssetUrl(entry.contractAddress, entry.tokenId, chainId);
     value.className = "token-floor-link";

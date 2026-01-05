@@ -1,6 +1,6 @@
 # cubixles_ — Threat Model
 
-Last updated: 2026-01-01
+Last updated: 2026-01-03
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -17,6 +17,8 @@ Last updated: 2026-01-01
 - External calls to PoolManager unlock/swap (external execution paths).
 - ETH transfers to owner/minter (receiver-controlled code).
 - ERC-20 transfer of $LESS (token contract behavior).
+- Off-chain price updates for Base (owner-set on-chain).
+- RPC/provider availability for fork tests and UI floor queries.
 
 ## Attack surfaces
 - `CubixlesMinter.mint` (external, payable, external calls + transfers).
@@ -35,9 +37,14 @@ Last updated: 2026-01-01
    - $LESS transfer fails (token-specific behavior).
 6. **Value conservation**
    - Overpayment not refunded; mint price not paid to owner.
+7. **Off-chain price updater centralization**
+   - Owner can delay or misprice Base mint price updates.
+8. **RPC/provider outages**
+   - Fork tests and UI data may fail under provider degradation.
 
 ## Security posture decisions
 - **Receiver failure policy (mint)**: strict. If owner or refund transfer fails, mint reverts.
 - **External call containment**: `nonReentrant` on mint and splitter receive.
+- **State-before-callback**: mint state is finalized before `_safeMint` callback.
 - **Rounding rule**: no splits in mint; refund exact `msg.value - MINT_PRICE`.
 - **ERC-721 behavior**: if `ownerOf` reverts or returns a different owner, mint reverts.

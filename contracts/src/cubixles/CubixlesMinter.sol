@@ -219,24 +219,24 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
 
         uint256 paletteIndex = _assignPaletteIndex(refsHash, salt, msg.sender, commit.blockNumber);
 
-        _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, tokenURI);
         ++totalMinted;
         tokenIdByIndex[totalMinted] = tokenId;
         minterByTokenId[tokenId] = msg.sender;
         paletteIndexByTokenId[tokenId] = paletteIndex;
+        _setTokenURI(tokenId, tokenURI);
+        _snapshotSupply(tokenId, true);
+        delete mintCommitByMinter[msg.sender];
+
+        _safeMint(msg.sender, tokenId);
 
         emit Minted(tokenId, msg.sender, salt, refsHash);
         emit PaletteAssigned(tokenId, paletteIndex);
 
-        _snapshotSupply(tokenId, true);
         _transferEth(resaleSplitter, price);
 
         if (msg.value > price) {
             _transferEth(msg.sender, msg.value - price);
         }
-
-        delete mintCommitByMinter[msg.sender];
     }
 
     /// @notice Commit a mint request for commit-reveal.

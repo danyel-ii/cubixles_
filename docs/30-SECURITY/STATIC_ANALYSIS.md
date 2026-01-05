@@ -1,6 +1,6 @@
 # cubixles_ — Static Analysis
 
-Last updated: 2026-01-01
+Last updated: 2026-01-03
 
 ## Tools
 - Slither (static analyzer)
@@ -18,8 +18,7 @@ npx solhint "src/**/*.sol"
 
 ```sh
 . .venv-slither/bin/activate
-cd contracts
-slither .
+slither contracts
 ```
 
 ## Related coverage gate
@@ -40,4 +39,21 @@ slither .
 - If an issue is accepted, include rationale and severity.
 
 ## Current findings (triaged)
-- No active Slither findings after refactors in `CubixlesMinter` and `RoyaltySplitter`.
+Latest run: 2026-01-03 (`slither contracts`)
+
+### Project findings
+1. **Weak PRNG** — `CubixlesMinter._assignPaletteIndex`
+   - Uses blockhash + inputs for palette selection; acceptable for art variance.
+   - Tracked in `docs/30-SECURITY/KNOWN_LIMITATIONS.md`.
+2. **Unused return values** — `RoyaltySplitter._sqrtPriceLimit`, `_poolInitialized`
+   - `POOL_MANAGER.getSlot0` is used only to test initialization; unused slots are intentional.
+3. **Local variable shadowing** — `CubixlesMinter.mint` (`tokenURI`)
+   - Harmless shadowing of ERC-721 `tokenURI` function name.
+4. **Missing zero-address validation** — `CubixlesMinter.LESS_TOKEN`
+   - Intentional to support fixed-price mode when `lessToken_ == address(0)`.
+
+### Dependency findings (noise)
+Slither also reports issues inside OpenZeppelin and Uniswap v4 dependencies
+(incorrect exponentiation/shift, divide-before-multiply, assembly usage, pragma-version
+mixing, dead code, and naming conventions). These are treated as dependency noise and
+not modified locally.
