@@ -12,8 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch submodules
-        run: git submodule update --init --recursive
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
@@ -25,8 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch submodules
-        run: git submodule update --init --recursive
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
@@ -40,6 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -51,6 +56,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -63,6 +71,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -75,6 +86,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: crytic/slither-action@v0.3.0
         with:
           target: contracts
@@ -84,6 +98,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -96,6 +113,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -113,6 +133,9 @@ jobs:
       FORK_BLOCK_NUMBER: ${{ secrets.FORK_BLOCK_NUMBER || '19000000' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
@@ -130,6 +153,9 @@ jobs:
       BASE_FORK_BLOCK: ${{ secrets.BASE_FORK_BLOCK || '10000000' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
