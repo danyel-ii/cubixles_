@@ -11,36 +11,7 @@ const nextConfig = {
     return config;
   },
   async headers() {
-    const isProd = process.env.NODE_ENV === "production";
-    const scriptSrc = isProd
-      ? "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live"
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://vercel.live";
-    const scriptSrcElem = isProd
-      ? "script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://vercel.live"
-      : "script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://vercel.live";
-    const frameAncestors =
-      process.env.FRAME_ANCESTORS ||
-      "'self' https://warpcast.com https://*.warpcast.com https://farcaster.xyz https://*.farcaster.xyz";
     const securityHeaders = [
-      {
-        key: "Content-Security-Policy",
-        value: [
-          "default-src 'self'",
-          "base-uri 'self'",
-          "form-action 'self'",
-          `frame-ancestors ${frameAncestors}`,
-          "object-src 'none'",
-          "frame-src 'self' https://vercel.live https://verify.walletconnect.org",
-          scriptSrc,
-          scriptSrcElem,
-          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-          "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
-          "img-src 'self' data: blob: https:",
-          "font-src 'self' data: https://fonts.gstatic.com https:",
-          "connect-src 'self' https: wss:",
-          "upgrade-insecure-requests",
-        ].join("; "),
-      },
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       {

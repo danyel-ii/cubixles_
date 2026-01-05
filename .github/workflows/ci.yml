@@ -71,6 +71,19 @@ jobs:
       - name: Client secret scan
         run: npm run check:no-client-secrets
 
+  repo-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Repo secret scan
+        run: npm run check:no-repo-secrets
+
   npm-audit:
     runs-on: ubuntu-latest
     steps:

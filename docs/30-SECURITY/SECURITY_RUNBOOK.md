@@ -32,6 +32,11 @@ npm run test:ui
 npm run check:no-client-secrets
 ```
 
+### Repo secret scan
+```sh
+npm run check:no-repo-secrets
+```
+
 ### API benchmarks
 ```sh
 BENCH_BASE_URL="http://127.0.0.1:3000" npm run bench:api
@@ -62,8 +67,14 @@ python3 -m slither .
 - `slither` (static analysis)
 - `npm audit --audit-level=high`
 - `npm run check:no-client-secrets`
+- `npm run check:no-repo-secrets`
 - `npm run coverage:contracts` (minimum 90% line coverage; report at `docs/50-REPORTS/COVERAGE_REPORT.md`)
 - `npm run fork-test` (mainnet + Base, only when RPC secrets are configured in CI)
+
+## Repo security settings
+- GitHub secret scanning + push protection enabled.
+- Dependabot security updates enabled.
+- Store deployer keys in GitHub/Vercel secrets; never commit them or echo them in logs.
 
 ## Incident response
 1. Freeze deployments if a critical issue is found.
@@ -78,6 +89,7 @@ python3 -m slither .
 ## HTTP security headers
 - Enforce CSP with `frame-ancestors` allowlist to support Farcaster embedding.
 - Configure the allowlist via `FRAME_ANCESTORS` (see `.env.example`).
+- CSP uses per-request nonces; production script-src disallows `unsafe-inline`.
 
 ## Circuit breakers
 - `DISABLE_PINNING` or `DISABLE_MINTING` to pause pinning/mints.

@@ -12,6 +12,7 @@
     "test:ui": "playwright test",
     "coverage:contracts": "cd contracts && python3 scripts/check_coverage.py",
     "check:no-client-secrets": "npm run build && node scripts/check-client-secrets.mjs",
+    "check:no-repo-secrets": "node scripts/check-repo-secrets.mjs",
     "deploy:base": "cd contracts && CUBIXLES_CHAIN_ID=8453 forge script script/DeployCubixles.s.sol --rpc-url \"$BASE_RPC_URL\" --private-key \"$BASE_DEPLOYER_KEY\" --broadcast",
     "deploy:base:dry": "cd contracts && CUBIXLES_CHAIN_ID=8453 forge script script/DeployCubixles.s.sol --rpc-url \"$BASE_RPC_URL\" --private-key \"$BASE_DEPLOYER_KEY\"",
     "deploy:mainnet": "cd contracts && CUBIXLES_CHAIN_ID=1 forge script script/DeployCubixles.s.sol --rpc-url \"$MAINNET_RPC_URL\" --private-key \"$MAINNET_DEPLOYER_KEY\" --broadcast",
