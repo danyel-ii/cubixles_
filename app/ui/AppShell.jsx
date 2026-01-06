@@ -43,7 +43,8 @@ export default function AppShell() {
           <div className="overlay-section">
             <div className="overlay-section-title">Fees</div>
             <p className="overlay-text">
-              Mint: dynamic (base 0.0015 ETH) · Resale royalty: 5% (ERC-2981)
+              Mint: mainnet tracks $LESS supply; Base uses linear, immutable pricing · Resale royalty:
+              5% (ERC-2981)
             </p>
           </div>
           <div className="overlay-section">
@@ -55,7 +56,7 @@ export default function AppShell() {
           <div className="overlay-section">
             <div className="overlay-section-title">Mint price</div>
             <p className="overlay-text">
-              Mint cost is calculated as a function of current{" "}
+              Mint cost depends on network: mainnet tracks{" "}
               <a
                 className="ui-link"
                 href="https://less.ripe.wtf/about"
@@ -64,7 +65,7 @@ export default function AppShell() {
               >
                 $LESS
               </a>{" "}
-              supply.
+              supply, Base uses an immutable linear step (0.0012 ETH base + 0.00036 ETH per mint).
             </p>
           </div>
           <div className="overlay-actions">
@@ -155,6 +156,13 @@ export default function AppShell() {
           updated —
         </div>
       </div>
+      <div id="base-mint-hud" className="base-mint-hud is-hidden" aria-hidden="true">
+        <div className="base-mint-hud-label">Base mint (original)</div>
+        <div id="base-mint-hud-value" className="base-mint-hud-value">
+          Mint price: —
+        </div>
+        <div className="base-mint-hud-note">Immutable linear pricing.</div>
+      </div>
       <div id="token-view-status" className="token-view-status is-hidden">
         Loading token...
       </div>
@@ -237,7 +245,7 @@ export default function AppShell() {
           <div id="mint-price" className="ui-hint">
             Mint price: —
           </div>
-          <div className="ui-hint is-accent">
+          <div id="mint-price-note" className="ui-hint is-accent">
             Mint price rises as{" "}
             <a
               className="ui-link"

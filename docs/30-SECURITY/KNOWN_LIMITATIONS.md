@@ -1,6 +1,6 @@
 # cubixles_ — Known Limitations
 
-Last updated: 2026-01-05
+Last updated: 2026-01-06
 
 1. **Strict receiver failure policy**
    - Mint and royalty distribution revert if ETH or $LESS transfers fail.
@@ -28,8 +28,8 @@ Last updated: 2026-01-05
 8. **Weak PRNG (art-only)**
    - Palette selection is blockhash-derived and not suitable for adversarial randomness.
 
-9. **Off-chain price updater (Base)**
-   - Base mint pricing relies on an owner-set price, which is centralized and can lag the intended floor.
+9. **Base pricing immutability**
+   - Base mint pricing is configured at deploy time (base + step) and cannot be changed without redeploying.
 
 10. **RPC/provider availability**
    - Fork tests, floor snapshots, and some app views depend on upstream RPCs; outages reduce functionality.

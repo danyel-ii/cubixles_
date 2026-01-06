@@ -10,6 +10,7 @@ const ABI = [
   "function setFixedMintPrice(uint256 price)",
   "function fixedMintPriceWei() view returns (uint256)",
   "function lessEnabled() view returns (bool)",
+  "function linearPricingEnabled() view returns (bool)",
 ];
 
 function requireEnv(key) {
@@ -92,29 +93,35 @@ async function main() {
   const baseRpc =
     getOptionalEnv("BASE_RPC_URL") ||
     `https://base-mainnet.g.alchemy.com/v2/${requireEnv("ALCHEMY_API_KEY")}`;
-  const deployerKey =
-    getOptionalEnv("BASE_DEPLOYER_KEY") || getOptionalEnv("DEPLOYER_KEY");
-  if (!deployerKey) {
-    throw new Error("Missing BASE_DEPLOYER_KEY (or DEPLOYER_KEY).");
-  }
 
   const minterAddress = await loadDeploymentAddress();
-  const { floor } = await fetchFloorPrice();
-  const targetPrice = floor * multiplier;
-  const priceWei = ethers.parseEther(String(targetPrice));
-
   const provider = new ethers.JsonRpcProvider(baseRpc);
-  const signer = new ethers.Wallet(deployerKey, provider);
-  const contract = new ethers.Contract(minterAddress, ABI, signer);
+  const contract = new ethers.Contract(minterAddress, ABI, provider);
+
+  const linearPricingEnabled = await contract.linearPricingEnabled();
+  if (linearPricingEnabled) {
+    throw new Error(
+      "Linear pricing is enabled; Base mint pricing is immutable and cannot be updated."
+    );
+  }
 
   const lessEnabled = await contract.lessEnabled();
   if (lessEnabled) {
     throw new Error("lessEnabled is true; fixed price updates are disabled.");
   }
 
-  const current = await contract.fixedMintPriceWei();
-
   const dryRun = process.argv.includes("--dry-run");
+  const deployerKey =
+    getOptionalEnv("BASE_DEPLOYER_KEY") || getOptionalEnv("DEPLOYER_KEY");
+  if (!deployerKey) {
+    throw new Error("Missing BASE_DEPLOYER_KEY (or DEPLOYER_KEY).");
+  }
+
+  const { floor } = await fetchFloorPrice();
+  const targetPrice = floor * multiplier;
+  const priceWei = ethers.parseEther(String(targetPrice));
+
+  const current = await contract.fixedMintPriceWei();
   console.log(`Punkology floor: ${floor} ETH`);
   console.log(`Multiplier: ${multiplier}x`);
   console.log(`Target mint price: ${targetPrice} ETH`);
@@ -124,7 +131,9 @@ async function main() {
     return;
   }
 
-  const tx = await contract.setFixedMintPrice(priceWei);
+  const signer = new ethers.Wallet(deployerKey, provider);
+  const writer = contract.connect(signer);
+  const tx = await writer.setFixedMintPrice(priceWei);
   console.log(`Submitted tx: ${tx.hash}`);
   const receipt = await tx.wait();
   console.log(`Confirmed in block ${receipt.blockNumber}.`);

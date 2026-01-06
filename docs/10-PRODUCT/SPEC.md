@@ -1,6 +1,6 @@
 # cubixles_ Miniapp v0 Spec — Provenance Shapes (Mainnet)
 
-Last updated: 2026-01-05
+Last updated: 2026-01-06
 
 ## Review Status
 
@@ -178,7 +178,8 @@ type MintMetadata = {
 - Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn).
 
 Base ETH-only mode:
-- When `LESS_TOKEN` is disabled on deployment, mint price is fixed (`fixedMintPriceWei`) and can be updated by the owner.
+- On Base deployments, `LESS_TOKEN` is disabled and linear pricing is enabled (0.0012 ETH base + 0.00036 ETH per mint).
+- `baseMintPriceWei` and `baseMintPriceStepWei` are immutable once deployed.
 - $LESS snapshots and delta metrics are disabled (stored as `0`) on Base.
 
 ## Deterministic TokenId

@@ -353,6 +353,44 @@ body.is-token-view #leaderboard {
   color: rgba(230, 233, 239, 0.5);
 }
 
+.base-mint-hud {
+  position: fixed;
+  right: 24px;
+  bottom: 188px;
+  z-index: 2;
+  pointer-events: none;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(12, 16, 24, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(230, 233, 239, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.base-mint-hud.is-hidden {
+  display: none;
+}
+
+.base-mint-hud-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(230, 233, 239, 0.55);
+}
+
+.base-mint-hud-value {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.base-mint-hud-note {
+  margin-top: 4px;
+  font-size: 10px;
+  color: rgba(230, 233, 239, 0.5);
+}
+
 .eth-hud-body {
   width: 140px;
   padding: 16px 14px;
@@ -1268,5 +1306,10 @@ body.is-minted .preview-bar {
   .less-hud {
     left: 12px;
     bottom: 12px;
+  }
+
+  .base-mint-hud {
+    right: 12px;
+    bottom: 148px;
   }
 }

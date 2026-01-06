@@ -59,6 +59,7 @@ export function initMintUi() {
   const mintButton = document.getElementById("mint-submit");
   const amountInput = document.getElementById("mint-payment");
   const mintPriceEl = document.getElementById("mint-price");
+  const mintPriceNoteEl = document.getElementById("mint-price-note");
   const floorSummaryEl = document.getElementById("mint-floor-summary");
   const floorListEl = document.getElementById("mint-floor-list");
   const commitProgressEl = document.getElementById("commit-progress");
@@ -291,13 +292,29 @@ export function initMintUi() {
     return ((value + step - 1n) / step) * step;
   }
 
+  function updateMintPriceNote() {
+    if (!mintPriceNoteEl) {
+      return;
+    }
+    const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+    if (chain?.supportsLess) {
+      mintPriceNoteEl.innerHTML = `Mint price rises as <a class="ui-link" href="https://less.ripe.wtf/about" target="_blank" rel="noreferrer">$LESS</a> supply drops (more burns = higher cost).`;
+      return;
+    }
+    mintPriceNoteEl.textContent =
+      "Base pricing is linear + immutable: 0.0012 ETH base, +0.00036 ETH per mint.";
+  }
+
   async function refreshMintPrice() {
     const onchain = await fetchMintPriceFromContract();
+    const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
     if (onchain) {
       currentMintPriceWei = BigInt(onchain);
-    } else {
+    } else if (chain?.supportsLess) {
       const computed = computeMintPriceFromSupply();
       currentMintPriceWei = computed;
+    } else {
+      currentMintPriceWei = null;
     }
     state.mintPriceWei = currentMintPriceWei;
     if (mintPriceEl) {
@@ -305,8 +322,8 @@ export function initMintUi() {
         ? `Mint price: ${formatEthFromWei(currentMintPriceWei)} ETH.`
         : "Mint price: —";
     }
-    if (amountInput && currentMintPriceWei) {
-      amountInput.value = formatEthFromWei(currentMintPriceWei);
+    if (amountInput) {
+      amountInput.value = currentMintPriceWei ? formatEthFromWei(currentMintPriceWei) : "";
     }
   }
 
@@ -424,6 +441,12 @@ export function initMintUi() {
     updateEligibility();
     refreshMintPrice();
   });
+  subscribeActiveChain(() => {
+    updateEligibility();
+    updateMintPriceNote();
+    refreshMintPrice();
+  });
+  updateMintPriceNote();
 
   document.addEventListener("nft-selection-change", () => {
     updateEligibility();

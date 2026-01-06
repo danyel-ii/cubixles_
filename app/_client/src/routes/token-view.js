@@ -4,7 +4,7 @@ import {
   downscaleImageToMax,
   getMaxTextureSize,
 } from "../app/app-utils.js";
-import { fetchTokenUri } from "../data/chain/cubixles-reader.js";
+import { fetchMintPriceByTokenId, fetchTokenUri } from "../data/chain/cubixles-reader.js";
 import { getProvenance } from "../data/nft/indexer";
 import { getCollectionFloorSnapshot } from "../data/nft/floor.js";
 import { resolveUri } from "../shared/utils/uri";
@@ -401,6 +401,15 @@ export async function initTokenViewRoute() {
 
   if (typeof setShareUrl === "function") {
     setShareUrl(`${window.location.origin}/m/${tokenId.toString()}`);
+  }
+
+  try {
+    const mintPrice = await fetchMintPriceByTokenId(tokenId);
+    state.tokenMintPriceWei = mintPrice == null ? null : BigInt(mintPrice);
+  } catch (error) {
+    state.tokenMintPriceWei = null;
+  } finally {
+    document.dispatchEvent(new CustomEvent("token-mint-price-change"));
   }
 
   try {

@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-01-05
+Last updated: 2026-01-06
 
 ## Review Status
 
@@ -10,7 +10,7 @@ Last updated: 2026-01-05
 
 ## 2025-12-22 — T5 Spec Shapes
 
-- v0 chain is Ethereum mainnet (`chainId: 1`), with Sepolia used only for rehearsal/testing when needed; Base can run in ETH-only mode with fixed mint pricing when LESS is disabled.
+- v0 chain is Ethereum mainnet (`chainId: 1`), with Sepolia used only for rehearsal/testing when needed; Base runs ETH-only with immutable linear pricing (0.0012 ETH base + 0.00036 ETH per mint).
 - `tokenId` stored as base-10 string (from `BigInt`) to allow large IDs.
 - Mint gating accepts 1 to 6 referenced NFTs.
 - `contractAddress` stored in EIP-55 checksum format.
@@ -31,7 +31,7 @@ Last updated: 2026-01-05
 - Resale royalties are handled via ERC-2981 with receiver = RoyaltySplitter.
 - RoyaltySplitter can attempt a $LESS buy, then splits $LESS 90% owner / 10% burn and forwards remaining ETH to owner (50% ETH sent upfront).
 - The minter snapshots $LESS supply at mint and on transfer to support ΔLESS metrics.
-- Base deployments can disable LESS and use a fixed mint price updated off-chain.
+- Base deployments disable LESS and use immutable linear pricing (0.0012 ETH base + 0.00036 ETH per mint; no off-chain updates).
 
 ## 2025-12-24 — Interactive Metadata (p5.js)
 

@@ -1,6 +1,6 @@
 # cubixles_ v0 — State of Review (2026-01-05)
 
-Last updated: 2026-01-05
+Last updated: 2026-01-06
 
 ## Summary
 
@@ -12,7 +12,7 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
 - **Provenance**: NFT selection -> provenance bundle -> mint metadata pipeline is in place.
 - **Mint UI**: builds metadata JSON, pins via `/api/pin/metadata`, includes token-specific `external_url` (`/m/<tokenId>`), palette/selection traits, and logs diagnostics; commit step shows a progress indicator while waiting for confirmation.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → provenance refs → cube render; share modal is available on token view pages.
-- **Contracts**: Foundry tests cover gating, pricing, and royalty routing; mint price is dynamic from $LESS supply (base `0.0015 ETH`, rounded up to `0.0001 ETH`), tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter which swaps to LESS and forwards to the owner/burn splits. Onchain $LESS supply snapshots + delta views are live.
+- **Contracts**: Foundry tests cover gating, pricing, and royalty routing; mint price is dynamic from $LESS supply on mainnet (base `0.0015 ETH`, rounded up to `0.0001 ETH`), while Base uses immutable linear pricing (0.0012 ETH base + 0.00036 ETH per mint). tokenId is deterministic via `previewTokenId`, and royalties are routed to RoyaltySplitter which swaps to LESS and forwards to the owner/burn splits. Onchain $LESS supply snapshots + delta views are live.
 - **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/30-SECURITY/` (coverage gate 90% via `npm run coverage:contracts`).
 - **Security tooling**: CSP report endpoint is live, client + repo secret scans run in CI.
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` when unavailable) + Leaderboard ranking by ΔLESS are live; leaderboard reads through public RPCs on mobile.

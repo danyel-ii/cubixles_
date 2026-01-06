@@ -30,10 +30,14 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     error ResaleSplitterRequired();
     /// @notice LESS token is required.
     error LessTokenRequired();
-    /// @notice Fixed mint price is required for ETH-only mode.
+    /// @notice Fixed mint price is required when LESS + linear pricing are disabled.
     error FixedPriceRequired();
-    /// @notice Fixed price updates are not allowed when LESS is enabled.
+    /// @notice Fixed price updates are not allowed when LESS or linear pricing is enabled.
     error FixedPriceNotAllowed();
+    /// @notice Linear pricing config is required when enabled.
+    error LinearPricingConfigRequired();
+    /// @notice Linear pricing cannot be enabled when LESS pricing is active.
+    error LinearPricingNotAllowed();
     /// @notice Royalty rate is too high.
     error RoyaltyTooHigh();
     /// @notice Mint commit is required.
@@ -96,12 +100,23 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Pending commit per minter.
     mapping(address => MintCommit) public mintCommitByMinter;
 
+    // slither-disable naming-convention,missing-zero-check
+    // solhint-disable immutable-vars-naming
     /// @notice LESS token address.
-    // slither-disable-next-line naming-convention,missing-zero-check
     address public immutable LESS_TOKEN;
+    // slither-enable naming-convention,missing-zero-check
+    // solhint-enable immutable-vars-naming
+    // solhint-disable immutable-vars-naming
     /// @notice Whether LESS pricing + snapshots are enabled.
     bool public immutable lessEnabled;
-    /// @notice Fixed mint price when LESS is disabled.
+    // solhint-enable immutable-vars-naming
+    /// @notice Whether linear pricing is enabled.
+    bool public immutable linearPricingEnabled;
+    /// @notice Base mint price for linear pricing.
+    uint256 public immutable baseMintPriceWei;
+    /// @notice Price step per mint for linear pricing.
+    uint256 public immutable baseMintPriceStepWei;
+    /// @notice Fixed mint price when LESS + linear pricing are disabled.
     uint256 public fixedMintPriceWei;
     /// @notice Royalty receiver for ERC-2981.
     address public resaleSplitter;
@@ -111,6 +126,8 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     mapping(uint256 => uint256) public tokenIdByIndex;
     /// @notice Minter address per tokenId.
     mapping(uint256 => address) public minterByTokenId;
+    /// @notice Mint price in wei recorded at mint time.
+    mapping(uint256 => uint256) public mintPriceByTokenId;
 
     /// @notice Emitted when a mint succeeds.
     /// @param tokenId Minted token id.
@@ -144,20 +161,28 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Emitted when royalty receiver changes.
     /// @param resaleSplitter New royalty receiver.
     event RoyaltyReceiverUpdated(address indexed resaleSplitter);
+    // solhint-disable gas-indexed-events
     /// @notice Emitted when fixed mint price is updated.
     /// @param price New fixed mint price in wei.
     event FixedMintPriceUpdated(uint256 price);
+    // solhint-enable gas-indexed-events
 
     /// @notice Create a new minter instance.
     /// @param resaleSplitter_ Royalty receiver for ERC-2981.
     /// @param lessToken_ LESS token address.
     /// @param resaleRoyaltyBps Royalty rate in basis points.
     /// @param fixedMintPriceWei_ Fixed mint price when LESS is disabled.
+    /// @param baseMintPriceWei_ Base mint price for linear pricing.
+    /// @param baseMintPriceStepWei_ Price step per mint for linear pricing.
+    /// @param linearPricingEnabled_ Whether linear pricing is enabled.
     constructor(
         address resaleSplitter_,
         address lessToken_,
         uint96 resaleRoyaltyBps,
-        uint256 fixedMintPriceWei_
+        uint256 fixedMintPriceWei_,
+        uint256 baseMintPriceWei_,
+        uint256 baseMintPriceStepWei_,
+        bool linearPricingEnabled_
     )
         ERC721("cubixles_", "cubixles_")
         Ownable(msg.sender)
@@ -171,14 +196,26 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         resaleSplitter = resaleSplitter_;
         // slither-disable-next-line missing-zero-check
         LESS_TOKEN = lessToken_;
-        if (lessToken_ == address(0)) {
-            if (fixedMintPriceWei_ == 0) {
-                revert FixedPriceRequired();
+        linearPricingEnabled = linearPricingEnabled_;
+        baseMintPriceWei = baseMintPriceWei_;
+        baseMintPriceStepWei = baseMintPriceStepWei_;
+        if (lessToken_ != address(0)) {
+            if (linearPricingEnabled_) {
+                revert LinearPricingNotAllowed();
             }
-            lessEnabled = false;
-            fixedMintPriceWei = fixedMintPriceWei_;
-        } else {
             lessEnabled = true;
+        } else {
+            lessEnabled = false;
+            if (linearPricingEnabled_) {
+                if (baseMintPriceWei_ == 0 || baseMintPriceStepWei_ == 0) {
+                    revert LinearPricingConfigRequired();
+                }
+            } else {
+                if (fixedMintPriceWei_ == 0) {
+                    revert FixedPriceRequired();
+                }
+                fixedMintPriceWei = fixedMintPriceWei_;
+            }
         }
 
         _setDefaultRoyalty(resaleSplitter_, resaleRoyaltyBps);
@@ -224,6 +261,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         ++totalMinted;
         tokenIdByIndex[totalMinted] = tokenId;
         minterByTokenId[tokenId] = msg.sender;
+        mintPriceByTokenId[tokenId] = price;
         paletteIndexByTokenId[tokenId] = paletteIndex;
         _setTokenURI(tokenId, metadataURI);
         _snapshotSupply(tokenId, true);
@@ -262,10 +300,13 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         emit MintCommitCreated(msg.sender, refsHash, salt, block.number);
     }
 
-    /// @notice Current mint price based on LESS total supply.
-    /// @dev Price scales from 1x to 2x as LESS supply decreases, then rounds up.
+    /// @notice Current mint price for this deployment.
+    /// @dev Linear pricing uses base + step * totalMinted. LESS pricing scales 1x→2x as supply drops.
     /// @return Current mint price in wei.
     function currentMintPrice() public view returns (uint256) {
+        if (linearPricingEnabled) {
+            return baseMintPriceWei + (baseMintPriceStepWei * totalMinted);
+        }
         if (!lessEnabled) {
             return fixedMintPriceWei;
         }
@@ -367,7 +408,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Update the fixed mint price (ETH-only mode).
     /// @param price New fixed mint price in wei.
     function setFixedMintPrice(uint256 price) external onlyOwner {
-        if (lessEnabled) {
+        if (lessEnabled || linearPricingEnabled) {
             revert FixedPriceNotAllowed();
         }
         if (price == 0) {

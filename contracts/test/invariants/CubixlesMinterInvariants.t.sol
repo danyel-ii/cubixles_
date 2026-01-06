@@ -70,7 +70,7 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0);
+        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0, 0, 0, false);
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");
         uint256 price = minter.currentMintPrice();

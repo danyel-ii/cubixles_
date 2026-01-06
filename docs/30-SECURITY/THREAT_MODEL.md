@@ -1,6 +1,6 @@
 # cubixles_ — Threat Model
 
-Last updated: 2026-01-03
+Last updated: 2026-01-06
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -17,7 +17,6 @@ Last updated: 2026-01-03
 - External calls to PoolManager unlock/swap (external execution paths).
 - ETH transfers to owner/minter (receiver-controlled code).
 - ERC-20 transfer of $LESS (token contract behavior).
-- Off-chain price updates for Base (owner-set on-chain).
 - RPC/provider availability for fork tests and UI floor queries.
 
 ## Attack surfaces
@@ -37,8 +36,8 @@ Last updated: 2026-01-03
    - $LESS transfer fails (token-specific behavior).
 6. **Value conservation**
    - Overpayment not refunded; mint price not paid to owner.
-7. **Off-chain price updater centralization**
-   - Owner can delay or misprice Base mint price updates.
+7. **Base pricing misconfiguration**
+   - Base linear pricing is immutable once deployed; mis-set base or step requires a redeploy.
 8. **RPC/provider outages**
    - Fork tests and UI data may fail under provider degradation.
 

@@ -21,6 +21,7 @@ export const state = {
   lessDeltaUpdatedAt: null,
   currentCubeTokenId: null,
   mintPriceWei: null,
+  tokenMintPriceWei: null,
   bgImage: null,
   bgImageDataUrl: null,
   rotX: -0.35,

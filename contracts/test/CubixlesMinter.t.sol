@@ -27,7 +27,7 @@ contract CubixlesMinterHarness is CubixlesMinter {
         address splitter,
         address lessToken,
         uint96 bps
-    ) CubixlesMinter(splitter, lessToken, bps, 0) {}
+    ) CubixlesMinter(splitter, lessToken, bps, 0, 0, 0, false) {}
 
     function exposedRoundUp(uint256 value, uint256 step) external pure returns (uint256) {
         return _roundUp(value, step);
@@ -53,7 +53,7 @@ contract CubixlesMinterTest is Test {
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0);
+        minter = new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0, 0, 0, false);
         vm.stopPrank();
 
         nftA = new MockERC721("NFT A", "NFTA");
@@ -200,6 +200,23 @@ contract CubixlesMinterTest is Test {
 
         assertEq(minter.ownerOf(tokenId), minterAddr);
         assertEq(minter.tokenURI(tokenId), "ipfs://token");
+    }
+
+    function testMintRecordsMintPrice() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+
+        uint256 price = minter.currentMintPrice();
+        vm.deal(minterAddr, price);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        vm.prank(minterAddr);
+        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, "ipfs://token", refs);
+
+        assertEq(minter.mintPriceByTokenId(tokenId), price);
     }
 
     function testPreviewTokenIdCanonicalizesRefs() public {
@@ -370,24 +387,62 @@ contract CubixlesMinterTest is Test {
 
     function testConstructorRevertsOnZeroResaleSplitter() public {
         vm.expectRevert(CubixlesMinter.ResaleSplitterRequired.selector);
-        new CubixlesMinter(address(0), address(lessToken), 500, 0);
+        new CubixlesMinter(address(0), address(lessToken), 500, 0, 0, 0, false);
     }
 
     function testConstructorRevertsOnZeroLessToken() public {
         vm.expectRevert(CubixlesMinter.FixedPriceRequired.selector);
-        new CubixlesMinter(resaleSplitter, address(0), 500, 0);
+        new CubixlesMinter(resaleSplitter, address(0), 500, 0, 0, 0, false);
     }
 
     function testConstructorRevertsOnRoyaltyTooHigh() public {
         vm.expectRevert(CubixlesMinter.RoyaltyTooHigh.selector);
-        new CubixlesMinter(resaleSplitter, address(lessToken), 1001, 0);
+        new CubixlesMinter(resaleSplitter, address(lessToken), 1001, 0, 0, 0, false);
     }
 
     function testFixedPriceWhenLessDisabled() public {
         uint256 fixedPrice = 2_000_000_000_000_000;
-        CubixlesMinter fixedMinter = new CubixlesMinter(resaleSplitter, address(0), 500, fixedPrice);
+        CubixlesMinter fixedMinter = new CubixlesMinter(
+            resaleSplitter,
+            address(0),
+            500,
+            fixedPrice,
+            0,
+            0,
+            false
+        );
         assertEq(fixedMinter.currentMintPrice(), fixedPrice);
         assertEq(fixedMinter.lessSupplyNow(), 0);
+    }
+
+    function testLinearPricingRequiresConfig() public {
+        vm.expectRevert(CubixlesMinter.LinearPricingConfigRequired.selector);
+        new CubixlesMinter(resaleSplitter, address(0), 500, 0, 0, 0, true);
+    }
+
+    function testLinearPricingNotAllowedWithLess() public {
+        vm.expectRevert(CubixlesMinter.LinearPricingNotAllowed.selector);
+        new CubixlesMinter(resaleSplitter, address(lessToken), 500, 0, 1, 1, true);
+    }
+
+    function testLinearPricingUsesBaseAndStep() public {
+        uint256 basePrice = 1_200_000_000_000_000;
+        uint256 step = 360_000_000_000_000;
+        CubixlesMinter linearMinter = new CubixlesMinter(
+            resaleSplitter,
+            address(0),
+            500,
+            0,
+            basePrice,
+            step,
+            true
+        );
+        assertEq(linearMinter.currentMintPrice(), basePrice);
+        stdstore
+            .target(address(linearMinter))
+            .sig("totalMinted()")
+            .checked_write(2);
+        assertEq(linearMinter.currentMintPrice(), basePrice + (step * 2));
     }
 
     function testLastSnapshotUpdatesOnTransfer() public {

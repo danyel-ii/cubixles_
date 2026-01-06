@@ -16,6 +16,26 @@
         "name": "resaleRoyaltyBps",
         "type": "uint96",
         "internalType": "uint96"
+      },
+      {
+        "name": "fixedMintPriceWei_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "baseMintPriceWei_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "baseMintPriceStepWei_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "linearPricingEnabled_",
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
     "stateMutability": "nonpayable"
@@ -176,6 +196,32 @@
   },
   {
     "type": "function",
+    "name": "baseMintPriceStepWei",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "baseMintPriceWei",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "commitMint",
     "inputs": [
       {
@@ -234,6 +280,19 @@
         "internalType": "uint256"
       }
     ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "fixedMintPriceWei",
+    "inputs": [],
     "outputs": [
       {
         "name": "",
@@ -307,6 +366,19 @@
   },
   {
     "type": "function",
+    "name": "lessEnabled",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "lessSupplyNow",
     "inputs": [],
     "outputs": [
@@ -314,6 +386,19 @@
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "linearPricingEnabled",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
     "stateMutability": "view"
@@ -328,7 +413,7 @@
         "internalType": "bytes32"
       },
       {
-        "name": "tokenURI",
+        "name": "metadataURI",
         "type": "string",
         "internalType": "string"
       },
@@ -382,6 +467,25 @@
       },
       {
         "name": "blockNumber",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "mintPriceByTokenId",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -563,12 +667,12 @@
     ],
     "outputs": [
       {
-        "name": "receiver",
+        "name": "",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "amount",
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -639,6 +743,19 @@
         "name": "approved",
         "type": "bool",
         "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setFixedMintPrice",
+    "inputs": [
+      {
+        "name": "price",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -865,6 +982,19 @@
   },
   {
     "type": "event",
+    "name": "FixedMintPriceUpdated",
+    "inputs": [
+      {
+        "name": "price",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "LastSupplySnapshotted",
     "inputs": [
       {
@@ -1054,6 +1184,17 @@
   },
   {
     "type": "error",
+    "name": "AddressInsufficientBalance",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "ERC2981InvalidDefaultRoyalty",
     "inputs": [
       {
@@ -1221,24 +1362,18 @@
   },
   {
     "type": "error",
-    "name": "FailedCall",
+    "name": "FailedInnerCall",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "InsufficientBalance",
-    "inputs": [
-      {
-        "name": "balance",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "needed",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
+    "name": "FixedPriceNotAllowed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FixedPriceRequired",
+    "inputs": []
   },
   {
     "type": "error",
@@ -1253,6 +1388,21 @@
   {
     "type": "error",
     "name": "LessTokenRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "LinearPricingConfigRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "LinearPricingNotAllowed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MathOverflowedMulDiv",
     "inputs": []
   },
   {

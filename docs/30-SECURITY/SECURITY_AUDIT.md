@@ -1,6 +1,6 @@
 # cubixles_ — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2026-01-05
+Last updated: 2026-01-06
 Date: 2026-01-05
 
 ## Scope
@@ -148,7 +148,7 @@ plus fork checks and manual review; formal proofs are a pending work item.
 - `_safeMint` is the only external callback path in mint; state is committed before it to reduce reentrancy risk.
 - External `ownerOf`/`royaltyInfo` calls are treated as untrusted and are allowed to revert.
 - Royalty swap path depends on PoolManager liquidity and hook behavior; failures revert to avoid partial state.
-- Base price updates are owner-set; trust is centralized to the owner and visible on-chain.
+- Base linear pricing is immutable once deployed; misconfiguration requires redeploy.
 
 ## Notes
 - Fork tests are optional; they skip unless `MAINNET_RPC_URL` or `BASE_RPC_URL` is provided.

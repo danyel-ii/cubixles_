@@ -1,6 +1,6 @@
 # cubixles_ — Master Index
 
-Last updated: 2026-01-05
+Last updated: 2026-01-06
 
 ## Executive Overview
 
@@ -82,9 +82,12 @@ This document is the single entry point for cubixles_ documentation. It explains
 - **opengraph-image**: Server-rendered OG image at `/m/<tokenId>/opengraph-image` for link previews.
 - **RoyaltySplitter**: ERC-2981 receiver that forwards royalties and optionally attempts $LESS purchases.
 - **$LESS**: The ERC-20 token used for dynamic mint pricing and delta metrics.
-- **fixedMintPriceWei**: Fixed ETH price used when LESS pricing is disabled (ETH-only mode, commonly Base).
+- **fixedMintPriceWei**: Fixed ETH price used when LESS + linear pricing are disabled.
+- **linearPricingEnabled**: Enables immutable base + step pricing (used for Base deployments).
+- **baseMintPriceWei**: Base mint price used when linear pricing is enabled.
+- **baseMintPriceStepWei**: Price step per mint when linear pricing is enabled.
 - **deltaFromLast**: Current metric used to rank tokens by $LESS supply delta from last transfer snapshot.
-- **currentMintPrice**: Mint price computed from $LESS totalSupply and rounded up to `0.0001 ETH`.
+- **currentMintPrice**: Mint price computed from $LESS totalSupply (mainnet) or base + step (Base).
 - **coverage gate**: Minimum 90% Solidity line coverage enforced by `npm run coverage:contracts`.
 
 ## Key Commands

@@ -13,9 +13,23 @@ import { TickMath } from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import { StateLibrary } from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
+/// @title IWETH
+/// @notice Minimal WETH interface for balance, transfer, and unwrap.
+/// @author cubixles_
 interface IWETH {
+    /// @notice Returns the WETH balance for an account.
+    /// @param account Account to query.
+    /// @return balance WETH balance.
     function balanceOf(address account) external view returns (uint256);
+
+    /// @notice Transfers WETH to a recipient.
+    /// @param to Recipient address.
+    /// @param value Amount to transfer.
+    /// @return success True if the transfer succeeded.
     function transfer(address to, uint256 value) external returns (bool);
+
+    /// @notice Unwraps WETH to ETH.
+    /// @param value Amount to unwrap.
     function withdraw(uint256 value) external;
 }
 
@@ -28,15 +42,16 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     using PoolIdLibrary for PoolKey;
     using StateLibrary for IPoolManager;
 
+    // slither-disable naming-convention
+    // solhint-disable immutable-vars-naming
     /// @notice LESS token address.
-    // slither-disable-next-line naming-convention
     address public immutable LESS_TOKEN;
     /// @notice Burn address for LESS.
-    // slither-disable-next-line naming-convention
     address public immutable BURN_ADDRESS;
     /// @notice Uniswap v4 PoolManager.
-    // slither-disable-next-line naming-convention
     IPoolManager public immutable POOL_MANAGER;
+    // slither-enable naming-convention
+    // solhint-enable immutable-vars-naming
     /// @notice PoolKey for the ETH/LESS pool.
     PoolKey public poolKey;
     /// @notice Whether swap to LESS is enabled.
@@ -81,12 +96,14 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     /// @param amount ETH amount forwarded.
     /// @param reasonHash Hash of the revert reason.
     event SwapFailedFallbackToOwner(uint256 indexed amount, bytes32 reasonHash);
+    // solhint-disable gas-indexed-events
     /// @notice Emitted when WETH is swept from the splitter.
     /// @param weth WETH token address.
     /// @param recipient Recipient of the sweep.
     /// @param amount Amount swept.
     /// @param unwrapped Whether the sweep unwrapped WETH to ETH.
     event WethSwept(address indexed weth, address indexed recipient, uint256 amount, bool unwrapped);
+    // solhint-enable gas-indexed-events
 
     /// @notice Create a new royalty splitter.
     /// @param owner_ Owner who receives ETH and can configure settings.
