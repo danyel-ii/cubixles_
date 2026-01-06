@@ -19,8 +19,7 @@
     "deploy:mainnet:dry": "cd contracts && CUBIXLES_CHAIN_ID=1 forge script script/DeployCubixles.s.sol --rpc-url \"$MAINNET_RPC_URL\" --private-key \"$MAINNET_DEPLOYER_KEY\"",
     "fork-test": "bash scripts/fork-test.sh",
     "bench:api": "node scripts/bench-api.mjs",
-    "monitor:swaps": "node scripts/monitor-swaps.mjs",
-    "update:base-mint-price": "node scripts/update-base-mint-price.mjs"
+    "monitor:swaps": "node scripts/monitor-swaps.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",

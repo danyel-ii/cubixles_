@@ -69,7 +69,7 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (2 tests; latest local run 2026-01-05 with `MAINNET_RPC_URL` set)
+Result: PASS (2 tests; latest local run 2026-01-06 with `MAINNET_RPC_URL` set)
 - `ownerOf` reverted (non-standard or restricted), logged and allowed.
 - `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
 
@@ -83,8 +83,8 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (2 tests; latest local run 2026-01-05 with `BASE_RPC_URL` set)
-- Punkology `ownerOf`/`royaltyInfo` checks logged as expected.
+Result: PASS (1 test; latest local run 2026-01-06 with `BASE_RPC_URL` set)
+- Chain id and fork block assertions passed (connectivity confirmed). Optional `BASE_FORK_TEST_ADDRESS` check runs only when set.
 
 ### Frontend tests
 Command:
@@ -134,7 +134,7 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 7 warnings (Natspec + immutable naming); latest local run 2026-01-06.
+  - Result: 0 errors, 0 warnings; latest local run 2026-01-06.
 - Local slither run (venv):
   - Command: `cd contracts && ../.venv-slither/bin/python -m slither .`
   - Result: 0 project findings (latest local run 2026-01-06); `naming-convention` excluded in config.
