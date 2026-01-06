@@ -101,18 +101,15 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     mapping(address => MintCommit) public mintCommitByMinter;
 
     /// @notice LESS token address.
-    // solhint-disable-next-line immutable-vars-naming
-    address public immutable LESS_TOKEN; // slither-disable-line naming-convention,missing-zero-check
-    // solhint-disable immutable-vars-naming
+    address public immutable LESS_TOKEN; /* solhint-disable-line immutable-vars-naming */ /* slither-disable-line naming-convention,missing-zero-check */
     /// @notice Whether LESS pricing + snapshots are enabled.
-    bool public immutable lessEnabled;
-    // solhint-enable immutable-vars-naming
+    bool public immutable lessEnabled; /* solhint-disable-line immutable-vars-naming */
     /// @notice Whether linear pricing is enabled.
-    bool public immutable linearPricingEnabled;
+    bool public immutable linearPricingEnabled; /* solhint-disable-line immutable-vars-naming */
     /// @notice Base mint price for linear pricing.
-    uint256 public immutable baseMintPriceWei;
+    uint256 public immutable baseMintPriceWei; /* solhint-disable-line immutable-vars-naming */
     /// @notice Price step per mint for linear pricing.
-    uint256 public immutable baseMintPriceStepWei;
+    uint256 public immutable baseMintPriceStepWei; /* solhint-disable-line immutable-vars-naming */
     /// @notice Fixed mint price when LESS + linear pricing are disabled.
     uint256 public fixedMintPriceWei;
     /// @notice Royalty receiver for ERC-2981.
