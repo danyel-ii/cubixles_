@@ -1,7 +1,7 @@
 # cubixles_ — Security & Edge-Case Coverage Implementation Results
 
 Last updated: 2026-01-06
-Date: 2026-01-05
+Date: 2026-01-06
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -42,7 +42,7 @@ Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: PASS (92.53% line coverage; minimum is 90%).
+Result: PASS (92.79% line coverage; minimum is 90%).
 - Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
 - Action: keep coverage at or above 90% before mainnet release.
@@ -134,10 +134,10 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 24 warnings (Natspec + gas-indexing); latest local run 2026-01-05.
+  - Result: 0 errors, 7 warnings (Natspec + immutable naming); latest local run 2026-01-06.
 - Local slither run (venv):
-  - Command: `cd contracts && python3 -m slither .`
-  - Result: 0 project findings (latest local run 2026-01-05).
+  - Command: `cd contracts && ../.venv-slither/bin/python -m slither .`
+  - Result: 0 project findings (latest local run 2026-01-06); `naming-convention` excluded in config.
   - Dependency noise: OpenZeppelin + Uniswap v4 math/assembly/pragma warnings.
 
 ## Formal verification

@@ -42,16 +42,15 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     using PoolIdLibrary for PoolKey;
     using StateLibrary for IPoolManager;
 
-    // slither-disable naming-convention
-    // solhint-disable immutable-vars-naming
     /// @notice LESS token address.
-    address public immutable LESS_TOKEN;
+    // solhint-disable-next-line immutable-vars-naming
+    address public immutable LESS_TOKEN; // slither-disable-line naming-convention
     /// @notice Burn address for LESS.
-    address public immutable BURN_ADDRESS;
+    // solhint-disable-next-line immutable-vars-naming
+    address public immutable BURN_ADDRESS; // slither-disable-line naming-convention
     /// @notice Uniswap v4 PoolManager.
-    IPoolManager public immutable POOL_MANAGER;
-    // slither-enable naming-convention
-    // solhint-enable immutable-vars-naming
+    // solhint-disable-next-line immutable-vars-naming
+    IPoolManager public immutable POOL_MANAGER; // slither-disable-line naming-convention
     /// @notice PoolKey for the ETH/LESS pool.
     PoolKey public poolKey;
     /// @notice Whether swap to LESS is enabled.

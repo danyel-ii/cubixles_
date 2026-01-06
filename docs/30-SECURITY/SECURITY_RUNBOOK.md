@@ -1,6 +1,6 @@
 # cubixles_ — Security Runbook
 
-Last updated: 2026-01-05
+Last updated: 2026-01-06
 
 ## Local commands
 
@@ -59,6 +59,8 @@ npm run fork-test
 cd contracts
 npx solhint "src/**/*.sol"
 python3 -m slither .
+# If slither isn't on PATH:
+../.venv-slither/bin/python -m slither .
 ```
 
 ## CI gates

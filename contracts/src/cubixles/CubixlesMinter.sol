@@ -100,12 +100,9 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Pending commit per minter.
     mapping(address => MintCommit) public mintCommitByMinter;
 
-    // slither-disable naming-convention,missing-zero-check
-    // solhint-disable immutable-vars-naming
     /// @notice LESS token address.
-    address public immutable LESS_TOKEN;
-    // slither-enable naming-convention,missing-zero-check
-    // solhint-enable immutable-vars-naming
+    // solhint-disable-next-line immutable-vars-naming
+    address public immutable LESS_TOKEN; // slither-disable-line naming-convention,missing-zero-check
     // solhint-disable immutable-vars-naming
     /// @notice Whether LESS pricing + snapshots are enabled.
     bool public immutable lessEnabled;

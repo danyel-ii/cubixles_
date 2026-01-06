@@ -1,5 +1,6 @@
 {
   "filter_paths": "lib|script|test",
+  "detectors_to_exclude": "naming-convention",
   "solc_remaps": [
     "@openzeppelin/=lib/openzeppelin-contracts/"
   ]

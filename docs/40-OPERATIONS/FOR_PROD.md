@@ -26,6 +26,8 @@ npm run coverage:contracts
 cd contracts
 npx solhint "src/**/*.sol"
 python3 -m slither .
+# If slither isn't on PATH:
+../.venv-slither/bin/python -m slither .
 ```
 
 5) Fork tests (release gate)

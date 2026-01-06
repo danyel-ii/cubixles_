@@ -1,10 +1,10 @@
 # cubixles_ Code Structure
 
-Last updated: 2026-01-05
+Last updated: 2026-01-06
 
 ## Review Status
 
-- Review status: Needs confirmation
+- Review status: Updated
 - Owner: danyel-ii
 
 Frontend code now lives under the Next.js `app/` directory (app router), with
@@ -66,6 +66,8 @@ are split into smaller modules.
   - Bottom-left $LESS supply HUD display.
 - `app/_client/src/ui/hud/less-delta.js`
   - Wallet-driven ΔLESS tracking for the HUD.
+- `app/_client/src/ui/hud/base-mint-hud.js`
+  - Base token-view mint price HUD (Base only).
 - `app/_client/src/features/wallet/wallet.js`
   - Wallet connection state + provider handshake.
 - `app/_client/src/features/wallet/wallet-ui.js`
@@ -85,7 +87,7 @@ are split into smaller modules.
 - `app/_client/src/data/chain/nfts-api.js`
   - Shared `/api/nfts` POST helper for client RPC + Alchemy calls.
 - `app/_client/src/data/chain/cubixles-reader.js`
-  - Reads tokenURI via `/api/nfts` JSON-RPC (no wallet required).
+  - Reads tokenURI + mintPriceByTokenId via `/api/nfts` JSON-RPC (no wallet required).
 - `app/_client/src/data/chain/less-supply.js`
   - Mainnet $LESS remaining supply fetcher via `/api/nfts` (totalSupply minus burn address).
 - `app/_client/src/data/chain/less-delta.js`
@@ -99,7 +101,7 @@ are split into smaller modules.
 - `app/_client/src/gif/variant.js`
   - Deterministic GIF variant selection + IPFS path builder.
 - `app/_client/src/routes/token-view.js`
-  - `/m/<tokenId>` viewer route for external_url rendering.
+  - `/m/<tokenId>` viewer route for external_url rendering and mint price snapshots.
 - `app/_client/src/shared/utils/uri.ts`
   - URI normalization and resolution helpers.
 - `app/_client/src/types/provenance.ts`

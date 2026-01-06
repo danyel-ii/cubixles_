@@ -35,5 +35,5 @@ Last updated: 2026-01-06
    - Fork tests, floor snapshots, and some app views depend on upstream RPCs; outages reduce functionality.
 
 11. **Static analysis noise**
-   - Solhint reports Natspec and gas-index warnings that are tracked but not enforced.
-   - Slither reports dependency noise only (project findings are suppressed inline).
+   - Solhint reports Natspec + immutable naming warnings that are tracked but not enforced.
+   - Slither excludes `naming-convention` via `contracts/slither.config.json`; remaining project suppressions are inline and dependency noise is ignored.

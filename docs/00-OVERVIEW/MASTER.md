@@ -113,6 +113,8 @@ npm run test:ui
 cd contracts
 npx solhint "src/**/*.sol"
 python3 -m slither .
+# If slither isn't on PATH:
+../.venv-slither/bin/python -m slither .
 
 # Fork tests (release gate)
 export MAINNET_RPC_URL=...
