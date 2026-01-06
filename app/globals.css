@@ -548,6 +548,10 @@ body.wallet-modal-open canvas {
   touch-action: pan-y;
 }
 
+body.overlay-active canvas {
+  pointer-events: none;
+}
+
 body.ui-pointer-active canvas {
   pointer-events: none;
 }
