@@ -1,4 +1,4 @@
-import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
+import { BrowserProvider, Contract, Interface, JsonRpcProvider } from "ethers";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
 import {
   formatChainName,
@@ -33,12 +33,105 @@ const WAD = 1_000_000_000_000_000_000n;
 const PRICE_STEP_WEI = 100_000_000_000_000n;
 const IS_DEV =
   typeof process !== "undefined" && process.env.NODE_ENV !== "production";
+const CUBIXLES_INTERFACE =
+  CUBIXLES_CONTRACT?.abi?.length ? new Interface(CUBIXLES_CONTRACT.abi) : null;
 
-function formatError(error) {
-  if (error instanceof Error) {
-    return error.message;
+const CUSTOM_ERROR_MESSAGES = {
+  InsufficientEth: "Insufficient ETH for mint price.",
+  MintCommitRequired: "Commit required before minting. Please retry.",
+  MintCommitExpired: "Commit expired. Please retry to create a new commit.",
+  MintCommitPendingBlock: "Commit pending. Wait for the next block to mint.",
+  MintCommitMismatch: "Mint selection changed since commit. Please re-commit.",
+  MintCommitSaltMismatch: "Mint salt mismatch. Please retry.",
+  MintCommitHashMissing: "Commit block unavailable. Please retry.",
+  MintCommitEmpty: "Commit missing. Please retry.",
+  MintCommitActive:
+    "Existing commit still active. Use the same selection or wait ~256 blocks.",
+  InvalidReferenceCount: "Select 1 to 6 NFTs.",
+  RefNotOwned: "You do not own one of the selected NFTs.",
+  RefOwnershipCheckFailed:
+    "Failed to verify ownership for a selected NFT. Try again.",
+  MintCapReached: "Mint cap reached.",
+  TokenIdExists: "Token already exists. Please retry.",
+  FixedPriceRequired: "Mint pricing misconfigured. Please contact support.",
+  FixedPriceNotAllowed: "Mint pricing mode is disabled.",
+  LinearPricingConfigRequired: "Mint pricing misconfigured. Please contact support.",
+  LinearPricingNotAllowed: "Mint pricing mode is disabled.",
+  LessTokenRequired: "LESS token is required for this contract.",
+  ResaleSplitterRequired: "Royalty receiver misconfigured.",
+  RoyaltyReceiverRequired: "Royalty receiver required.",
+  RoyaltyTooHigh: "Royalty rate too high.",
+  AddressInsufficientBalance: "Contract balance is insufficient to transfer ETH.",
+  FailedInnerCall: "Payment transfer failed. Try again.",
+};
+
+function extractRevertData(error) {
+  const candidates = [
+    error?.data,
+    error?.error?.data,
+    error?.error?.data?.data,
+    error?.info?.error?.data,
+    error?.info?.error?.data?.data,
+    error?.data?.data,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.startsWith("0x")) {
+      return candidate;
+    }
   }
-  return "Mint failed.";
+  return null;
+}
+
+function parseCustomErrorName(error, iface) {
+  if (!iface) {
+    return null;
+  }
+  const data = extractRevertData(error);
+  if (data) {
+    try {
+      const parsed = iface.parseError(data);
+      return parsed?.name || null;
+    } catch (parseError) {
+      void parseError;
+    }
+  }
+  const message =
+    error?.shortMessage || error?.reason || error?.message || "";
+  const match = message.match(/execution reverted: ([A-Za-z0-9_]+)\b/);
+  return match ? match[1] : null;
+}
+
+function formatError(error, { iface } = {}) {
+  if (!error) {
+    return "Mint failed.";
+  }
+  const code = error?.code ?? error?.error?.code ?? error?.info?.error?.code;
+  const shortMessage = error?.shortMessage || "";
+  const message = error?.message || shortMessage || "Mint failed.";
+
+  if (code === 4001 || code === "ACTION_REJECTED") {
+    return "Transaction cancelled in wallet.";
+  }
+  if (code === "INSUFFICIENT_FUNDS" || /insufficient funds/i.test(message)) {
+    return "Insufficient ETH to cover gas + value.";
+  }
+  if (/user rejected|denied|cancelled/i.test(message)) {
+    return "Transaction cancelled in wallet.";
+  }
+
+  const customName = parseCustomErrorName(error, iface);
+  if (customName && CUSTOM_ERROR_MESSAGES[customName]) {
+    return CUSTOM_ERROR_MESSAGES[customName];
+  }
+
+  if (code === "CALL_EXCEPTION" || /missing revert data/i.test(message)) {
+    return "Transaction reverted. Check your wallet network and try again.";
+  }
+  if (code === "NETWORK_ERROR") {
+    return "Network error. Check your wallet connection and retry.";
+  }
+
+  return message || "Mint failed.";
 }
 
 function isZeroAddress(address) {
@@ -292,6 +385,36 @@ export function initMintUi() {
     return ((value + step - 1n) / step) * step;
   }
 
+  async function ensureBalanceForMint({ provider, contract, args, valueWei }) {
+    if (!provider || !contract || !walletState?.address || valueWei == null) {
+      return;
+    }
+    let gasLimit = null;
+    try {
+      gasLimit = await contract.estimateGas.mint(...args, { value: valueWei });
+    } catch (error) {
+      return;
+    }
+    const [balance, feeData] = await Promise.all([
+      provider.getBalance(walletState.address),
+      provider.getFeeData(),
+    ]);
+    const gasPrice = feeData?.maxFeePerGas ?? feeData?.gasPrice;
+    if (!gasPrice) {
+      return;
+    }
+    const estimatedGas =
+      typeof gasLimit === "bigint" ? gasLimit : BigInt(gasLimit);
+    const required = valueWei + estimatedGas * BigInt(gasPrice);
+    if (balance < required) {
+      const shortfall = required - balance;
+      const shortfallEth = formatEthFromWei(shortfall);
+      throw new Error(
+        `Insufficient ETH for mint price + gas. Add about ${shortfallEth} ETH and retry.`
+      );
+    }
+  }
+
   function updateMintPriceNote() {
     if (!mintPriceNoteEl) {
       return;
@@ -457,6 +580,7 @@ export function initMintUi() {
   });
 
   mintButton.addEventListener("click", async () => {
+    let contract = null;
     if (!walletState || walletState.status !== "connected") {
       setStatus("Connect your wallet to mint.", "error");
       return;
@@ -489,7 +613,7 @@ export function initMintUi() {
         CUBIXLES_CONTRACT.abi,
         readProvider
       );
-      const contract = new Contract(
+      contract = new Contract(
         CUBIXLES_CONTRACT.address,
         CUBIXLES_CONTRACT.abi,
         signer
@@ -662,6 +786,12 @@ export function initMintUi() {
       state.currentCubeTokenId = tokenId;
       document.dispatchEvent(new CustomEvent("cube-token-change"));
       const overrides = { value: currentMintPriceWei };
+      await ensureBalanceForMint({
+        provider,
+        contract,
+        args: [salt, tokenUri, refsCanonical],
+        valueWei: currentMintPriceWei,
+      });
 
       setStatus("Step 2/2: confirm mint in your wallet.");
       const tx = await contract.mint(salt, tokenUri, refsCanonical, overrides);
@@ -694,7 +824,9 @@ export function initMintUi() {
       });
       document.dispatchEvent(new CustomEvent("mint-complete"));
     } catch (error) {
-      const message = formatError(error);
+      const message = formatError(error, {
+        iface: contract?.interface || CUBIXLES_INTERFACE,
+      });
       setStatus(message, "error");
       showToast({
         title: "Mint failed",
