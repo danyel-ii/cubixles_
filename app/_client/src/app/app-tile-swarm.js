@@ -362,20 +362,8 @@ function attachListeners() {
   });
 }
 
-function setLayerVisibility() {
-  const canvas = tileSwarm?.layer?.canvas || tileSwarm?.layer?.elt;
-  if (!canvas) {
-    return;
-  }
-  canvas.classList.toggle("is-hidden", tileSwarm.hidden);
-}
-
 function resetTileSwarm() {
   if (!tileSwarm) {
-    return;
-  }
-  if (tileSwarm.hidden) {
-    setLayerVisibility();
     return;
   }
   const baseSize = clamp(Math.min(width, height) * 0.012, 4, 9);
@@ -394,7 +382,6 @@ function resetTileSwarm() {
   tileSwarm.tooltipNode = null;
   tileSwarm.startAt = typeof millis === "function" ? millis() : 0;
   tileSwarm.formed = false;
-  setLayerVisibility();
 }
 
 function resolveTarget(now) {
@@ -485,21 +472,8 @@ export function initTileSwarm() {
     maxDelay: 0,
     startAt: 0,
     formed: false,
-    hidden: false,
   };
   attachListeners();
-  if (typeof document !== "undefined") {
-    tileSwarm.hidden = Boolean(window?.localStorage?.getItem("cubixles:chainId"));
-  }
-  if (typeof document !== "undefined") {
-    document.addEventListener("cubixles-chain-change", () => {
-      if (!tileSwarm) {
-        return;
-      }
-      tileSwarm.hidden = true;
-      setLayerVisibility();
-    });
-  }
   const layer = createGraphics(windowWidth, windowHeight);
   layer.pixelDensity(1);
   layer.noSmooth();
@@ -524,7 +498,7 @@ export function resizeTileSwarm() {
 }
 
 export function drawTileSwarm() {
-  if (!tileSwarm || !tileSwarm.tiles.length || tileSwarm.hidden || !tileSwarm.layer) {
+  if (!tileSwarm || !tileSwarm.tiles.length || !tileSwarm.layer) {
     return;
   }
   const layer = tileSwarm.layer;

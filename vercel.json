@@ -1,3 +1,13 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/inspecta_deck",
+      "destination": "https://provenance-viewer.vercel.app/"
+    },
+    {
+      "source": "/inspecta_deck/:path*",
+      "destination": "https://provenance-viewer.vercel.app/:path*"
+    }
+  ]
 }
