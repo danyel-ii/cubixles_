@@ -756,6 +756,11 @@ body.ui-pointer-active canvas {
   pointer-events: none;
 }
 
+body.is-preview.ui-pointer-active canvas,
+body.is-preview.ui-pointer-active .p5Canvas {
+  pointer-events: auto;
+}
+
 .ui-panel {
   position: fixed;
   top: 20px;

@@ -70,6 +70,17 @@ export function initLeaderboardUi() {
 
   let walletState = null;
   let readProviderPromise = null;
+  function isMainnetConnected() {
+    return walletState?.status === "connected" && walletState?.chainId === 1;
+  }
+
+  function updateOpenButtonVisibility() {
+    const show = isMainnetConnected();
+    openButton.classList.toggle("is-hidden", !show);
+    openButton.disabled = !show;
+    openButton.setAttribute("aria-hidden", String(!show));
+  }
+
   function updateLeaderboardDetails() {
     contractEl.textContent = `Contract: ${CUBIXLES_CONTRACT.address}`;
     chainEl.textContent = `Chain: ${formatChainName(CUBIXLES_CONTRACT.chainId)}`;
@@ -268,12 +279,16 @@ export function initLeaderboardUi() {
 
   subscribeWallet((next) => {
     walletState = next;
+    updateOpenButtonVisibility();
   });
 
   subscribeActiveChain(() => {
     readProviderPromise = null;
+    updateOpenButtonVisibility();
     if (!leaderboardPanel.classList.contains("is-hidden")) {
       refreshLeaderboard();
     }
   });
+
+  updateOpenButtonVisibility();
 }

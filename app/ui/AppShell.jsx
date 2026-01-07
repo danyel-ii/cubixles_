@@ -75,9 +75,9 @@ export default function AppShell() {
             <button id="enter-btn" className="overlay-button is-glow" type="button">
               Enter
             </button>
-            <button id="overlay-leaderboard" className="overlay-button is-ghost" type="button">
-              Leaderboard
-            </button>
+            <a id="overlay-inspect" className="overlay-button is-ghost" href="/inspecta_deck/">
+              Inspect
+            </a>
             <button id="overlay-about" className="overlay-button is-ghost" type="button">
               About
             </button>
@@ -200,7 +200,7 @@ export default function AppShell() {
           </button>
         </div>
         <div className="ui-row">
-          <button id="leaderboard-open" className="ui-button is-ghost" type="button">
+          <button id="leaderboard-open" className="ui-button is-ghost is-hidden" type="button">
             Leaderboard
           </button>
         </div>
