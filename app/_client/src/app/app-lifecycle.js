@@ -28,6 +28,9 @@ import {
 import { fetchBackgroundDataUrl } from "./app-exporter.js";
 import { initUiRoot } from "../ui/ui-root.js";
 
+// Temporarily disable the tooltip tracer swarm.
+const TOOLTIP_SWARM_ENABLED = false;
+
 function preloadApp() {
   state.defaultTextures = config.sourceUrls.map((url) =>
     loadImage(resolveUrl(url))
@@ -46,7 +49,9 @@ function setupApp() {
   state.faceTextures = fillFaceTextures(state.defaultTextures);
   initUiRoot();
   fetchBackgroundDataUrl();
-  initTileSwarm();
+  if (TOOLTIP_SWARM_ENABLED) {
+    initTileSwarm();
+  }
 }
 
 function drawApp() {
@@ -61,13 +66,17 @@ function drawApp() {
   drawGlassShell();
   drawInkEdges();
   drawForeground();
-  drawTileSwarm();
+  if (TOOLTIP_SWARM_ENABLED) {
+    drawTileSwarm();
+  }
 }
 
 function resizeApp() {
   resizeCanvas(windowWidth, windowHeight);
   initBackdrop();
-  resizeTileSwarm();
+  if (TOOLTIP_SWARM_ENABLED) {
+    resizeTileSwarm();
+  }
 }
 
 function handleMouseWheel(event) {
