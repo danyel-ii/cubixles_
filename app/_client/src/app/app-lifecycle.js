@@ -12,6 +12,7 @@ import {
   drawBackdrop,
   drawForeground,
 } from "./app-backdrop.js";
+import { initTileSwarm, drawTileSwarm, resizeTileSwarm } from "./app-tile-swarm.js";
 import { drawTexturedFaces, drawGlassShell } from "./app-cube.js";
 import { buildEdges, drawInkEdges } from "./app-edges.js";
 import {
@@ -45,6 +46,7 @@ function setupApp() {
   state.faceTextures = fillFaceTextures(state.defaultTextures);
   initUiRoot();
   fetchBackgroundDataUrl();
+  initTileSwarm();
 }
 
 function drawApp() {
@@ -59,11 +61,13 @@ function drawApp() {
   drawGlassShell();
   drawInkEdges();
   drawForeground();
+  drawTileSwarm();
 }
 
 function resizeApp() {
   resizeCanvas(windowWidth, windowHeight);
   initBackdrop();
+  resizeTileSwarm();
 }
 
 function handleMouseWheel(event) {

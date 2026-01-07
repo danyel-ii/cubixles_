@@ -738,6 +738,11 @@ canvas,
   touch-action: none;
 }
 
+.tile-swarm-layer {
+  z-index: 20;
+  pointer-events: none;
+}
+
 body.wallet-modal-open canvas {
   pointer-events: none;
   touch-action: pan-y;
