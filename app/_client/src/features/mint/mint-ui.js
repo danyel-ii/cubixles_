@@ -474,6 +474,7 @@ export function initMintUi() {
     if (!selection.length) {
       floorSummaryEl.textContent = "Total floor (snapshot): 0.0000 ETH";
       floorListEl.textContent = "Select NFTs to view floor snapshot.";
+      floorListEl.classList.add("is-empty");
       state.sumFloorEth = 0;
       if (capture) {
         state.floorSnapshotAt = new Date().toISOString();
@@ -482,6 +483,7 @@ export function initMintUi() {
       return;
     }
 
+    floorListEl.classList.remove("is-empty");
     const uniqueContracts = new Map();
     selection.forEach((nft) => {
       if (!uniqueContracts.has(nft.contractAddress)) {

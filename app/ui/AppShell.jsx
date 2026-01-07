@@ -17,7 +17,12 @@ export default function AppShell() {
     <>
       <div id="overlay" className="overlay">
         <div className="overlay-card">
-          <div className="overlay-title is-logotype">cubixles_</div>
+          <div className="overlay-title is-logotype" aria-label="cubixles_">
+            <span className="logo-mark" aria-hidden="true">
+              {"\uE000"}
+            </span>
+            <span className="sr-only">cubixles_</span>
+          </div>
           <div className="overlay-sub">
             Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered
             to NFTs you already own.
@@ -167,7 +172,12 @@ export default function AppShell() {
         Loading token...
       </div>
       <div id="ui" className="ui-panel">
-        <div className="ui-title is-logotype">cubixles_</div>
+        <div className="ui-title is-logotype" aria-label="cubixles_">
+          <span className="logo-mark" aria-hidden="true">
+            {"\uE000"}
+          </span>
+          <span className="sr-only">cubixles_</span>
+        </div>
         <div className="ui-sub">
           Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to
           NFTs you already own.

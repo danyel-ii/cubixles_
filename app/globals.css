@@ -280,9 +280,21 @@ body.is-token-view #leaderboard {
 .overlay-title {
   font-family: var(--font-logo);
   font-size: 30px;
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 0.2em;
   text-transform: lowercase;
+  font-synthesis: none;
+}
+
+.logo-mark {
+  font-family: var(--font-logo);
+  font-weight: 400;
+  font-size: 1em;
+  letter-spacing: 0;
+  text-transform: none;
+  font-synthesis: none;
+  line-height: 1;
+  display: inline-block;
 }
 
 .overlay-sub {
@@ -694,8 +706,22 @@ body.ui-pointer-active canvas {
 .ui-title.is-logotype {
   font-family: var(--font-logo);
   font-size: 16px;
+  font-weight: 400;
   letter-spacing: 0.2em;
   text-transform: lowercase;
+  font-synthesis: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  white-space: nowrap;
 }
 
 .ui-sub {
@@ -1383,6 +1409,12 @@ body.is-minted .preview-bar {
   margin-top: 6px;
   display: grid;
   gap: 6px;
+}
+
+.ui-floor-list.is-empty {
+  font-size: 11px;
+  color: var(--ink-soft);
+  line-height: 1.4;
 }
 
 .ui-floor-row {
