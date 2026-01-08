@@ -2,7 +2,8 @@
 
 Last updated: 2026-01-08
 Date: 2026-01-08
-Run timestamp (local): 2026-01-08T12:20:11Z
+Run timestamp (local): 2026-01-08T14:48:09Z (app-only audit)
+Previous full scan: 2026-01-08T12:20:11Z
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -30,6 +31,16 @@ Run timestamp (local): 2026-01-08T12:20:11Z
 - RoyaltySplitter sends 50% ETH to owner, swaps 50% to $LESS, then sends 90% $LESS to owner and 10% to burn.
 
 ## Test results
+### App security audit (no contract scans)
+Run timestamp (local): 2026-01-08T14:48:09Z
+- `npm test` — PASS (22 tests)
+- `npm run test:ui` — PASS (3 tests)
+- `npm run check:no-client-secrets` — PASS
+- `npm run check:no-repo-secrets` — PASS
+- `npm audit --audit-level=high` — PASS (0 vulnerabilities)
+Notes:
+- Contract-focused scans (`forge test`, `coverage:contracts`, `solhint`, `slither`, fork tests) were not run for this app-only audit.
+
 ### Unit + edge + fuzz + invariants
 Command:
 ```sh
