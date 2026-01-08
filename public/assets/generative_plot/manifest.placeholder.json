@@ -1,0 +1,11 @@
+[
+  {
+    "output": "cubixles_<BASE64_ID>.png",
+    "palette_id": "placeholder",
+    "hex_colors": ["#000000"],
+    "used_hex_colors": ["#000000"],
+    "rarity_inverse_frequency": 0,
+    "rarity_color_rarity_sum": 0,
+    "rarity_unique_count": 0
+  }
+]

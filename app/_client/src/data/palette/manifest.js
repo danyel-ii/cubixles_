@@ -62,6 +62,17 @@ export function pickPaletteEntry(seedHex, manifest) {
   return { index, entry: manifest[index] };
 }
 
+export function getPaletteEntryByIndex(index, manifest) {
+  if (!Array.isArray(manifest) || manifest.length === 0) {
+    throw new Error("Palette manifest is empty.");
+  }
+  const parsed = Number(index);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed >= manifest.length) {
+    throw new Error("Palette index is out of range.");
+  }
+  return manifest[parsed];
+}
+
 export function buildPaletteImageUrl(entry) {
   const imagesCid = getPaletteImagesCid();
   if (!imagesCid) {

@@ -13,9 +13,8 @@ import { state } from "../../app/app-state.js";
 import { buildMintMetadata } from "./mint-metadata.js";
 import {
   buildPaletteImageUrl,
-  computePaletteCommitSeed,
+  getPaletteEntryByIndex,
   loadPaletteManifest,
-  pickPaletteEntry,
 } from "../../data/palette/manifest.js";
 import { pinTokenMetadata } from "./token-uri-provider.js";
 import { computeRefsHash, sortRefsCanonically } from "./refs.js";
@@ -699,7 +698,6 @@ export function initMintUi() {
         tokenId,
         minter: walletState.address,
       });
-      let commitBlockHash = null;
       if (supportsCommitReveal && commitBlockNumber === null) {
         showToast({
           title: "Two-step mint",
@@ -736,23 +734,15 @@ export function initMintUi() {
         setStatus("Preparing mint...");
         commitBlockNumber = Number(latestBlock);
       }
-      const commitBlock = await readProvider.getBlock(commitBlockNumber);
-      commitBlockHash = commitBlock?.hash;
-      if (!commitBlockHash) {
-        throw new Error("Commit hash unavailable.");
-      }
-      const paletteSeed = computePaletteCommitSeed({
+      const paletteManifest = await loadPaletteManifest();
+      const paletteIndexRaw = await readContract.previewPaletteIndex(
         refsHash,
         salt,
-        minter: walletState.address,
-        commitBlockNumber,
-        commitBlockHash,
-      });
-      const paletteManifest = await loadPaletteManifest();
-      const { entry: paletteEntry, index: paletteIndex } = pickPaletteEntry(
-        paletteSeed,
-        paletteManifest
+        walletState.address,
+        commitBlockNumber
       );
+      const paletteIndex = Number(paletteIndexRaw);
+      const paletteEntry = getPaletteEntryByIndex(paletteIndex, paletteManifest);
       const variantIndex = computeVariantIndex(selectionSeed);
       const params = decodeVariantIndex(variantIndex);
       const paletteImageUrl = buildPaletteImageUrl(paletteEntry);

@@ -16,6 +16,8 @@ contracts/.gitmodules
 assets/
 !public/assets/
 !public/assets/**
+public/assets/.DS_Store
+public/assets/**/.DS_Store
 contracts/lcov.info
 .vercel
 .env*.local

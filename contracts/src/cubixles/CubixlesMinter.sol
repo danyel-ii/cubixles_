@@ -78,7 +78,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Fixed-point scale for WAD math.
     uint256 public constant WAD = 1e18;
     /// @notice Maximum number of mints allowed.
-    uint256 public constant MAX_MINTS = 32_768;
+    uint256 public constant MAX_MINTS = 10_000;
     /// @notice Palette entries available for random draw.
     uint256 public constant PALETTE_SIZE = 10_000;
     /// @notice Commit expiry window (in blocks) for reveal.
@@ -97,6 +97,8 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     mapping(uint256 => uint256) private _lastSupply;
     /// @notice Palette index selected at mint time by tokenId.
     mapping(uint256 => uint256) public paletteIndexByTokenId;
+    /// @notice Swap map for random-without-replacement palette draws.
+    mapping(uint256 => uint256) private _paletteIndexSwap;
     /// @notice Pending commit per minter.
     mapping(address => MintCommit) public mintCommitByMinter;
 
@@ -545,19 +547,65 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         }
     }
 
+    function _resolvePaletteIndex(uint256 offset) private view returns (uint256) {
+        uint256 mapped = _paletteIndexSwap[offset];
+        return mapped == 0 ? offset : mapped - 1;
+    }
+
+    function _drawPaletteIndex(bytes32 seed) private returns (uint256) {
+        uint256 remaining = MAX_MINTS - totalMinted;
+        if (remaining == 0) {
+            revert MintCapReached();
+        }
+        uint256 rand = uint256(seed) % remaining;
+        uint256 selected = _resolvePaletteIndex(rand);
+
+        uint256 lastIndex = remaining - 1;
+        if (rand != lastIndex) {
+            uint256 lastValue = _resolvePaletteIndex(lastIndex);
+            _paletteIndexSwap[rand] = lastValue + 1;
+        }
+
+        return selected;
+    }
+
+    /// @notice Preview the palette index for a commit before minting.
+    /// @dev Uses the current draw state; another mint can change the result.
+    function previewPaletteIndex(
+        bytes32 refsHash,
+        bytes32 salt,
+        address minter,
+        uint256 commitBlockNumber
+    ) external view returns (uint256) {
+        bytes32 commitBlockHash = blockhash(commitBlockNumber);
+        if (commitBlockHash == bytes32(0)) {
+            revert MintCommitHashMissing();
+        }
+        bytes32 seed = keccak256(
+            abi.encodePacked(refsHash, salt, minter, commitBlockNumber, commitBlockHash)
+        );
+        uint256 remaining = MAX_MINTS - totalMinted;
+        if (remaining == 0) {
+            revert MintCapReached();
+        }
+        uint256 rand = uint256(seed) % remaining;
+        return _resolvePaletteIndex(rand);
+    }
+
     function _assignPaletteIndex(
         bytes32 refsHash,
         bytes32 salt,
         address minter,
         uint256 commitBlockNumber
-    ) private view returns (uint256) {
+    ) private returns (uint256) {
         bytes32 commitBlockHash = blockhash(commitBlockNumber);
         if (commitBlockHash == bytes32(0)) {
             revert MintCommitHashMissing();
         }
         // slither-disable-next-line weak-prng
-        return uint256(
-            keccak256(abi.encodePacked(refsHash, salt, minter, commitBlockNumber, commitBlockHash))
-        ) % PALETTE_SIZE;
+        bytes32 seed = keccak256(
+            abi.encodePacked(refsHash, salt, minter, commitBlockNumber, commitBlockHash)
+        );
+        return _drawPaletteIndex(seed);
     }
 }

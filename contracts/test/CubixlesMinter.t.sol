@@ -92,8 +92,9 @@ contract CubixlesMinterTest is Test {
         address minterAddr,
         bytes32 salt,
         CubixlesMinter.NftRef[] memory refs
-    ) internal {
+    ) internal returns (uint256 commitBlockNumber) {
         bytes32 refsHash = Refs.hashCanonical(refs);
+        commitBlockNumber = block.number;
         vm.prank(minterAddr);
         minter.commitMint(salt, refsHash);
         vm.roll(block.number + 1);
@@ -182,6 +183,48 @@ contract CubixlesMinterTest is Test {
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.MintCapReached.selector);
         minter.mint{ value: amount }(DEFAULT_SALT, "ipfs://token", refs);
+    }
+
+    function testMintCapIsTenThousand() public {
+        assertEq(minter.MAX_MINTS(), 10_000);
+        assertEq(minter.MAX_MINTS(), minter.PALETTE_SIZE());
+    }
+
+    function testPaletteIndexUniqueForMultipleMints() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        uint256 amount = minter.currentMintPrice();
+        vm.deal(minterAddr, amount * 5);
+
+        uint256[] memory indices = new uint256[](5);
+        bytes32 refsHash = Refs.hashCanonical(refs);
+        for (uint256 i = 0; i < indices.length; i += 1) {
+            bytes32 salt = keccak256(abi.encodePacked("salt", i));
+            uint256 commitBlock = _commitMint(minterAddr, salt, refs);
+            uint256 previewIndex = minter.previewPaletteIndex(
+                refsHash,
+                salt,
+                minterAddr,
+                commitBlock
+            );
+
+            vm.prank(minterAddr);
+            uint256 tokenId = minter.mint{ value: amount }(salt, "ipfs://token", refs);
+            uint256 paletteIndex = minter.paletteIndexByTokenId(tokenId);
+            assertEq(paletteIndex, previewIndex);
+            indices[i] = paletteIndex;
+        }
+
+        for (uint256 i = 0; i < indices.length; i += 1) {
+            assertLt(indices[i], minter.PALETTE_SIZE());
+            for (uint256 j = i + 1; j < indices.length; j += 1) {
+                assertTrue(indices[i] != indices[j]);
+            }
+        }
     }
 
     function testMintSetsTokenUri() public {
