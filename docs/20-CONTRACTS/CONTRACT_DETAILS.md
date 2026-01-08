@@ -10,8 +10,8 @@ Last updated: 2026-01-08
 
 ## Executive Summary
 
-CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0015 ETH`, scaled by a 1.0–2.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps half the royalty via the v4 PoolManager; on successful swap, 50% of the ETH is forwarded to the owner, the remaining ETH is swapped to $LESS, 90% of $LESS goes to the owner and 10% to the burn address, and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubixles_ miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `external_url`.
-An ETH-only mode is supported when `LESS_TOKEN` is set to `0x0` on deployment; in that case mint pricing is either fixed or linear (base + step) depending on `linearPricingEnabled`, and LESS snapshots/deltas remain `0`. Base deployments use immutable linear pricing (0.0012 ETH base + 0.000036 ETH per mint).
+CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0015 ETH`, scaled by a 1.0–4.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps half the royalty via the v4 PoolManager; on successful swap, 50% of the ETH is forwarded to the owner, the remaining ETH is swapped to $LESS, 90% of $LESS goes to the owner and 10% to the burn address, and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubixles_ miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `external_url`.
+An ETH-only mode is supported when `LESS_TOKEN` is set to `0x0` on deployment; in that case mint pricing is either fixed or linear (base + step) depending on `linearPricingEnabled`, and LESS snapshots/deltas remain `0`. Base deployments use immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint).
 Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. ETH transfers use `Address.sendValue` and revert on failure, and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
 
 ## Contract Overview
@@ -41,7 +41,7 @@ Key steps:
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
 3. **Pricing**: `currentMintPrice()` returns the dynamic $LESS price, linear base + step (when `linearPricingEnabled` is on), or fixed ETH pricing when LESS + linear pricing are disabled.
    - `base = 0.0015 ETH`
-   - `factor = 1 + (1B - supply) / 1B`, clamped at 1.0 when supply ≥ 1B
+   - `factor = 1 + (3 * (1B - supply)) / 1B`, clamped at 1.0 when supply ≥ 1B
    - `price = base * factor`
    - `price` is rounded up to the nearest `0.0001 ETH`
    - linear price = `baseMintPriceWei + (baseMintPriceStepWei * totalMinted)` (no rounding)

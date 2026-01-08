@@ -297,7 +297,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice Current mint price for this deployment.
-    /// @dev Linear pricing uses base + step * totalMinted. LESS pricing scales 1x→2x as supply drops.
+    /// @dev Linear pricing uses base + step * totalMinted. LESS pricing scales 1x→4x as supply drops.
     /// @return Current mint price in wei.
     function currentMintPrice() public view returns (uint256) {
         if (linearPricingEnabled) {
@@ -312,7 +312,7 @@ contract CubixlesMinter is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         }
         // Scale price by remaining supply so lower supply increases mint cost.
         uint256 delta = ONE_BILLION - supply;
-        uint256 factorWad = WAD + (delta * WAD) / ONE_BILLION;
+        uint256 factorWad = WAD + (delta * 3 * WAD) / ONE_BILLION;
         uint256 rawPrice = (BASE_PRICE_WEI * factorWad) / WAD;
         return _roundUp(rawPrice, PRICE_STEP_WEI);
     }

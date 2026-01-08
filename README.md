@@ -9,7 +9,7 @@ The frontend runs on Next.js, and the contracts are built and tested with Foundr
 - Wallet connect supports EIP-6963 browser wallets and WalletConnect fallback.
 - Token viewer routes live at `/m/<tokenId>` with OG previews at `/m/<tokenId>/opengraph-image`.
 - NFT picker filters spam/airdrops and surfaces purchased/minted ERC-721s.
-- Multi-chain UI supports mainnet + Base; Base uses ETH-only linear pricing (0.0012 ETH base + 0.000036 ETH per mint, immutable).
+- Multi-chain UI supports mainnet + Base; Base uses ETH-only linear pricing (0.0012 ETH base + 0.000012 ETH per mint, immutable).
 
 ## Repository layout
 - `app/` — Next.js app router, API routes, and UI.

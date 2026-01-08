@@ -33,7 +33,7 @@ struct NftRef {
 
 - `mint` is payable.
 - `commitMint` must be called first; reveal must occur after the commit is mined (next block or later) and within 256 blocks.
-- Mint price is dynamic and derived from $LESS totalSupply (base `0.0015 ETH` with a 1.0–2.0 factor), rounded up to the nearest `0.0001 ETH`.
+- Mint price is dynamic and derived from $LESS totalSupply (base `0.0015 ETH` with a 1.0–4.0 factor), rounded up to the nearest `0.0001 ETH`.
 - TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
 - Mint pays the RoyaltySplitter and refunds any excess.
 - If the payout transfer fails, the mint reverts (no partial transfers).

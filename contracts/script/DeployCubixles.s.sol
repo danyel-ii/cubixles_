@@ -109,7 +109,7 @@ contract DeployCubixles is Script {
         );
         cfg.baseMintPriceStepWei = vm.envOr(
             "CUBIXLES_BASE_MINT_PRICE_STEP_WEI",
-            cfg.chainId == 8453 ? 36_000_000_000_000 : 0
+            cfg.chainId == 8453 ? 12_000_000_000_000 : 0
         );
     }
 

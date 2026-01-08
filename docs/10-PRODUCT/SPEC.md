@@ -197,7 +197,7 @@ type MintMetadata = {
 
 - Mint price is **dynamic** based on $LESS totalSupply:
   - base price `0.0015 ETH`
-  - factor `1 + (1B - supply) / 1B` (clamped at 1.0 when supply ≥ 1B)
+  - factor `1 + (3 * (1B - supply)) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Mint accepts `msg.value >= currentMintPrice()` and refunds overpayment.
 - Mint supply is capped at 32,768 total mints.
@@ -205,7 +205,7 @@ type MintMetadata = {
 - Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn).
 
 Base ETH-only mode:
-- On Base deployments, `LESS_TOKEN` is disabled and linear pricing is enabled (0.0012 ETH base + 0.000036 ETH per mint).
+- On Base deployments, `LESS_TOKEN` is disabled and linear pricing is enabled (0.0012 ETH base + 0.000012 ETH per mint).
 - Mint price is `baseMintPriceWei + (baseMintPriceStepWei * totalMinted)` (no rounding).
 - `baseMintPriceWei` and `baseMintPriceStepWei` are immutable once deployed.
 - $LESS snapshots and delta metrics are disabled (stored as `0`) on Base.

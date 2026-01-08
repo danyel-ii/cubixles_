@@ -470,7 +470,7 @@ contract CubixlesMinterTest is Test {
 
     function testLinearPricingUsesBaseAndStep() public {
         uint256 basePrice = 1_200_000_000_000_000;
-        uint256 step = 36_000_000_000_000;
+        uint256 step = 12_000_000_000_000;
         CubixlesMinter linearMinter = new CubixlesMinter(
             resaleSplitter,
             address(0),
@@ -620,13 +620,13 @@ contract CubixlesMinterTest is Test {
 
     function testCurrentMintPriceSupplyZero() public {
         uint256 price = minter.currentMintPrice();
-        assertEq(price, _roundUp(BASE_PRICE * 2, PRICE_STEP));
+        assertEq(price, _roundUp(BASE_PRICE * 4, PRICE_STEP));
     }
 
     function testCurrentMintPriceHalfSupply() public {
         lessToken.mint(address(this), ONE_BILLION / 2);
         uint256 price = minter.currentMintPrice();
-        assertEq(price, _roundUp((BASE_PRICE * 15) / 10, PRICE_STEP));
+        assertEq(price, _roundUp((BASE_PRICE * 5) / 2, PRICE_STEP));
     }
 
     function testCurrentMintPriceFullSupply() public {

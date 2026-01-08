@@ -16,7 +16,7 @@ Last updated: 2026-01-08
 
 ## 2025-12-22 — T5 Spec Shapes
 
-- v0 chain initially targeted Ethereum mainnet (`chainId: 1`), with Sepolia used only for rehearsal/testing when needed; Base runs ETH-only with immutable linear pricing (0.0012 ETH base + 0.000036 ETH per mint). (Superseded by the 2026-01-08 multi-chain update.)
+- v0 chain initially targeted Ethereum mainnet (`chainId: 1`), with Sepolia used only for rehearsal/testing when needed; Base runs ETH-only with immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint). (Superseded by the 2026-01-08 multi-chain update.)
 - `tokenId` stored as base-10 string (from `BigInt`) to allow large IDs.
 - Mint gating accepts 1 to 6 referenced NFTs.
 - `contractAddress` stored in EIP-55 checksum format.
@@ -32,12 +32,12 @@ Last updated: 2026-01-08
 
 - Mint price is **dynamic**, derived from $LESS totalSupply:
   - base price `0.0015 ETH`
-  - factor `1 + (1B - supply) / 1B` (clamped at 1.0 when supply ≥ 1B)
+  - factor `1 + (3 * (1B - supply)) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Resale royalties are handled via ERC-2981 with receiver = RoyaltySplitter.
 - RoyaltySplitter can attempt a $LESS buy, then splits $LESS 90% owner / 10% burn and forwards remaining ETH to owner (50% ETH sent upfront).
 - The minter snapshots $LESS supply at mint and on transfer to support ΔLESS metrics.
-- Base deployments disable LESS and use immutable linear pricing (0.0012 ETH base + 0.000036 ETH per mint; no off-chain updates).
+- Base deployments disable LESS and use immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint; no off-chain updates).
 
 ## 2025-12-24 — Interactive Metadata (p5.js)
 

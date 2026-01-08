@@ -167,7 +167,7 @@ npm run deploy:mainnet
 
 - Set `CUBIXLES_LESS_TOKEN=0x0000000000000000000000000000000000000000`.
 - Set `CUBIXLES_LINEAR_PRICING_ENABLED=true`.
-- Set `CUBIXLES_BASE_MINT_PRICE_WEI` and `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (defaults: 0.0012 ETH and 0.000036 ETH; immutable once deployed).
+- Set `CUBIXLES_BASE_MINT_PRICE_WEI` and `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (defaults: 0.0012 ETH and 0.000012 ETH; immutable once deployed).
 - Leave `CUBIXLES_FIXED_MINT_PRICE_WEI=0` (unused on Base).
 - Disable swaps by leaving `CUBIXLES_POOL_MANAGER` unset (or `0x0`).
 - Deploy:
