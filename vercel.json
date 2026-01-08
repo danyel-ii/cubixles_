@@ -1,9 +1,21 @@
 {
   "framework": "nextjs",
+  "redirects": [
+    {
+      "source": "/inspecta_deck/",
+      "destination": "/inspecta_deck",
+      "permanent": true
+    },
+    {
+      "source": "/landing_page/",
+      "destination": "/landing_page",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/landing_page",
-      "destination": "https://provenance-viewer.vercel.app/inspecta_deck/"
+      "destination": "https://provenance-viewer.vercel.app/inspecta_deck"
     },
     {
       "source": "/landing_page/:path*",
@@ -11,7 +23,7 @@
     },
     {
       "source": "/inspecta_deck",
-      "destination": "https://provenance-viewer.vercel.app/inspecta_deck/"
+      "destination": "https://provenance-viewer.vercel.app/inspecta_deck"
     },
     {
       "source": "/inspecta_deck/:path*",

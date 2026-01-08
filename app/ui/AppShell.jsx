@@ -75,7 +75,7 @@ export default function AppShell() {
             <button id="enter-btn" className="overlay-button is-glow" type="button">
               Enter
             </button>
-            <a id="overlay-inspect" className="overlay-button is-ghost" href="/inspecta_deck/">
+            <a id="overlay-inspect" className="overlay-button is-ghost" href="/inspecta_deck">
               Inspect
             </a>
             <button id="overlay-about" className="overlay-button is-ghost" type="button">
