@@ -2,7 +2,7 @@ import { config } from "./app-config.js";
 import { state } from "./app-state.js";
 
 const INTRO_DURATION_MS = 3600;
-const INTRO_HOLD_MS = 500;
+const INTRO_HOLD_MS = 750;
 const INTRO_FADE_START = 0.55;
 const INTRO_FADE_END = 0.92;
 const INTRO_TEXTURE_START = 0.42;
