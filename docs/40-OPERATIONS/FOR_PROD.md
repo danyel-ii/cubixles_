@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2026-01-06
+Last updated: 2026-01-08
 
 ## 0) Pre-flight (local)
 
@@ -61,7 +61,10 @@ npm run check:no-repo-secrets
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid` in the deploy script)
-- `CUBIXLES_FIXED_MINT_PRICE_WEI` (required only when LESS is disabled)
+- `CUBIXLES_LINEAR_PRICING_ENABLED` (optional; required for Base linear pricing)
+- `CUBIXLES_BASE_MINT_PRICE_WEI` (optional; base price for linear pricing)
+- `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (optional; step price for linear pricing)
+- `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS + linear pricing are disabled)
 - `CUBIXLES_DEPLOYMENT_PATH` (optional, overrides default `contracts/deployments/<chain>.json`)
 
 ### Deploy
@@ -84,8 +87,8 @@ node contracts/scripts/export-abi.mjs
 ```
 
 ### Update frontend contract config
-- Update `app/_client/src/config/contracts.ts` with the deployed address if needed.
-- Confirm `CUBIXLES_CONTRACT.address` matches deployment.
+- Confirm `contracts/deployments/<chain>.json` was updated by the deploy script.
+- `app/_client/src/config/contracts.ts` reads those deployment files; no manual address edits required.
 
 ## 2) App setup
 
@@ -93,8 +96,12 @@ node contracts/scripts/export-abi.mjs
 - `PINATA_JWT`
 - `ALCHEMY_API_KEY`
 - `SERVER_AUTH_SALT`
-- `CUBIXLES_CONTRACT_ADDRESS`
-- `CUBIXLES_CHAIN_ID=1` (use `11155111` only for Sepolia rehearsal)
+- `CUBIXLES_CHAIN_ID=1` (server signature verification; use `11155111` only for Sepolia rehearsal)
+
+### Client env (public)
+- `NEXT_PUBLIC_DEFAULT_CHAIN_ID=1` (set to `8453` for Base)
+- `NEXT_PUBLIC_TOKEN_VIEW_BASE_URL` (prod domain for `external_url` + Farcaster meta)
+- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
 
 ### Run dev + smoke
 ```sh
@@ -126,7 +133,7 @@ npm run check:no-client-secrets
    - `docs/30-SECURITY/SECURITY_AUDIT.md`
    - `docs/60-STATUS/STATE_OF_REVIEW.md`
 5) Verify Vercel env secrets are set (no `.env` on mainnet).
-6) Set `CUBIXLES_CHAIN_ID=1` and mainnet contract address in config.
+6) Set `CUBIXLES_CHAIN_ID=1` for server signature verification and `NEXT_PUBLIC_DEFAULT_CHAIN_ID=1`, then confirm `contracts/deployments/mainnet.json` is current.
 
 ## 5) Mainnet deploy (contracts)
 

@@ -1,6 +1,6 @@
 # cubixles_ — Invariants
 
-Last updated: 2026-01-01
+Last updated: 2026-01-08
 
 ## I-1: Ownership gate
 Mint must revert if any referenced NFT is not owned by `msg.sender` or if `ownerOf` reverts.
@@ -27,9 +27,9 @@ For the minting handler address, `balanceOf(handler) == mintCount`.
 `royaltyInfo(tokenId, salePrice)` always returns the configured receiver and `salePrice * bps / 10000`.
 
 ## I-8: RoyaltySplitter fallback
-- Router unset → forwards 100% ETH to owner.
-- Router reverts → forwards 100% ETH to owner.
-- Router succeeds → sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn.
+- PoolManager unset or swap disabled -> forwards 100% ETH to owner.
+- Swap reverts -> forwards remaining ETH to owner.
+- Swap succeeds -> sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn.
 
 ## I-9: Reentrancy safety
 Reentrancy via owner/refund/PoolManager calls must not mint extra tokens or corrupt state.

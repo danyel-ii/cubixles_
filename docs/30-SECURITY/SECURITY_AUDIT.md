@@ -1,7 +1,8 @@
 # cubixles_ — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2026-01-06
-Date: 2026-01-06
+Last updated: 2026-01-08
+Date: 2026-01-08
+Run timestamp (local): 2026-01-08T12:20:11Z
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -35,7 +36,7 @@ Command:
 cd contracts
 forge test -vvv
 ```
-Result: PASS (93 tests; fork tests skipped in this run because RPC env vars were not set).
+Result: PASS (96 tests; fork tests logged as skipped because RPC env vars were not set).
 
 ### Coverage (Solidity)
 Command:
@@ -51,13 +52,8 @@ Warnings during coverage:
 - Some test functions could be marked `view` (test-only warnings).
 - Foundry coverage anchors missing for a few lines in test/mocks (informational).
 
-### Invariants (standalone run)
-Command:
-```sh
-cd contracts
-forge test --match-path "test/invariants/*" -vvv
-```
-Result: PASS (3 tests, 128k handler calls)
+### Invariants (via `forge test -vvv`)
+Result: PASS (3 tests, 128k handler calls; included in the full forge run).
 
 ### Fork tests (mainnet)
 Command:
@@ -69,9 +65,10 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (2 tests; latest local run 2026-01-06 with `MAINNET_RPC_URL` set)
+Result: PASS (2 tests; latest local run 2026-01-08 with `MAINNET_RPC_URL` set)
 - `ownerOf` reverted (non-standard or restricted), logged and allowed.
 - `royaltyInfo` reverted (non-ERC2981 or restricted), logged and allowed.
+- Forge traces emitted Sourcify decode warnings (non-blocking).
 
 ### Fork tests (Base)
 Command:
@@ -83,7 +80,7 @@ export HTTP_PROXY=""
 export HTTPS_PROXY=""
 npm run fork-test
 ```
-Result: PASS (1 test; latest local run 2026-01-06 with `BASE_RPC_URL` set)
+Result: PASS (1 test; latest local run 2026-01-08 with `BASE_RPC_URL` set)
 - Chain id and fork block assertions passed (connectivity confirmed). Optional `BASE_FORK_TEST_ADDRESS` check runs only when set.
 
 ### Frontend tests
@@ -98,7 +95,7 @@ Command:
 ```sh
 npm run test:ui
 ```
-Result: PASS (3 tests, ~4.5s)
+Result: PASS (3 tests, ~9s)
 
 ### Client secret scan
 Command:
@@ -127,17 +124,17 @@ Command:
 npm run dev -- --port 3010
 ```
 Results (local):
-- Size cap: `POST /api/pin/metadata` with ~60KB body → `413 Payload too large`.
-- Rate limit: 5 requests in quick succession → `429 Rate limit exceeded` after the 4th allowed request (capacity 5, refill 0.5/sec).
+- Size cap: `POST /api/pin/metadata` with ~50KB body → `413 Payload too large`.
+- Rate limit: 5 requests in quick succession → `429 Rate limit exceeded` on the 6th request (capacity 5, refill 0.5/sec).
 - Invalid payloads return `400` before signature checks as expected.
 
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 0 warnings; latest local run 2026-01-06.
+  - Result: 0 errors, 0 warnings; latest local run 2026-01-08.
 - Local slither run (venv):
   - Command: `cd contracts && ../.venv-slither/bin/python -m slither .`
-  - Result: 0 project findings (latest local run 2026-01-06); `naming-convention` excluded in config.
+  - Result: 0 project findings (latest local run 2026-01-08); `naming-convention` excluded in config.
   - Dependency noise: OpenZeppelin + Uniswap v4 math/assembly/pragma warnings.
 
 ## Formal verification
@@ -147,7 +144,7 @@ plus fork checks and manual review; formal proofs are a pending work item.
 ## Attack-surface review (manual)
 - `_safeMint` is the only external callback path in mint; state is committed before it to reduce reentrancy risk.
 - External `ownerOf`/`royaltyInfo` calls are treated as untrusted and are allowed to revert.
-- Royalty swap path depends on PoolManager liquidity and hook behavior; failures revert to avoid partial state.
+- Royalty swap path depends on PoolManager liquidity and hook behavior; failures fall back to forwarding ETH to the owner.
 - Base linear pricing is immutable once deployed; misconfiguration requires redeploy.
 
 ## Notes
@@ -155,4 +152,4 @@ plus fork checks and manual review; formal proofs are a pending work item.
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER` or `BASE_FORK_BLOCK`.
 - CI includes `forge test`, `npm test`, `npm run test:ui`, `solhint`, `slither`, coverage (90% minimum),
   `npm audit --audit-level=high`, `npm run check:no-client-secrets`, and `npm run check:no-repo-secrets`.
-- Local `npm audit --json` (2026-01-01): 0 vulnerabilities.
+- Local `npm audit --audit-level=high` (2026-01-08): 0 vulnerabilities.

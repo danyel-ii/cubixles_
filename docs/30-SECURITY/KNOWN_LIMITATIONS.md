@@ -1,9 +1,10 @@
 # cubixles_ — Known Limitations
 
-Last updated: 2026-01-06
+Last updated: 2026-01-08
 
 1. **Strict receiver failure policy**
-   - Mint and royalty distribution revert if ETH or $LESS transfers fail.
+   - Mint reverts if ETH transfers fail.
+   - RoyaltySplitter ETH sends revert on failure, but swap failures fall back to forwarding ETH to the owner.
    - This is intentional but means a misconfigured owner address can block mints or royalty flows.
 
 2. **ERC-721 heterogeneity**
@@ -15,8 +16,8 @@ Last updated: 2026-01-06
 4. **PoolManager swap assumptions**
    - Swap logic uses PoolManager `unlock` + `swap` and relies on a configured slippage cap; outcomes depend on pool liquidity and hook behavior.
 
-5. **$LESS token transfer assumptions**
-   - The splitter requires `IERC20.transfer` to return `true` for WETH unwraps; non-standard tokens can block WETH sweeps.
+5. **WETH sweep assumptions**
+   - The splitter requires `IWETH.transfer` to return `true` when sweeping WETH without unwrap; non-standard tokens can block WETH sweeps.
 
 6. **Fork tests require secrets**
    - Mainnet fork tests are skipped unless `MAINNET_RPC_URL` is set.

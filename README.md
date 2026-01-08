@@ -1,6 +1,6 @@
 # cubixles_
 
-Last updated: 2026-01-06
+Last updated: 2026-01-08
 
 cubixles_ lets users mint NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs they already own.
 The frontend runs on Next.js, and the contracts are built and tested with Foundry.

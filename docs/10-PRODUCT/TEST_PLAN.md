@@ -1,10 +1,10 @@
 # cubixles_ v0 — Test Plan
 
-Last updated: 2026-01-05
+Last updated: 2026-01-08
 
 ## Review Status
 
-- Last reviewed: 2026-01-05
+- Last reviewed: 2026-01-08
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -21,7 +21,7 @@ This plan defines the tests needed to trust the system end-to-end:
 1. **Ownership gating**: mint must fail unless `msg.sender` owns every referenced NFT.
 2. **Ref count**: `refs.length` in `[1..6]`.
 3. **TokenURI correctness**: stored tokenURI points to metadata JSON that:
-   - includes provenance bundle (refs + full metadata gamut)
+   - includes provenance bundle (refs + sanitized provenance; raw metadata stripped)
    - includes `external_url` pointing to `https://<domain>/m/<tokenId>`
    - includes `image` pointing to the palette image (gateway URL)
    - includes palette + selection traits in `attributes`
@@ -29,6 +29,7 @@ This plan defines the tests needed to trust the system end-to-end:
    - mint requires `msg.value >= currentMintPrice()`
    - mint pays `currentMintPrice()` to RoyaltySplitter and refunds any overpayment
    - `currentMintPrice()` is rounded up to the nearest `0.0001 ETH`
+   - on Base (LESS disabled), `currentMintPrice()` is linear (`base + step * totalMinted`) and LESS metrics are `0`
    - ERC-2981 resale royalties route to RoyaltySplitter (bps = 500)
 5. **Resale royalties (ERC-2981)**:
    - `royaltyInfo(tokenId, salePrice)` returns the **splitter** as receiver
@@ -58,6 +59,13 @@ This plan defines the tests needed to trust the system end-to-end:
 **C2. Deterministic tokenId**
 - `previewTokenId(salt, refs)` matches the minted tokenId
 - mint reverts on replay with the same salt + refs
+
+**C3. Commit guards**
+- mint reverts without a prior commit
+- mint reverts if commit is in the same block
+- mint reverts if commit expires (>256 blocks)
+- mint reverts on refsHash or salt mismatch
+- commitMint reverts on empty hash or active commit
 
 **D. Payment requirements**
 - mint reverts if `msg.value < currentMintPrice()`
@@ -113,7 +121,7 @@ Use Foundry fuzzing to generate:
 ### 2.1 Unit tests (mock Pinata)
 For `/api/pin/metadata`:
 - accepts `{ address, nonce, signature, payload }`
-- validates required fields exist (`name`, `external_url`, `provenance`, `schemaVersion`)
+- validates metadata schema (`name` required, `provenance` present) and requires 1..6 provenance refs
 - rejects invalid nonce/signature with `401`
 - returns `{ cid, tokenURI }` and caches by payload hash
 - rejects malformed JSON
@@ -127,8 +135,8 @@ For `/api/nfts`:
 - caches responses and returns minimized payloads
 
 For `/api/identity`:
-- returns Farcaster identity when configured (Neynar API key)
-- falls back to ENS or address when unavailable
+- returns `{ address, farcaster, ens }` with `farcaster`/`ens` null when unavailable
+- includes Farcaster `fid`, `username`, and `url` when the Neynar API key is configured
 
 **Security tests**
 - endpoint does not echo secrets in response/logs
@@ -144,7 +152,7 @@ For `/api/identity`:
 **Provenance builder**
 - builds bundle for 1..6 selections
 - includes contractAddress checksum formatting
-- tokenId SAFE-INT policy enforced (block unsafe)
+- tokenId SAFE-INT policy applied to `tokenIdNumber` (null if > MAX_SAFE_INTEGER)
 - stores `{original, resolved}` for tokenUri and image
 - raw metadata JSON stored (“gamut”)
 
@@ -161,16 +169,17 @@ For `/api/identity`:
 - selection constrained to 1..6
 - mint button disabled until:
   - wallet connected
-  - on mainnet
-  - provenance fetched
-- floor snapshot computed for current selection
-  - pinning succeeded (if option B)
+  - selection count is 1..6
+  - contract address + ABI are present
+- mint action blocks and shows an error if the read provider reports a different chain than the active chain
+- floor snapshot computed for current selection (cached per contract)
 - mint payment autofill matches `currentMintPrice()`
 - mint flow shows two wallet prompts (commit then mint), and step 2 auto-triggers after commit confirmation
 - floor snapshot UI shows per-NFT and total floor values
 - floor snapshot defaults to `0` when unavailable
-- ΔLESS HUD shows delta when tokenId is known
-- Leaderboard ranks tokens by ΔLESS and returns to main UI
+- ΔLESS HUD shows delta when tokenId is known (mainnet only)
+- Leaderboard ranks tokens by ΔLESS and returns to main UI (mainnet only)
+- On Base, LESS metrics are disabled and the mint price note shows linear pricing
 
 ### 3.3 Automated smoke (Playwright)
 - Load `/` and assert overlay + UI controls render.

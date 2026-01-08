@@ -1,10 +1,10 @@
-# cubixles_ Deployment (CubixlesMinter, Mainnet + Sepolia)
+# cubixles_ Deployment (CubixlesMinter, Mainnet + Base + Sepolia)
 
-Last updated: 2026-01-05
+Last updated: 2026-01-08
 
 ## Review Status
 
-- Last reviewed: 2026-01-05
+- Last reviewed: 2026-01-08
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -32,7 +32,7 @@ struct NftRef {
 ## Payable Semantics
 
 - `mint` is payable.
-- `commitMint` must be called first; reveal must occur within 256 blocks.
+- `commitMint` must be called first; reveal must occur after the commit is mined (next block or later) and within 256 blocks.
 - Mint price is dynamic and derived from $LESS totalSupply (base `0.0015 ETH` with a 1.0–2.0 factor), rounded up to the nearest `0.0001 ETH`.
 - TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
 - Mint pays the RoyaltySplitter and refunds any excess.
@@ -65,7 +65,10 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - Note: env var names use `CUBIXLES_*` for compatibility with existing deploy tooling.
 - `CUBIXLES_OWNER`
 - `CUBIXLES_LESS_TOKEN` (optional; use `0x0` to disable LESS pricing)
-- `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS is disabled)
+- `CUBIXLES_LINEAR_PRICING_ENABLED` (optional; required for Base linear pricing)
+- `CUBIXLES_BASE_MINT_PRICE_WEI` (optional; base price for linear pricing)
+- `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (optional; step price for linear pricing)
+- `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS + linear pricing are disabled)
 - `CUBIXLES_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
 - `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
 - `CUBIXLES_POOL_FEE` (optional, defaults to 0)
@@ -75,3 +78,5 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
 - `CUBIXLES_DEPLOYMENT_PATH` (optional; defaults to `contracts/deployments/<chain>.json`)
+
+Base deployments require `CUBIXLES_LESS_TOKEN=0x0000000000000000000000000000000000000000` and `CUBIXLES_LINEAR_PRICING_ENABLED=true` (fixed pricing must be unset/0).

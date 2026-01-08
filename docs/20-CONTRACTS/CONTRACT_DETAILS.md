@@ -1,10 +1,10 @@
 # cubixles_ Contract Details (CubixlesMinter)
 
-Last updated: 2026-01-06
+Last updated: 2026-01-08
 
 ## Review Status
 
-- Last reviewed: 2026-01-05
+- Last reviewed: 2026-01-08
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -36,7 +36,7 @@ mint(bytes32 salt, string calldata tokenURI, NftRef[] calldata refs) external pa
 
 Key steps:
 
-0. **Commit required**: `commitMint(salt, refsHash)` must be called first (commit window is 256 blocks).
+0. **Commit required**: `commitMint(salt, refsHash)` must be called first (commit must be mined in a prior block; window is 256 blocks).
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
 3. **Pricing**: `currentMintPrice()` returns the dynamic $LESS price, linear base + step (when `linearPricingEnabled` is on), or fixed ETH pricing when LESS + linear pricing are disabled.
@@ -44,6 +44,8 @@ Key steps:
    - `factor = 1 + (1B - supply) / 1B`, clamped at 1.0 when supply ≥ 1B
    - `price = base * factor`
    - `price` is rounded up to the nearest `0.0001 ETH`
+   - linear price = `baseMintPriceWei + (baseMintPriceStepWei * totalMinted)` (no rounding)
+   - fixed price = `fixedMintPriceWei` when LESS + linear pricing are disabled
 4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and a **canonical** `refsHash` (refs sorted by contract + tokenId).
 4.5 **Supply cap**: mint reverts once `totalMinted` reaches 32,768.
 5. **Random palette index**: derived from commit blockhash + `refsHash` + `salt` + minter.
@@ -129,7 +131,7 @@ File: `app/_client/src/config/contracts.ts` reads deployment + ABI.
 Mint UI: `app/_client/src/features/mint/mint-ui.js`
 
 - Builds provenance bundle from selected NFTs.
-- Creates a JSON metadata object with `image` (palette image via gateway), `image_ipfs` (ipfs:// for wallets), `external_url` (`/m/<tokenId>`), and `provenance.refsFaces` + `provenance.refsCanonical`.
+- Creates a JSON metadata object with `image` (palette image via gateway), `image_ipfs` (ipfs:// for wallets), `external_url` (`/m/<tokenId>`), `tokenId`/`chainId`/`salt`, and `provenance.refsFaces` + `provenance.refsCanonical` (pinning may append `preview_gif`).
 - Pins metadata via `/api/pin/metadata` and calls `mint(salt, tokenURI, refs)` on mainnet with the resulting `ipfs://` URI.
 
 ## Known Placeholders / TODOs

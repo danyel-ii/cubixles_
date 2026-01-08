@@ -1,21 +1,27 @@
 # Decision Log
 
-Last updated: 2026-01-06
+Last updated: 2026-01-08
 
 ## Review Status
 
-- Last reviewed: 2026-01-05
+- Last reviewed: 2026-01-08
 - Review status: Updated
 - Owner: danyel-ii
 
+## 2026-01-08 — Multi-chain provenance + metadata shaping
+
+- Provenance chain gating supports mainnet (`chainId: 1`) and Base (`chainId: 8453`); the UI enforces the active chain.
+- Mint metadata includes `tokenId`, `chainId`, and `salt` in `provenance`, plus a `palette` object; pinning may append a `preview_gif`.
+- `sourceMetadata.raw` is retained only in the in-memory provenance bundle and stripped before pinning tokenURI JSON.
+
 ## 2025-12-22 — T5 Spec Shapes
 
-- v0 chain is Ethereum mainnet (`chainId: 1`), with Sepolia used only for rehearsal/testing when needed; Base runs ETH-only with immutable linear pricing (0.0012 ETH base + 0.000036 ETH per mint).
+- v0 chain initially targeted Ethereum mainnet (`chainId: 1`), with Sepolia used only for rehearsal/testing when needed; Base runs ETH-only with immutable linear pricing (0.0012 ETH base + 0.000036 ETH per mint). (Superseded by the 2026-01-08 multi-chain update.)
 - `tokenId` stored as base-10 string (from `BigInt`) to allow large IDs.
 - Mint gating accepts 1 to 6 referenced NFTs.
 - `contractAddress` stored in EIP-55 checksum format.
 - `tokenUri` + `image` store both `{ original, resolved }`.
-- Provenance stores full `sourceMetadata.raw` JSON.
+- Provenance fetch stores full `sourceMetadata.raw` JSON (stripped from pinned tokenURI payloads as of 2026-01-08).
 
 ## 2025-12-23 — T13 Storage Decision (v0)
 

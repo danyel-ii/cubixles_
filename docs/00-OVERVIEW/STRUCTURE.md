@@ -1,6 +1,6 @@
 # cubixles_ Code Structure
 
-Last updated: 2026-01-06
+Last updated: 2026-01-08
 
 ## Review Status
 
@@ -77,9 +77,11 @@ are split into smaller modules.
 - `app/_client/src/features/nft/picker-ui.js`
   - NFT selection UI + cube texture application.
 - `app/_client/src/features/mint/mint-ui.js`
-  - Mint flow, floor snapshot UI (mainnet only), and diagnostics.
+  - Mint flow, floor snapshot UI (Alchemy-backed; mainnet + Base), and diagnostics.
 - `app/_client/src/features/mint/mint-metadata.js`
   - Mint metadata + provenance shaping.
+- `app/_client/src/features/mint/refs.js`
+  - Canonical ref sorting + refsHash helper for commit-reveal.
 - `app/_client/src/features/mint/token-uri-provider.js`
   - Token URI pinning helper.
 - `app/_client/src/data/chain/alchemy-client.ts`
@@ -95,7 +97,7 @@ are split into smaller modules.
 - `app/_client/src/data/nft/indexer.ts`
   - Inventory + provenance fetchers.
 - `app/_client/src/data/nft/floor.js`
-  - Floor price snapshot helper (mainnet only).
+  - Floor price snapshot helper (Alchemy-backed; mainnet + Base).
 - `app/_client/src/gif/params.js`
   - GIF parameter lookup tables.
 - `app/_client/src/gif/variant.js`

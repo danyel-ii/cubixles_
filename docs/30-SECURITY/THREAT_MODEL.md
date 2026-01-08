@@ -1,6 +1,6 @@
 # cubixles_ — Threat Model
 
-Last updated: 2026-01-06
+Last updated: 2026-01-08
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -9,7 +9,7 @@ Last updated: 2026-01-06
 ## Actors
 - **Owner**: receives mint payments + royalties, can update royalty receiver and swap enablement.
 - **Minter**: mints NFTs by proving ownership of referenced NFTs.
-- **Router**: optional external swap target for royalties.
+- **PoolManager**: optional Uniswap v4 swap target for royalties.
 - **Referenced NFT contracts**: external ERC-721 contracts used for gating.
 
 ## Trust boundaries
@@ -28,7 +28,7 @@ Last updated: 2026-01-06
    - Owner/minter receive hooks attempt reentrancy or state corruption.
 2. **Malicious ERC-721 contracts**
    - `ownerOf` reverts or returns incorrect owner.
-3. **Router misbehavior**
+3. **PoolManager misbehavior**
    - Swap call reverts or consumes gas.
 4. **Receiver failure**
    - Owner or minter refund reverts to block mint or royalty processing.
