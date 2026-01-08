@@ -6,7 +6,7 @@ import { buildGatewayUrls } from "../../../src/shared/ipfs-fetch.js";
 
 const DEFAULT_DESCRIPTION = "cubixles_ and curtains";
 const SHARE_TITLE = "remixed and cubed nft mints";
-const DEFAULT_IMAGE_PATH = "/ogImage.png";
+const DEFAULT_IMAGE_PATH = "/assets/ogimage.png";
 
 export const dynamic = "force-dynamic";
 

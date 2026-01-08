@@ -8,7 +8,7 @@ export const config = {
     "ipfs://bafybeifn4fxn52lupflqnbkknv3koztzmmkm4ycfnaxezfevgh3nkvynl4",
   ],
   ipfsGateway: "https://ipfs.io/ipfs/",
-  backgroundUrl: "/bg_1.png",
+  backgroundUrl: "/assets/bg_1.png",
   cubeSize: 220,
   zoom: {
     initial: 520,

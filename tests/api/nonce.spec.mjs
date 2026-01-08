@@ -5,6 +5,7 @@ vi.mock("../../src/server/ratelimit.js", () => ({
 }));
 vi.mock("../../src/server/request.js", () => ({
   getClientIp: () => "127.0.0.1",
+  makeRequestId: () => "test-request-id",
 }));
 vi.mock("../../src/server/log.js", () => ({
   logRequest: vi.fn(),

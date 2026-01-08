@@ -1,12 +1,11 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { issueNonce } from "../../../src/server/auth.js";
 import { checkRateLimit } from "../../../src/server/ratelimit.js";
-import { getClientIp } from "../../../src/server/request.js";
+import { getClientIp, makeRequestId } from "../../../src/server/request.js";
 import { logRequest } from "../../../src/server/log.js";
 
 export async function GET(request) {
-  const requestId = crypto.randomUUID();
+  const requestId = makeRequestId();
   const ip = getClientIp(request);
   const limit = await checkRateLimit(`nonce:${ip}`, {
     capacity: 10,

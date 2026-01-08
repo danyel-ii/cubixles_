@@ -28,7 +28,6 @@ import {
 import { fetchBackgroundDataUrl } from "./app-exporter.js";
 import { initUiRoot } from "../ui/ui-root.js";
 
-// Temporarily disable the tooltip tracer swarm.
 const TOOLTIP_SWARM_ENABLED = false;
 
 function preloadApp() {

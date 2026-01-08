@@ -25,7 +25,7 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
 - `/.well-known/farcaster.json` includes:
   - `miniapp` + `frame` blocks (identical as required)
   - `version` set to `"1"`
-  - Hosted image assets under `/public` (icon, hero, splash, ogImage)
+  - Hosted image assets under `/public/assets` (icon, hero, splash, ogimage)
   - `buttonTitle` + `imageUrl` set for share cards
   - `screenshotUrls` includes the primary share image and hero
 - accountAssociation set for `https://www.cubixles.xyz` in `public/.well-known/farcaster.json`.

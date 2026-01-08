@@ -5,7 +5,7 @@ export const metadata = {
   description:
     "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own.",
   icons: {
-    icon: "/icon.png",
+    icon: "/assets/icon.png",
   },
 };
 
@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
   const frameDefinition = baseUrl
     ? {
         version: "next",
-        imageUrl: `${baseUrl}/ogImage.png`,
+        imageUrl: `${baseUrl}/assets/ogimage.png`,
         button: {
           title: "Launch cubixles_",
           action: {
@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
             url: baseUrl,
           },
         },
-        splashImageUrl: `${baseUrl}/splash.png`,
+        splashImageUrl: `${baseUrl}/assets/splash.png`,
         splashBackgroundColor: "#000000",
       }
     : null;
@@ -44,11 +44,11 @@ export default function RootLayout({ children }) {
     ? {
         version: "1",
         name: "cubixles_",
-        iconUrl: `${baseUrl}/icon.png`,
+        iconUrl: `${baseUrl}/assets/icon.png`,
         homeUrl: baseUrl,
-        imageUrl: `${baseUrl}/image.png`,
+        imageUrl: `${baseUrl}/assets/image.png`,
         buttonTitle: "mint cube(less)",
-        splashImageUrl: `${baseUrl}/splash.png`,
+        splashImageUrl: `${baseUrl}/assets/splash.png`,
         splashBackgroundColor: "#000000",
       }
     : null;

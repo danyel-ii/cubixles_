@@ -1,8 +1,7 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { requireEnv, readEnvBool } from "../../../src/server/env.js";
 import { checkRateLimit } from "../../../src/server/ratelimit.js";
-import { getClientIp } from "../../../src/server/request.js";
+import { getClientIp, makeRequestId } from "../../../src/server/request.js";
 import { logRequest } from "../../../src/server/log.js";
 import { nftRequestSchema, readJsonWithLimit, formatZodError } from "../../../src/server/validate.js";
 import { getCache, setCache } from "../../../src/server/cache.js";
@@ -95,7 +94,7 @@ export async function POST(request) {
 }
 
 async function handleRequest(request) {
-  const requestId = crypto.randomUUID();
+  const requestId = makeRequestId();
   const ip = getClientIp(request);
   const limit = await checkRateLimit(`nfts:ip:${ip}`, { capacity: 30, refillPerSec: 1 });
   if (!limit.ok) {

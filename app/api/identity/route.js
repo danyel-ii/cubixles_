@@ -1,9 +1,8 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { JsonRpcProvider, getAddress } from "ethers";
 import { requireEnv } from "../../../src/server/env.js";
 import { checkRateLimit } from "../../../src/server/ratelimit.js";
-import { getClientIp } from "../../../src/server/request.js";
+import { getClientIp, makeRequestId } from "../../../src/server/request.js";
 import { logRequest } from "../../../src/server/log.js";
 import { identityRequestSchema } from "../../../src/server/validate.js";
 import { getCache, setCache } from "../../../src/server/cache.js";
@@ -54,7 +53,7 @@ async function resolveFarcaster(address) {
 }
 
 export async function GET(request) {
-  const requestId = crypto.randomUUID();
+  const requestId = makeRequestId();
   const ip = getClientIp(request);
   const limit = await checkRateLimit(`identity:ip:${ip}`, { capacity: 20, refillPerSec: 1 });
   if (!limit.ok) {

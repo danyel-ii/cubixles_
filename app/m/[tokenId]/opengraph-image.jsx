@@ -10,7 +10,7 @@ export const contentType = "image/png";
 
 const DEFAULT_DESCRIPTION =
   "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own.";
-const DEFAULT_IMAGE_PATH = "/ogImage.png";
+const DEFAULT_IMAGE_PATH = "/assets/ogimage.png";
 const SHARE_TITLE = "remixed and cubed nft mints";
 
 function resolveImageUrl(imageUrl, baseUrl) {

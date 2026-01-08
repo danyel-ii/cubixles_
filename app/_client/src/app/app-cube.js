@@ -3,19 +3,23 @@ import { state } from "./app-state.js";
 
 export function drawTexturedFaces() {
   const half = config.cubeSize / 2 - 1;
-  const face = config.cubeSize * 0.98;
+  const faceSize = config.cubeSize * 0.98;
   const tintAlpha = 210;
   const faces = state.faceTextures;
-  // Face order: +X, -X, +Y, -Y, +Z, -Z
-  drawFace(faces[0], half, 0, 0, 0, HALF_PI, 0, false, face, tintAlpha); // +X
-  drawFace(faces[1], -half, 0, 0, 0, -HALF_PI, 0, true, face, tintAlpha); // -X
-  drawFace(faces[2], 0, half, 0, HALF_PI, 0, 0, true, face, tintAlpha); // +Y
-  drawFace(faces[3], 0, -half, 0, -HALF_PI, 0, 0, false, face, tintAlpha); // -Y
-  drawFace(faces[4], 0, 0, half, 0, 0, 0, false, face, tintAlpha); // +Z
-  drawFace(faces[5], 0, 0, -half, 0, PI, 0, true, face, tintAlpha); // -Z
+  const transforms = [
+    { x: half, y: 0, z: 0, rx: 0, ry: HALF_PI, rz: 0, mirrorX: false },
+    { x: -half, y: 0, z: 0, rx: 0, ry: -HALF_PI, rz: 0, mirrorX: true },
+    { x: 0, y: half, z: 0, rx: HALF_PI, ry: 0, rz: 0, mirrorX: true },
+    { x: 0, y: -half, z: 0, rx: -HALF_PI, ry: 0, rz: 0, mirrorX: false },
+    { x: 0, y: 0, z: half, rx: 0, ry: 0, rz: 0, mirrorX: false },
+    { x: 0, y: 0, z: -half, rx: 0, ry: PI, rz: 0, mirrorX: true },
+  ];
+  transforms.forEach((transform, index) => {
+    drawFace(faces[index], transform, faceSize, tintAlpha);
+  });
 }
 
-function drawFace(img, x, y, z, rx, ry, rz, mirrorX, size, alpha) {
+function drawFace(img, { x, y, z, rx, ry, rz, mirrorX }, size, alpha) {
   if (!img || state.isLoadingLocal) {
     return;
   }

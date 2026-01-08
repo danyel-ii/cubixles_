@@ -45,5 +45,5 @@ export function buildPalettePreviewGifUrl() {
   if (!base) {
     return "";
   }
-  return `${base}/palette_cycle_512.gif`;
+  return `${base}/assets/palette_cycle_512.gif`;
 }

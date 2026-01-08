@@ -1,18 +1,4 @@
-const GATEWAYS = [
-  "https://ipfs.runfission.com/ipfs/",
-  "https://w3s.link/ipfs/",
-  "https://dweb.link/ipfs/",
-  "https://gateway.pinata.cloud/ipfs/",
-  "https://ipfs.io/ipfs/",
-];
-
-function buildGatewayUrls(ipfsUrl) {
-  if (!ipfsUrl.startsWith("ipfs://")) {
-    return [ipfsUrl];
-  }
-  const path = ipfsUrl.replace("ipfs://", "");
-  return GATEWAYS.map((base) => `${base}${path}`);
-}
+import { parseIpfsUrl, buildGatewayUrls } from "../../../src/server/ipfs.js";
 
 function looksLikeJson(text) {
   const trimmed = text.trimStart();
@@ -21,15 +7,23 @@ function looksLikeJson(text) {
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const url = searchParams.get("url");
-  if (!url) {
+  const rawUrl = searchParams.get("url");
+  if (!rawUrl) {
     return new Response(JSON.stringify({ error: "Missing url query param." }), {
       status: 400,
       headers: { "content-type": "application/json" },
     });
   }
-  const expectsJson = url.endsWith(".json");
-  const gatewayUrls = buildGatewayUrls(url);
+  const parsed = parseIpfsUrl(rawUrl);
+  if (!parsed) {
+    return new Response(JSON.stringify({ error: "Unsupported IPFS url." }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+  const expectsJson =
+    parsed.path.endsWith(".json") || parsed.path.includes("manifest.json");
+  const gatewayUrls = buildGatewayUrls(parsed);
   for (const gatewayUrl of gatewayUrls) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
@@ -63,8 +57,7 @@ export async function GET(request) {
         status: response.status,
         headers,
       });
-    } catch (error) {
-      // try next gateway
+    } catch {
     } finally {
       clearTimeout(timeout);
     }

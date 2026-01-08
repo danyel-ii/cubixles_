@@ -316,7 +316,7 @@ async function getWalletConnectProvider() {
     name: "cubixles_",
     description: "cubixles_ miniapp",
     url: window.location.origin,
-    icons: [`${window.location.origin}/icon.png`],
+    icons: [`${window.location.origin}/assets/icon.png`],
   };
   const activeChainId = getActiveChainId();
   const optionalChains = getActiveChain()

@@ -1,7 +1,6 @@
-import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { checkRateLimit } from "../../../../src/server/ratelimit.js";
-import { getClientIp } from "../../../../src/server/request.js";
+import { getClientIp, makeRequestId } from "../../../../src/server/request.js";
 import { logRequest } from "../../../../src/server/log.js";
 import { pinRequestSchema, readJsonWithLimit, formatZodError } from "../../../../src/server/validate.js";
 import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/metadata.js";
@@ -18,7 +17,7 @@ const MAX_BYTES = 50 * 1024;
 export const runtime = "nodejs";
 
 export async function POST(request) {
-  const requestId = crypto.randomUUID();
+  const requestId = makeRequestId();
   let bodySize = 0;
   const ip = getClientIp(request);
 

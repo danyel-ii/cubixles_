@@ -135,6 +135,14 @@ function getRpcUrl() {
   return process.env.MAINNET_RPC_URL || null;
 }
 
+async function callSignatureMethod(contract, method, args) {
+  try {
+    return await contract[method](...args);
+  } catch {
+    return null;
+  }
+}
+
 async function verifyContractSignature(checksum, message, signature) {
   const rpcUrl = getRpcUrl();
   if (!rpcUrl) {
@@ -148,21 +156,17 @@ async function verifyContractSignature(checksum, message, signature) {
 
   const contract = new Contract(checksum, EIP1271_ABI, provider);
   const messageHash = hashMessage(message);
-  try {
-    const result = await contract["isValidSignature(bytes32,bytes)"](messageHash, signature);
+  const checks = [
+    ["isValidSignature(bytes32,bytes)", [messageHash, signature]],
+    ["isValidSignature(bytes,bytes)", [toUtf8Bytes(message), signature]],
+  ];
+  for (const [method, args] of checks) {
+    const result = await callSignatureMethod(contract, method, args);
     if (result?.toLowerCase?.() === EIP1271_MAGIC) {
       return true;
     }
-  } catch (error) {
-    // fall through to bytes signature
   }
-
-  try {
-    const result = await contract["isValidSignature(bytes,bytes)"](toUtf8Bytes(message), signature);
-    return result?.toLowerCase?.() === EIP1271_MAGIC;
-  } catch (error) {
-    return false;
-  }
+  return false;
 }
 
 export async function verifySignature({ address, nonce, signature }) {
