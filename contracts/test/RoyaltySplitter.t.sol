@@ -31,8 +31,8 @@ contract LowOutputPoolManager {
     }
 }
 
-contract MockLess is ERC20 {
-    constructor() ERC20("LESS", "LESS") {}
+contract MockToken is ERC20 {
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {}
 
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
@@ -40,8 +40,10 @@ contract MockLess is ERC20 {
 }
 
 contract MockPoolManager {
-    MockLess public immutable less;
-    int128 public immutable amount1Out;
+    MockToken public immutable less;
+    MockToken public immutable pnk;
+    int128 public immutable amount1OutLess;
+    int128 public immutable amount1OutPnk;
     bool public immutable initialized;
     uint256 public immutable settleReturn;
     bool public immutable useSettleReturn;
@@ -51,14 +53,18 @@ contract MockPoolManager {
     uint24 public immutable lpFee;
 
     constructor(
-        MockLess less_,
-        int128 amount1Out_,
+        MockToken less_,
+        MockToken pnk_,
+        int128 amount1OutLess_,
+        int128 amount1OutPnk_,
         bool initialized_,
         uint256 settleReturn_,
         bool useSettleReturn_
     ) {
         less = less_;
-        amount1Out = amount1Out_;
+        pnk = pnk_;
+        amount1OutLess = amount1OutLess_;
+        amount1OutPnk = amount1OutPnk_;
         initialized = initialized_;
         settleReturn = settleReturn_;
         useSettleReturn = useSettleReturn_;
@@ -72,13 +78,19 @@ contract MockPoolManager {
         return IUnlockCallback(msg.sender).unlockCallback(data);
     }
 
-    function swap(PoolKey memory, IPoolManager.SwapParams memory params, bytes calldata)
+    function swap(PoolKey memory poolKey, IPoolManager.SwapParams memory params, bytes calldata)
         external
         view
         returns (BalanceDelta)
     {
         int128 amount0 = int128(params.amountSpecified);
-        return toBalanceDelta(amount0, amount1Out);
+        address outToken = Currency.unwrap(poolKey.currency1);
+        int128 amount1 = outToken == address(less)
+            ? amount1OutLess
+            : outToken == address(pnk)
+                ? amount1OutPnk
+                : int128(0);
+        return toBalanceDelta(amount0, amount1);
     }
 
     function getSlot0(bytes32) external view returns (uint160, int24, uint24, uint24) {
@@ -94,7 +106,12 @@ contract MockPoolManager {
 
     function take(Currency currency, address to, uint256 amount) external {
         if (!currency.isAddressZero()) {
-            less.mint(to, amount);
+            address token = Currency.unwrap(currency);
+            if (token == address(less)) {
+                less.mint(to, amount);
+            } else if (token == address(pnk)) {
+                pnk.mint(to, amount);
+            }
         }
     }
 
@@ -123,24 +140,34 @@ contract RoyaltySplitterHarness is RoyaltySplitter {
     constructor(
         address owner_,
         address lessToken_,
+        address pnkstrToken_,
         IPoolManager poolManager_,
-        PoolKey memory poolKey_,
-        uint16 swapMaxSlippageBps_,
-        address burnAddress_
-    ) RoyaltySplitter(owner_, lessToken_, poolManager_, poolKey_, swapMaxSlippageBps_, burnAddress_) {}
+        PoolKey memory lessPoolKey_,
+        PoolKey memory pnkPoolKey_,
+        uint16 swapMaxSlippageBps_
+    )
+        RoyaltySplitter(
+            owner_,
+            lessToken_,
+            pnkstrToken_,
+            poolManager_,
+            lessPoolKey_,
+            pnkPoolKey_,
+            swapMaxSlippageBps_
+        )
+    {}
 
     function exposedSlippageLimit(uint160 sqrtPriceX96) external view returns (uint160) {
         return _slippageLimit(sqrtPriceX96);
     }
 
-    function exposedPoolInitialized() external view returns (bool) {
-        return _poolInitialized();
+    function exposedPoolInitialized(PoolKey memory key) external view returns (bool) {
+        return _poolInitialized(key);
     }
 }
 
 contract RoyaltySplitterTest is Test {
     address private owner = makeAddr("owner");
-    address private burn = address(0x000000000000000000000000000000000000dEaD);
 
     function setUp() public {
         vm.deal(owner, 0);
@@ -149,10 +176,10 @@ contract RoyaltySplitterTest is Test {
     event SwapSlippageUpdated(uint16 maxSlippageBps);
     event SwapFailedFallbackToOwner(uint256 amount, bytes32 reasonHash);
 
-    function _poolKey(address less) internal pure returns (PoolKey memory) {
+    function _poolKey(address token) internal pure returns (PoolKey memory) {
         return PoolKey({
             currency0: Currency.wrap(address(0)),
-            currency1: Currency.wrap(less),
+            currency1: Currency.wrap(token),
             fee: 0,
             tickSpacing: 60,
             hooks: IHooks(address(0))
@@ -160,14 +187,16 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testForwardsAllWhenSwapDisabled() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
         vm.deal(address(this), 1 ether);
 
@@ -177,14 +206,16 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testFallbackWithCalldataForwardsWhenSwapDisabled() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
         vm.deal(address(this), 1 ether);
 
@@ -194,15 +225,17 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testSetSwapEnabledUpdatesStateAndEmits() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, true, 0, false);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.prank(owner);
@@ -211,34 +244,38 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testForwardLessSkipsWhenBalanceZero() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, true, 0, false);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.deal(address(this), 2 ether);
         (bool ok, ) = address(splitter).call{ value: 2 ether }("");
         assertTrue(ok);
         assertEq(less.balanceOf(owner), 0);
-        assertEq(less.balanceOf(burn), 0);
+        assertEq(pnk.balanceOf(owner), 0);
     }
 
     function testForwardsAllWhenSwapReverts() public {
         RevertingPoolManager poolManager = new RevertingPoolManager();
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.deal(address(this), 2 ether);
@@ -248,14 +285,16 @@ contract RoyaltySplitterTest is Test {
 
     function testForwardsAllWhenSwapRevertsWithoutReason() public {
         SilentRevertingPoolManager poolManager = new SilentRevertingPoolManager();
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.deal(address(this), 2 ether);
@@ -264,35 +303,47 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testForwardsLessAndEthOnSwapSuccess() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 250 ether, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(
+            less,
+            pnk,
+            250 ether,
+            500 ether,
+            true,
+            0,
+            false
+        );
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.deal(address(this), 2 ether);
         (bool ok, ) = address(splitter).call{ value: 2 ether }("");
         assertTrue(ok);
-        assertEq(owner.balance, 1 ether);
-        assertEq(less.balanceOf(owner), 225 ether);
-        assertEq(less.balanceOf(burn), 25 ether);
+        assertEq(owner.balance, 0.5 ether);
+        assertEq(less.balanceOf(owner), 250 ether);
+        assertEq(pnk.balanceOf(owner), 500 ether);
     }
 
     function testRevertsWhenOwnerCannotReceiveEth() public {
         ReceiverRevertsOnReceive receiver = new ReceiverRevertsOnReceive();
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitter splitter = new RoyaltySplitter(
             address(receiver),
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.deal(address(this), 1 ether);
@@ -301,15 +352,17 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testSwapOutputTooLowFallsBackToOwner() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, true, 0, false);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.deal(address(this), 2 ether);
@@ -318,33 +371,37 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testSwapOutputTooLowFromUnlockResultFallsBack() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         LowOutputPoolManager poolManager = new LowOutputPoolManager();
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.deal(address(this), 1 ether);
         (bool ok, ) = address(splitter).call{ value: 1 ether }("");
-        assertEq(ok, false);
-        assertEq(owner.balance, 0);
+        assertTrue(ok);
+        assertEq(owner.balance, 1 ether);
     }
 
     function testSettleMismatchFallsBackToOwner() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 250 ether, true, 1, true);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 250 ether, 500 ether, true, 1, true);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.deal(address(this), 2 ether);
@@ -353,67 +410,78 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testConstructorRevertsOnZeroLessToken() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, true, 0, false);
         vm.expectRevert(RoyaltySplitter.LessTokenRequired.selector);
         new RoyaltySplitter(
             owner,
             address(0),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(0)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
+        );
+    }
+
+    function testConstructorRevertsOnZeroPnkToken() public {
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, true, 0, false);
+        vm.expectRevert(RoyaltySplitter.PnkstrTokenRequired.selector);
+        new RoyaltySplitter(
+            owner,
+            address(less),
+            address(0),
+            IPoolManager(address(poolManager)),
+            _poolKey(address(less)),
+            _poolKey(address(0)),
+            0
         );
     }
 
     function testConstructorRevertsOnZeroOwner() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         vm.expectRevert(abi.encodeWithSignature("OwnableInvalidOwner(address)", address(0)));
         new RoyaltySplitter(
             address(0),
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            0,
-            burn
-        );
-    }
-
-    function testConstructorRevertsOnZeroBurnAddress() public {
-        MockLess less = new MockLess();
-        vm.expectRevert(RoyaltySplitter.BurnAddressRequired.selector);
-        new RoyaltySplitter(
-            owner,
-            address(less),
-            IPoolManager(address(0)),
-            _poolKey(address(less)),
-            0,
-            address(0)
+            _poolKey(address(pnk)),
+            0
         );
     }
 
     function testConstructorRevertsOnInvalidSlippage() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         vm.expectRevert(RoyaltySplitter.InvalidSlippageBps.selector);
         new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            type(uint16).max,
-            burn
+            _poolKey(address(pnk)),
+            type(uint16).max
         );
     }
 
     function testSetSwapEnabledRevertsWhenNoPoolManager() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.prank(owner);
@@ -422,14 +490,16 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testNoOpWhenZeroValueReceived() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         (bool ok, ) = address(splitter).call("");
@@ -438,15 +508,17 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testSetSwapMaxSlippageUpdatesStateAndEmits() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, true, 0, false);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.prank(owner);
@@ -456,15 +528,17 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testSetSwapEnabledRevertsWhenPoolUninitialized() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 0, false, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, false, 0, false);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.prank(owner);
@@ -473,15 +547,17 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testSetSwapMaxSlippageRevertsWhenTooHigh() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, true, 0, false);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.prank(owner);
@@ -490,8 +566,9 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testConstructorRevertsOnInvalidCurrency0() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, true, 0, false);
         PoolKey memory badKey = PoolKey({
             currency0: Currency.wrap(address(less)),
             currency1: Currency.wrap(address(less)),
@@ -504,16 +581,18 @@ contract RoyaltySplitterTest is Test {
         new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             badKey,
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
     }
 
     function testConstructorRevertsOnInvalidCurrency1() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 0, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 0, 0, true, 0, false);
         PoolKey memory badKey = PoolKey({
             currency0: Currency.wrap(address(0)),
             currency1: Currency.wrap(address(0xBEEF)),
@@ -526,10 +605,11 @@ contract RoyaltySplitterTest is Test {
         new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
+            _poolKey(address(less)),
             badKey,
-            0,
-            burn
+            0
         );
     }
 
@@ -537,24 +617,28 @@ contract RoyaltySplitterTest is Test {
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(0),
+            address(0),
             IPoolManager(address(0)),
             _poolKey(address(0)),
-            0,
-            burn
+            _poolKey(address(0)),
+            0
         );
         assertEq(address(splitter.LESS_TOKEN()), address(0));
+        assertEq(address(splitter.PNKSTR_TOKEN()), address(0));
         assertEq(address(splitter.POOL_MANAGER()), address(0));
     }
 
     function testSlippageLimitReturnsInputWhenZeroBps() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitterHarness splitter = new RoyaltySplitterHarness(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         uint160 sqrtPrice = 1_000_000;
@@ -562,14 +646,16 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testSlippageLimitAppliesBps() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitterHarness splitter = new RoyaltySplitterHarness(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            50,
-            burn
+            _poolKey(address(pnk)),
+            50
         );
 
         uint160 sqrtPrice = TickMath.MIN_SQRT_PRICE + 1_000_000_000;
@@ -578,67 +664,79 @@ contract RoyaltySplitterTest is Test {
     }
 
     function testPoolInitializedReturnsFalseWhenNoManager() public {
-        MockLess less = new MockLess();
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
         RoyaltySplitterHarness splitter = new RoyaltySplitterHarness(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(0)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
-        assertEq(splitter.exposedPoolInitialized(), false);
+        assertEq(splitter.exposedPoolInitialized(_poolKey(address(less))), false);
     }
 
     function testUnlockCallbackRevertsWhenCallerNotPoolManager() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 250 ether, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 250 ether, 500 ether, true, 0, false);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.expectRevert(RoyaltySplitter.PoolManagerOnly.selector);
-        splitter.unlockCallback(abi.encode(uint256(1)));
+        splitter.unlockCallback(abi.encode(uint256(1), RoyaltySplitter.SwapToken.Less));
     }
 
     function testUnlockCallbackReturnsEmptyWhenAmountInZero() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 250 ether, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 250 ether, 500 ether, true, 0, false);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            0,
-            burn
+            _poolKey(address(pnk)),
+            0
         );
 
         vm.prank(address(poolManager));
-        bytes memory result = splitter.unlockCallback(abi.encode(uint256(0)));
+        bytes memory result = splitter.unlockCallback(
+            abi.encode(uint256(0), RoyaltySplitter.SwapToken.Less)
+        );
         assertEq(result.length, 0);
     }
 
     function testUnlockCallbackWithSlippageConfig() public {
-        MockLess less = new MockLess();
-        MockPoolManager poolManager = new MockPoolManager(less, 250 ether, true, 0, false);
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockPoolManager poolManager = new MockPoolManager(less, pnk, 250 ether, 500 ether, true, 0, false);
         RoyaltySplitter splitter = new RoyaltySplitter(
             owner,
             address(less),
+            address(pnk),
             IPoolManager(address(poolManager)),
             _poolKey(address(less)),
-            50,
-            burn
+            _poolKey(address(pnk)),
+            50
         );
 
         vm.deal(address(splitter), 1 ether);
         vm.prank(address(poolManager));
-        bytes memory result = splitter.unlockCallback(abi.encode(uint256(1 ether)));
+        bytes memory result = splitter.unlockCallback(
+            abi.encode(uint256(1 ether), RoyaltySplitter.SwapToken.Less)
+        );
         (int128 amount0, int128 amount1) = abi.decode(result, (int128, int128));
         assertTrue(amount0 < 0);
         assertTrue(amount1 > 0);

@@ -27,7 +27,8 @@ contract CubixlesMinterHarness is CubixlesMinter {
         address splitter,
         address lessToken,
         uint96 bps,
-        string memory paletteMetadataCID,
+        string memory paletteImagesCID,
+        bytes32 paletteManifestHash,
         address vrfCoordinator,
         bytes32 vrfKeyHash,
         uint64 vrfSubscriptionId,
@@ -42,7 +43,8 @@ contract CubixlesMinterHarness is CubixlesMinter {
             0,
             0,
             false,
-            paletteMetadataCID,
+            paletteImagesCID,
+            paletteManifestHash,
             vrfCoordinator,
             vrfKeyHash,
             vrfSubscriptionId,
@@ -77,7 +79,11 @@ contract CubixlesMinterTest is Test {
     uint16 private constant VRF_CONFIRMATIONS = 3;
     uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
     uint256 private constant DEFAULT_RANDOMNESS = 123_456;
-    string private constant PALETTE_CID = "bafytestcid";
+    string private constant PALETTE_IMAGES_CID = "bafyimagescid";
+    bytes32 private constant PALETTE_MANIFEST_HASH = keccak256("manifest");
+    string private constant TOKEN_URI_PREFIX = "ipfs://metadata/";
+    bytes32 private constant METADATA_HASH = keccak256("metadata");
+    bytes32 private constant IMAGE_PATH_HASH = keccak256("image-path");
 
     function setUp() public {
         vm.startPrank(owner);
@@ -90,7 +96,8 @@ contract CubixlesMinterTest is Test {
             0,
             0,
             false,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -131,6 +138,36 @@ contract CubixlesMinterTest is Test {
         return ((value + step - 1) / step) * step;
     }
 
+    function _buildTokenURI(uint256 paletteIndex) internal view returns (string memory) {
+        return string.concat(TOKEN_URI_PREFIX, vm.toString(paletteIndex));
+    }
+
+    function _commitMetadata(address minterAddr) internal {
+        vm.prank(minterAddr);
+        minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH);
+    }
+
+    function _mintWithExpected(
+        address minterAddr,
+        bytes32 salt,
+        CubixlesMinter.NftRef[] memory refs,
+        uint256 value
+    ) internal returns (uint256 tokenId) {
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
+        string memory tokenUri = _buildTokenURI(expected);
+        vm.prank(minterAddr);
+        minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH);
+        vm.prank(minterAddr);
+        tokenId = minter.mint{ value: value }(
+            salt,
+            refs,
+            expected,
+            tokenUri,
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
+    }
+
     function _commitMint(
         address minterAddr,
         bytes32 salt,
@@ -141,7 +178,7 @@ contract CubixlesMinterTest is Test {
         vm.prank(minterAddr);
         minter.commitMint(commitment);
         vm.roll(block.number + 1);
-        (, , requestId, , ) = minter.mintCommitByMinter(minterAddr);
+        (, , requestId, , , , , , , ) = minter.mintCommitByMinter(minterAddr);
     }
 
     function _commitMintSameBlock(
@@ -181,6 +218,8 @@ contract CubixlesMinterTest is Test {
         CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
+        _commitMetadata(minterAddr);
         vm.prank(minterAddr);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -191,7 +230,14 @@ contract CubixlesMinterTest is Test {
                 address(0xBEEF)
             )
         );
-        minter.mint(DEFAULT_SALT, refs);
+        minter.mint(
+            DEFAULT_SALT,
+            refs,
+            expected,
+            _buildTokenURI(expected),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testMintPaysSplitter() public {
@@ -205,8 +251,7 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, amount);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        minter.mint{ value: amount }(DEFAULT_SALT, refs);
+        _mintWithExpected(minterAddr, DEFAULT_SALT, refs, amount);
 
         assertEq(resaleSplitter.balance, amount);
     }
@@ -223,7 +268,14 @@ contract CubixlesMinterTest is Test {
 
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.MintCommitRequired.selector);
-        minter.mint{ value: amount }(DEFAULT_SALT, refs);
+        minter.mint{ value: amount }(
+            DEFAULT_SALT,
+            refs,
+            0,
+            _buildTokenURI(0),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testMintCapReached() public {
@@ -244,7 +296,14 @@ contract CubixlesMinterTest is Test {
 
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.MintCapReached.selector);
-        minter.mint{ value: amount }(DEFAULT_SALT, refs);
+        minter.mint{ value: amount }(
+            DEFAULT_SALT,
+            refs,
+            0,
+            _buildTokenURI(0),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testMintCapIsTenThousand() public {
@@ -267,8 +326,7 @@ contract CubixlesMinterTest is Test {
             bytes32 salt = keccak256(abi.encodePacked("salt", i));
             _commitAndFulfill(minterAddr, salt, refs, DEFAULT_RANDOMNESS + i);
 
-            vm.prank(minterAddr);
-            uint256 tokenId = minter.mint{ value: amount }(salt, refs);
+            uint256 tokenId = _mintWithExpected(minterAddr, salt, refs, amount);
             uint256 paletteIndex = minter.paletteIndexByTokenId(tokenId);
             indices[i] = paletteIndex;
         }
@@ -292,19 +350,21 @@ contract CubixlesMinterTest is Test {
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
+        uint256 expectedIndex = minter.previewPaletteIndex(minterAddr);
+        string memory expectedTokenUri = _buildTokenURI(expectedIndex);
+        _commitMetadata(minterAddr);
         vm.prank(minterAddr);
-        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, refs);
+        uint256 tokenId = minter.mint{ value: price }(
+            DEFAULT_SALT,
+            refs,
+            expectedIndex,
+            expectedTokenUri,
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
 
         assertEq(minter.ownerOf(tokenId), minterAddr);
-        uint256 paletteIndex = minter.paletteIndexByTokenId(tokenId);
-        string memory expected = string.concat(
-            "ipfs://",
-            PALETTE_CID,
-            "/",
-            vm.toString(paletteIndex),
-            ".json"
-        );
-        assertEq(minter.tokenURI(tokenId), expected);
+        assertEq(minter.tokenURI(tokenId), expectedTokenUri);
     }
 
     function testMintRecordsMintPrice() public {
@@ -318,8 +378,7 @@ contract CubixlesMinterTest is Test {
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, refs);
+        uint256 tokenId = _mintWithExpected(minterAddr, DEFAULT_SALT, refs, price);
 
         assertEq(minter.mintPriceByTokenId(tokenId), price);
     }
@@ -356,8 +415,7 @@ contract CubixlesMinterTest is Test {
         uint256 price = minter.currentMintPrice();
         vm.deal(minterA, price);
         _commitAndFulfill(minterA, saltA, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterA);
-        uint256 tokenIdA = minter.mint{ value: price }(saltA, refs);
+        uint256 tokenIdA = _mintWithExpected(minterA, saltA, refs, price);
 
         vm.prank(minterA);
         nftA.transferFrom(minterA, minterB, tokenA);
@@ -368,8 +426,7 @@ contract CubixlesMinterTest is Test {
 
         vm.deal(minterB, price);
         _commitAndFulfill(minterB, saltB, refs, DEFAULT_RANDOMNESS + 1);
-        vm.prank(minterB);
-        uint256 tokenIdB = minter.mint{ value: price }(saltB, refs);
+        uint256 tokenIdB = _mintWithExpected(minterB, saltB, refs, price);
 
         assertTrue(tokenIdA != tokenIdB);
     }
@@ -385,8 +442,7 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, price);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, refs);
+        uint256 tokenId = _mintWithExpected(minterAddr, DEFAULT_SALT, refs, price);
 
         assertEq(minter.totalMinted(), 1);
         assertEq(minter.tokenIdByIndex(1), tokenId);
@@ -406,7 +462,14 @@ contract CubixlesMinterTest is Test {
         _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.InvalidReferenceCount.selector);
-        minter.mint(DEFAULT_SALT, refs);
+        minter.mint(
+            DEFAULT_SALT,
+            refs,
+            0,
+            _buildTokenURI(0),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testMintRejectsTooManyRefs() public {
@@ -416,7 +479,14 @@ contract CubixlesMinterTest is Test {
         _commitMint(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.InvalidReferenceCount.selector);
-        minter.mint(DEFAULT_SALT, refs);
+        minter.mint(
+            DEFAULT_SALT,
+            refs,
+            0,
+            _buildTokenURI(0),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testMintRejectsInsufficientPayment() public {
@@ -432,7 +502,14 @@ contract CubixlesMinterTest is Test {
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.InsufficientEth.selector);
-        minter.mint{ value: price - 1 }(DEFAULT_SALT, refs);
+        minter.mint{ value: price - 1 }(
+            DEFAULT_SALT,
+            refs,
+            0,
+            _buildTokenURI(0),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testMintRefundsExcessPayment() public {
@@ -451,8 +528,7 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, amount);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        minter.mint{ value: amount }(DEFAULT_SALT, refs);
+        _mintWithExpected(minterAddr, DEFAULT_SALT, refs, amount);
 
         assertEq(minterAddr.balance, amount - required);
     }
@@ -471,8 +547,7 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, price);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, refs);
+        uint256 tokenId = _mintWithExpected(minterAddr, DEFAULT_SALT, refs, price);
 
         assertEq(minter.mintSupplySnapshot(tokenId), supply);
         assertEq(minter.lastSupplySnapshot(tokenId), supply);
@@ -490,7 +565,8 @@ contract CubixlesMinterTest is Test {
             resaleSplitter,
             address(lessToken),
             500,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -510,7 +586,8 @@ contract CubixlesMinterTest is Test {
             0,
             0,
             false,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -529,7 +606,8 @@ contract CubixlesMinterTest is Test {
             0,
             0,
             false,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -548,7 +626,8 @@ contract CubixlesMinterTest is Test {
             0,
             0,
             false,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -567,7 +646,8 @@ contract CubixlesMinterTest is Test {
             0,
             0,
             false,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -588,7 +668,8 @@ contract CubixlesMinterTest is Test {
             0,
             0,
             true,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -607,7 +688,8 @@ contract CubixlesMinterTest is Test {
             1,
             1,
             true,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -627,7 +709,8 @@ contract CubixlesMinterTest is Test {
             basePrice,
             step,
             true,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -657,8 +740,7 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, price);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, refs);
+        uint256 tokenId = _mintWithExpected(minterAddr, DEFAULT_SALT, refs, price);
 
         uint256 nextSupply = supply + 25_000e18;
         lessToken.mint(address(this), nextSupply - supply);
@@ -684,8 +766,7 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, price);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, refs);
+        uint256 tokenId = _mintWithExpected(minterAddr, DEFAULT_SALT, refs, price);
 
         lessToken.mint(address(this), 5_000e18);
 
@@ -707,8 +788,7 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, price);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, refs);
+        uint256 tokenId = _mintWithExpected(minterAddr, DEFAULT_SALT, refs, price);
 
         lessToken.burn(address(this), 6_000e18);
 
@@ -728,8 +808,7 @@ contract CubixlesMinterTest is Test {
         uint256 price = minter.currentMintPrice();
         vm.deal(minterAddr, price);
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        uint256 minted = minter.mint{ value: price }(DEFAULT_SALT, refs);
+        uint256 minted = _mintWithExpected(minterAddr, DEFAULT_SALT, refs, price);
 
         assertEq(minted, preview);
     }
@@ -745,13 +824,21 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, price * 2);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        minter.mint{ value: price }(DEFAULT_SALT, refs);
+        _mintWithExpected(minterAddr, DEFAULT_SALT, refs, price);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS + 1);
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
+        _commitMetadata(minterAddr);
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.TokenIdExists.selector);
-        minter.mint{ value: price }(DEFAULT_SALT, refs);
+        minter.mint{ value: price }(
+            DEFAULT_SALT,
+            refs,
+            expected,
+            _buildTokenURI(expected),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testTokenIdCanonicalOrderIgnoresInputOrder() public {
@@ -813,7 +900,14 @@ contract CubixlesMinterTest is Test {
 
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.MintCommitExpired.selector);
-        minter.mint{ value: amount }(DEFAULT_SALT, refs);
+        minter.mint{ value: amount }(
+            DEFAULT_SALT,
+            refs,
+            0,
+            _buildTokenURI(0),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testCommitMismatchReverts() public {
@@ -830,9 +924,18 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, amount);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, otherRefs, DEFAULT_RANDOMNESS);
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
+        _commitMetadata(minterAddr);
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.MintCommitMismatch.selector);
-        minter.mint{ value: amount }(DEFAULT_SALT, refs);
+        minter.mint{ value: amount }(
+            DEFAULT_SALT,
+            refs,
+            expected,
+            _buildTokenURI(expected),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testCommitMintRevertsOnEmptyHash() public {
@@ -871,7 +974,14 @@ contract CubixlesMinterTest is Test {
         _commitMintSameBlock(minterAddr, DEFAULT_SALT, refs);
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.MintCommitPendingBlock.selector);
-        minter.mint{ value: amount }(DEFAULT_SALT, refs);
+        minter.mint{ value: amount }(
+            DEFAULT_SALT,
+            refs,
+            0,
+            _buildTokenURI(0),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testMintRevertsOnSaltMismatch() public {
@@ -885,9 +995,18 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, amount);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
+        _commitMetadata(minterAddr);
         vm.prank(minterAddr);
         vm.expectRevert(CubixlesMinter.MintCommitMismatch.selector);
-        minter.mint{ value: amount }(keccak256("salt-b"), refs);
+        minter.mint{ value: amount }(
+            keccak256("salt-b"),
+            refs,
+            expected,
+            _buildTokenURI(expected),
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 
     function testSetRoyaltyReceiverUpdatesDefault() public {
@@ -945,8 +1064,7 @@ contract CubixlesMinterTest is Test {
         vm.deal(minterAddr, price);
 
         _commitAndFulfill(minterAddr, DEFAULT_SALT, refs, DEFAULT_RANDOMNESS);
-        vm.prank(minterAddr);
-        uint256 tokenId = minter.mint{ value: price }(DEFAULT_SALT, refs);
+        uint256 tokenId = _mintWithExpected(minterAddr, DEFAULT_SALT, refs, price);
 
         uint256 paletteIndex = minter.paletteIndexByTokenId(tokenId);
         assertLt(paletteIndex, minter.PALETTE_SIZE());

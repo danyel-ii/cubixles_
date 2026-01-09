@@ -38,9 +38,14 @@
         "internalType": "bool"
       },
       {
-        "name": "paletteMetadataCID_",
+        "name": "paletteImagesCID_",
         "type": "string",
         "internalType": "string"
+      },
+      {
+        "name": "paletteManifestHash_",
+        "type": "bytes32",
+        "internalType": "bytes32"
       },
       {
         "name": "vrfCoordinator_",
@@ -278,6 +283,24 @@
   },
   {
     "type": "function",
+    "name": "commitMetadata",
+    "inputs": [
+      {
+        "name": "metadataHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "imagePathHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "commitMint",
     "inputs": [
       {
@@ -403,6 +426,25 @@
   },
   {
     "type": "function",
+    "name": "imagePathHashByTokenId",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "isApprovedForAll",
     "inputs": [
       {
@@ -485,6 +527,25 @@
   },
   {
     "type": "function",
+    "name": "metadataHashByTokenId",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "mint",
     "inputs": [
       {
@@ -508,6 +569,26 @@
             "internalType": "uint256"
           }
         ]
+      },
+      {
+        "name": "expectedPaletteIndex",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "tokenURI_",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "metadataHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "imagePathHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
       }
     ],
     "outputs": [
@@ -552,6 +633,31 @@
       },
       {
         "name": "randomnessReady",
+        "type": "bool",
+        "internalType": "bool"
+      },
+      {
+        "name": "paletteIndex",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "paletteAssigned",
+        "type": "bool",
+        "internalType": "bool"
+      },
+      {
+        "name": "metadataHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "imagePathHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "metadataCommitted",
         "type": "bool",
         "internalType": "bool"
       }
@@ -662,6 +768,19 @@
   },
   {
     "type": "function",
+    "name": "paletteImagesCID",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "paletteIndexByTokenId",
     "inputs": [
       {
@@ -681,13 +800,32 @@
   },
   {
     "type": "function",
-    "name": "paletteMetadataCID",
+    "name": "paletteManifestHash",
     "inputs": [],
     "outputs": [
       {
         "name": "",
-        "type": "string",
-        "internalType": "string"
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "previewPaletteIndex",
+    "inputs": [
+      {
+        "name": "minter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -980,6 +1118,19 @@
   },
   {
     "type": "function",
+    "name": "totalAssigned",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "totalMinted",
     "inputs": [],
     "outputs": [
@@ -1207,6 +1358,31 @@
   },
   {
     "type": "event",
+    "name": "MintMetadataCommitted",
+    "inputs": [
+      {
+        "name": "minter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "metadataHash",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "imagePathHash",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "MintRandomnessFulfilled",
     "inputs": [
       {
@@ -1327,6 +1503,25 @@
         "type": "address",
         "indexed": true,
         "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TokenURIUpdated",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "tokenURI",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
       }
     ],
     "anonymous": false
@@ -1551,6 +1746,11 @@
   },
   {
     "type": "error",
+    "name": "ImagePathHashRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InsufficientEth",
     "inputs": []
   },
@@ -1577,6 +1777,11 @@
   {
     "type": "error",
     "name": "MathOverflowedMulDiv",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MetadataHashRequired",
     "inputs": []
   },
   {
@@ -1612,6 +1817,21 @@
   {
     "type": "error",
     "name": "MintCommitRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintMetadataCommitActive",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintMetadataCommitRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintMetadataMismatch",
     "inputs": []
   },
   {
@@ -1659,7 +1879,28 @@
   },
   {
     "type": "error",
-    "name": "PaletteMetadataCidRequired",
+    "name": "PaletteImagesCidRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "PaletteIndexMismatch",
+    "inputs": [
+      {
+        "name": "expected",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "actual",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PaletteManifestHashRequired",
     "inputs": []
   },
   {
@@ -1727,6 +1968,11 @@
   {
     "type": "error",
     "name": "TokenIdExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TokenUriRequired",
     "inputs": []
   },
   {

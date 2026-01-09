@@ -76,13 +76,28 @@ export function getPaletteEntryByIndex(index, manifest) {
   return manifest[parsed];
 }
 
-export function buildPaletteImageUrl(entry) {
-  const imagesCid = getPaletteImagesCid();
-  if (!imagesCid) {
-    return "";
-  }
+export function buildPaletteImagePath(entry) {
   if (!entry?.output) {
     return "";
   }
-  return `ipfs://${imagesCid}/${entry.output}`;
+  const raw = entry.output.trim();
+  if (!raw) {
+    return "";
+  }
+  if (raw.includes("/")) {
+    return raw;
+  }
+  return `cubixles_images/${raw}`;
+}
+
+export function buildPaletteImageUrl(entry) {
+  const imagesCid = getPaletteImagesCid();
+  const imagePath = buildPaletteImagePath(entry);
+  if (!imagesCid) {
+    return "";
+  }
+  if (!imagePath) {
+    return "";
+  }
+  return `ipfs://${imagesCid}/${imagePath}`;
 }

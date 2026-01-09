@@ -263,7 +263,7 @@ export default function AppShell() {
             >
               $LESS
             </a>{" "}
-            supply drops (more burns = higher cost).
+            supply drops.
           </div>
         </div>
         <div className="ui-row">
@@ -303,9 +303,10 @@ export default function AppShell() {
         <div className="ui-section">
           <div className="ui-section-title">$LESS + Minting</div>
           <p className="ui-text">
-            Mint fees and resale royalties route through the RoyaltySplitter. Half the ETH goes to
-            the contract owner, and the other half is swapped to $LESS. Of the $LESS output, 90% is
-            sent to the owner and 10% is sent to the burn address.
+            Mint fees and resale royalties route through the RoyaltySplitter. When swaps are
+            enabled, 25% of the ETH is sent to the owner, 25% is swapped to $LESS (sent to the
+            owner), and 50% is swapped to $PNKSTR (sent to the owner). If swaps are disabled or
+            fail, all ETH is forwarded to the owner.
           </p>
         </div>
         <div className="ui-section">

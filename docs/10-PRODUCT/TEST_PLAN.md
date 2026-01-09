@@ -12,7 +12,7 @@ This plan defines the tests needed to trust the system end-to-end:
 - Interactive p5-based NFT (`external_url`)
 - Provenance refs (1–6 NFTs)
 - Economics (dynamic mint price + ERC-2981 resale royalties)
-- Onchain tokenURI (palette metadata CID) and optional metadata pinning
+- Per-mint tokenURI pinning + palette manifest commitment
 - Farcaster miniapp wallet connect + mint UX
 
 ## 0) Definitions & invariants (shared across all tests)
@@ -20,10 +20,10 @@ This plan defines the tests needed to trust the system end-to-end:
 ### Core invariants
 1. **Ownership gating**: mint must fail unless `msg.sender` owns every referenced NFT.
 2. **Ref count**: `refs.length` in `[1..6]`.
-3. **TokenURI correctness**: computed tokenURI points to palette metadata JSON that:
-   - resolves via `ipfs://<paletteMetadataCID>/<paletteIndex>.json`
-   - includes palette traits + image
-   - optional offchain metadata can extend this with provenance + `external_url`
+3. **TokenURI correctness**: pinned tokenURI points to metadata JSON that:
+   - resolves via `ipfs://<metadataCid>`
+   - includes palette traits + image + provenance
+   - uses the expected palette index for the image filename
 4. **Economics**:
    - mint requires `msg.value >= currentMintPrice()`
    - mint pays `currentMintPrice()` to RoyaltySplitter and refunds any overpayment
@@ -34,7 +34,8 @@ This plan defines the tests needed to trust the system end-to-end:
    - `royaltyInfo(tokenId, salePrice)` returns the **splitter** as receiver
    - bps matches configured value
 6. **Onchain tokenURI**:
-   - mint derives `tokenURI` from palette index + metadata CID (no input tokenURI)
+   - mint stores `tokenURI` provided by the minter (non-empty)
+   - mint reverts if `expectedPaletteIndex` does not match the drawn palette index
 
 ## 1) Contract tests (Foundry) — required
 
@@ -50,8 +51,9 @@ This plan defines the tests needed to trust the system end-to-end:
 - mint reverts if any ref is not owned by `msg.sender`
 - mint succeeds when all refs owned
 
-**C. TokenURI computation**
-- tokenURI resolves to `ipfs://<paletteMetadataCID>/<paletteIndex>.json`
+**C. TokenURI storage**
+- tokenURI resolves to pinned metadata (`ipfs://<metadataCid>`)
+- tokenURI metadata includes palette traits + provenance
 - tokenId is deterministic and unique per (minter, salt, refs)
 
 **C2. Deterministic tokenId**
@@ -74,7 +76,7 @@ This plan defines the tests needed to trust the system end-to-end:
 **E. RoyaltySplitter behavior**
 - when swap disabled → forwards 100% ETH to owner
 - when swap reverts → forwards 100% ETH to owner (does not revert)
-- when swap succeeds → sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn
+- when swap succeeds → sends 25% ETH to owner, swaps 25% to $LESS (owner), swaps 50% to $PNKSTR (owner), and forwards any remaining ETH to owner
 
 **F. ERC-2981 resale royalty**
 - `royaltyInfo(ourTokenId, salePrice)` returns `(splitter, expectedAmount)`
@@ -216,7 +218,7 @@ This is the “ship gate” checklist:
    - wallet shows tx with correct `value`
 6. Confirm onchain:
    - transaction success
-   - tokenURI resolves to `ipfs://<paletteMetadataCID>/<paletteIndex>.json`
+   - tokenURI resolves to pinned metadata (`ipfs://<metadataCid>`)
    - resale royalty points to splitter
    - balances reflect mint-time splits + refund
 7. Open `https://<domain>/m/<tokenId>` and verify the cube loads with the correct refs.

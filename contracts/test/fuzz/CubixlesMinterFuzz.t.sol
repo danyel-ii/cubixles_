@@ -19,7 +19,11 @@ contract CubixlesMinterFuzzTest is Test {
     uint16 private constant VRF_CONFIRMATIONS = 3;
     uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
     uint256 private constant DEFAULT_RANDOMNESS = 123_456;
-    string private constant PALETTE_CID = "bafytestcid";
+    string private constant PALETTE_IMAGES_CID = "bafyimagescid";
+    bytes32 private constant PALETTE_MANIFEST_HASH = keccak256("manifest");
+    string private constant TOKEN_URI_PREFIX = "ipfs://metadata/";
+    bytes32 private constant METADATA_HASH = keccak256("metadata");
+    bytes32 private constant IMAGE_PATH_HASH = keccak256("image-path");
 
     function _commitMint(
         address minterAddr,
@@ -31,11 +35,16 @@ contract CubixlesMinterFuzzTest is Test {
         vm.prank(minterAddr);
         minter.commitMint(commitment);
         vm.roll(block.number + 1);
-        (, , uint256 requestId, , ) = minter.mintCommitByMinter(minterAddr);
+        (, , uint256 requestId, , , , , , , ) = minter.mintCommitByMinter(minterAddr);
         uint256[] memory words = new uint256[](1);
         words[0] = DEFAULT_RANDOMNESS;
         vm.prank(vrfCoordinator);
         minter.rawFulfillRandomWords(requestId, words);
+    }
+
+    function _commitMetadata(address minterAddr) internal {
+        vm.prank(minterAddr);
+        minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH);
     }
 
     function setUp() public {
@@ -49,7 +58,8 @@ contract CubixlesMinterFuzzTest is Test {
             0,
             0,
             false,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
@@ -71,6 +81,10 @@ contract CubixlesMinterFuzzTest is Test {
         }
     }
 
+    function _buildTokenURI(uint256 paletteIndex) internal view returns (string memory) {
+        return string.concat(TOKEN_URI_PREFIX, vm.toString(paletteIndex));
+    }
+
     function testFuzz_PaymentBoundary(uint256 paymentRaw, uint8 countRaw) public {
         uint8 count = uint8(bound(countRaw, 1, 6));
         uint256 payment = bound(paymentRaw, 0, 1 ether);
@@ -85,15 +99,32 @@ contract CubixlesMinterFuzzTest is Test {
             _commitMint(minterAddr, salt, refs);
             vm.prank(minterAddr);
             vm.expectRevert(CubixlesMinter.InsufficientEth.selector);
-            minter.mint{ value: payment }(salt, refs);
+            minter.mint{ value: payment }(
+                salt,
+                refs,
+                0,
+                _buildTokenURI(0),
+                METADATA_HASH,
+                IMAGE_PATH_HASH
+            );
             return;
         }
 
         uint256 splitterBefore = resaleSplitter.balance;
         uint256 minterBefore = minterAddr.balance;
         _commitMint(minterAddr, salt, refs);
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
+        string memory tokenUri = _buildTokenURI(expected);
+        _commitMetadata(minterAddr);
         vm.prank(minterAddr);
-        minter.mint{ value: payment }(salt, refs);
+        minter.mint{ value: payment }(
+            salt,
+            refs,
+            expected,
+            tokenUri,
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
 
         assertEq(resaleSplitter.balance, splitterBefore + price);
         assertEq(minterAddr.balance, minterBefore - price);
@@ -125,9 +156,26 @@ contract CubixlesMinterFuzzTest is Test {
                     other
                 )
             );
-            minter.mint{ value: price }(keccak256("salt"), refs);
+            minter.mint{ value: price }(
+                keccak256("salt"),
+                refs,
+                0,
+                _buildTokenURI(0),
+                METADATA_HASH,
+                IMAGE_PATH_HASH
+            );
             return;
         }
-        minter.mint{ value: price }(keccak256("salt"), refs);
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
+        string memory tokenUri = _buildTokenURI(expected);
+        _commitMetadata(minterAddr);
+        minter.mint{ value: price }(
+            keccak256("salt"),
+            refs,
+            expected,
+            tokenUri,
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
     }
 }

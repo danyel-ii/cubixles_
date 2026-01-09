@@ -80,7 +80,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 - **provenance**: Metadata field recording refs and mint context for auditability.
 - **external_url**: Token metadata field that points to the interactive token viewer `/m/<tokenId>`.
 - **opengraph-image**: Server-rendered OG image at `/m/<tokenId>/opengraph-image` for link previews.
-- **RoyaltySplitter**: ERC-2981 receiver that forwards royalties and optionally attempts $LESS purchases.
+- **RoyaltySplitter**: ERC-2981 receiver that forwards royalties and optionally swaps into $LESS + $PNKSTR.
 - **$LESS**: The ERC-20 token used for dynamic mint pricing and delta metrics.
 - **fixedMintPriceWei**: Fixed ETH price used when LESS + linear pricing are disabled.
 - **linearPricingEnabled**: Enables immutable base + step pricing (used for Base deployments).

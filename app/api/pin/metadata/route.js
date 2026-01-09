@@ -130,6 +130,7 @@ export async function POST(request) {
 
     const payloadText = canonicalJson(finalPayload);
     const payloadHash = hashPayload(payloadText);
+    const metadataHash = `0x${payloadHash}`;
     const cachedCid = await getCachedCid(payloadHash);
     if (cachedCid) {
       recordMetric("mint.pin.cache_hit");
@@ -143,7 +144,7 @@ export async function POST(request) {
         actor,
       });
       return NextResponse.json(
-        { cid: cachedCid, tokenURI, cached: true, requestId },
+        { cid: cachedCid, tokenURI, metadataHash, cached: true, requestId },
         { status: 200 }
       );
     }
@@ -169,7 +170,7 @@ export async function POST(request) {
       payloadHash,
       actor,
     });
-    return NextResponse.json({ cid, tokenURI, requestId }, { status: 200 });
+    return NextResponse.json({ cid, tokenURI, metadataHash, requestId }, { status: 200 });
   } catch (error) {
     const status = error?.status || 500;
     recordMetric("mint.pin.failed");

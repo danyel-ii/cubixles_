@@ -34,7 +34,7 @@ interface IWETH {
 }
 
 /// @title RoyaltySplitter
-/// @notice Splits mint ETH and optionally swaps half to LESS via Uniswap v4 PoolManager.
+/// @notice Splits mint ETH and swaps into LESS + PNKSTR via Uniswap v4 PoolManager.
 /// @dev Uses PoolManager unlock + swap; swap failures fall back to owner.
 /// @author cubixles_
 contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
@@ -44,12 +44,14 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
 
     /// @notice LESS token address.
     address public immutable LESS_TOKEN; /* solhint-disable-line immutable-vars-naming */ /* slither-disable-line naming-convention */
-    /// @notice Burn address for LESS.
-    address public immutable BURN_ADDRESS; /* solhint-disable-line immutable-vars-naming */ /* slither-disable-line naming-convention */
+    /// @notice PNKSTR token address.
+    address public immutable PNKSTR_TOKEN; /* solhint-disable-line immutable-vars-naming */ /* slither-disable-line naming-convention */
     /// @notice Uniswap v4 PoolManager.
     IPoolManager public immutable POOL_MANAGER; /* solhint-disable-line immutable-vars-naming */ /* slither-disable-line naming-convention */
     /// @notice PoolKey for the ETH/LESS pool.
-    PoolKey public poolKey;
+    PoolKey public lessPoolKey;
+    /// @notice PoolKey for the ETH/PNKSTR pool.
+    PoolKey public pnkPoolKey;
     /// @notice Whether swap to LESS is enabled.
     bool public swapEnabled;
     /// @notice Max slippage in basis points (0 disables).
@@ -59,13 +61,13 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
 
     /// @notice LESS token address is required.
     error LessTokenRequired();
+    /// @notice PNKSTR token address is required.
+    error PnkstrTokenRequired();
     /// @notice Owner is required.
     error OwnerRequired();
-    /// @notice Burn address is required.
-    error BurnAddressRequired();
     /// @notice PoolManager is required when enabling swaps.
     error PoolManagerRequired();
-    /// @notice PoolKey does not match expected ETH/LESS pool.
+    /// @notice PoolKey does not match expected pool.
     error InvalidPoolKey();
     /// @notice Slippage exceeds allowed maximum.
     error InvalidSlippageBps();
@@ -104,43 +106,42 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
     /// @notice Create a new royalty splitter.
     /// @param owner_ Owner who receives ETH and can configure settings.
     /// @param lessToken_ LESS token address.
+    /// @param pnkstrToken_ PNKSTR token address.
     /// @param poolManager_ Uniswap v4 PoolManager (optional for no-swap).
-    /// @param poolKey_ PoolKey for ETH/LESS pool.
+    /// @param lessPoolKey_ PoolKey for ETH/LESS pool.
+    /// @param pnkPoolKey_ PoolKey for ETH/PNKSTR pool.
     /// @param swapMaxSlippageBps_ Max slippage in basis points.
-    /// @param burnAddress_ Address to receive 50% of LESS.
     constructor(
         address owner_,
         address lessToken_,
+        address pnkstrToken_,
         IPoolManager poolManager_,
-        PoolKey memory poolKey_,
-        uint16 swapMaxSlippageBps_,
-        address burnAddress_
+        PoolKey memory lessPoolKey_,
+        PoolKey memory pnkPoolKey_,
+        uint16 swapMaxSlippageBps_
     ) Ownable(owner_) {
         if (owner_ == address(0)) {
             revert OwnerRequired();
-        }
-        if (burnAddress_ == address(0)) {
-            revert BurnAddressRequired();
         }
         bool swapReady = address(poolManager_) != address(0);
         if (swapReady) {
             if (lessToken_ == address(0)) {
                 revert LessTokenRequired();
             }
-            if (Currency.unwrap(poolKey_.currency0) != address(0)) {
-                revert InvalidPoolKey();
+            if (pnkstrToken_ == address(0)) {
+                revert PnkstrTokenRequired();
             }
-            if (Currency.unwrap(poolKey_.currency1) != lessToken_) {
-                revert InvalidPoolKey();
-            }
+            _requirePoolKeyMatches(lessPoolKey_, lessToken_);
+            _requirePoolKeyMatches(pnkPoolKey_, pnkstrToken_);
         }
         if (swapMaxSlippageBps_ > MAX_SWAP_SLIPPAGE_BPS) {
             revert InvalidSlippageBps();
         }
         LESS_TOKEN = lessToken_;
+        PNKSTR_TOKEN = pnkstrToken_;
         POOL_MANAGER = poolManager_;
-        poolKey = poolKey_;
-        BURN_ADDRESS = burnAddress_;
+        lessPoolKey = lessPoolKey_;
+        pnkPoolKey = pnkPoolKey_;
         swapEnabled = swapReady;
         swapMaxSlippageBps = swapMaxSlippageBps_;
     }
@@ -161,7 +162,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         if (enabled && address(POOL_MANAGER) == address(0)) {
             revert PoolManagerRequired();
         }
-        if (enabled && !_poolInitialized()) {
+        if (enabled && (!_poolInitialized(lessPoolKey) || !_poolInitialized(pnkPoolKey))) {
             revert PoolNotInitialized();
         }
         swapEnabled = enabled;
@@ -213,15 +214,24 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             return;
         }
 
-        uint256 ethToOwner = amount / 2;
-        uint256 ethToSwap = amount - ethToOwner;
-        if (ethToSwap == 0) {
-            _send(owner(), amount);
-            return;
+        uint256 ethToLess = amount / 4;
+        uint256 ethToPnk = amount / 2;
+        uint256 ethToOwner = amount - ethToLess - ethToPnk;
+        if (ethToOwner > 0) {
+            _send(owner(), ethToOwner);
         }
+        if (ethToLess > 0) {
+            _swapAndDistribute(ethToLess, SwapToken.Less);
+        }
+        if (ethToPnk > 0) {
+            _swapAndDistribute(ethToPnk, SwapToken.Pnkstr);
+        }
+        _send(owner(), address(this).balance);
+    }
 
-        _send(owner(), ethToOwner);
-        _swapAndDistribute(ethToSwap);
+    enum SwapToken {
+        Less,
+        Pnkstr
     }
 
     /// @notice PoolManager callback to perform swap settlement.
@@ -231,13 +241,14 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         if (msg.sender != address(POOL_MANAGER)) {
             revert PoolManagerOnly();
         }
-        uint256 amountIn = abi.decode(data, (uint256));
+        (uint256 amountIn, SwapToken swapToken) = abi.decode(data, (uint256, SwapToken));
         if (amountIn == 0) {
             return bytes("");
         }
-        uint160 sqrtPriceLimitX96 = _sqrtPriceLimit();
-        BalanceDelta delta = _swapForLess(amountIn, sqrtPriceLimitX96);
-        _settleSwap(delta);
+        PoolKey memory key = swapToken == SwapToken.Less ? lessPoolKey : pnkPoolKey;
+        uint160 sqrtPriceLimitX96 = _sqrtPriceLimit(key);
+        BalanceDelta delta = _swapForToken(key, amountIn, sqrtPriceLimitX96);
+        _settleSwap(key, delta);
 
         return abi.encode(delta.amount0(), delta.amount1());
     }
@@ -250,15 +261,24 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         Address.sendValue(payable(recipient), amount);
     }
 
-    function _swapAndDistribute(uint256 ethToSwap) private {
-        try POOL_MANAGER.unlock(abi.encode(ethToSwap)) returns (bytes memory unlockResult) {
+    function _swapAndDistribute(uint256 ethToSwap, SwapToken swapToken) private {
+        if (ethToSwap == 0) {
+            return;
+        }
+        try POOL_MANAGER.unlock(abi.encode(ethToSwap, swapToken)) returns (
+            bytes memory unlockResult
+        ) {
             if (unlockResult.length == 64) {
                 (, int128 amount1) = abi.decode(unlockResult, (int128, int128));
                 if (amount1 < 1) {
-                    revert SwapOutputTooLow();
+                    emit SwapFailedFallbackToOwner(
+                        ethToSwap,
+                        keccak256(bytes("SwapOutputTooLow"))
+                    );
+                    _send(owner(), ethToSwap);
+                    return;
                 }
             }
-            _send(owner(), address(this).balance);
         } catch (bytes memory reason) {
             emit SwapFailedFallbackToOwner(ethToSwap, keccak256(reason));
             _send(owner(), ethToSwap);
@@ -278,22 +298,23 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         return uint160(limit);
     }
 
-    function _sqrtPriceLimit() private view returns (uint160) {
+    function _sqrtPriceLimit(PoolKey memory key) private view returns (uint160) {
         uint160 sqrtPriceLimitX96 = TickMath.MIN_SQRT_PRICE + 1;
         if (swapMaxSlippageBps != 0) {
             // slither-disable-next-line unused-return
-            (uint160 sqrtPriceX96, , , ) = POOL_MANAGER.getSlot0(poolKey.toId());
+            (uint160 sqrtPriceX96, , , ) = POOL_MANAGER.getSlot0(key.toId());
             sqrtPriceLimitX96 = _slippageLimit(sqrtPriceX96);
         }
         return sqrtPriceLimitX96;
     }
 
-    function _swapForLess(
+    function _swapForToken(
+        PoolKey memory key,
         uint256 amountIn,
         uint160 sqrtPriceLimitX96
     ) private returns (BalanceDelta) {
         return POOL_MANAGER.swap(
-            poolKey,
+            key,
             IPoolManager.SwapParams({
                 zeroForOne: true,
                 amountSpecified: -int256(amountIn),
@@ -303,7 +324,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         );
     }
 
-    function _settleSwap(BalanceDelta delta) private {
+    function _settleSwap(PoolKey memory key, BalanceDelta delta) private {
         int128 amount0 = delta.amount0();
         int128 amount1 = delta.amount1();
         if (amount1 < 1) {
@@ -318,24 +339,26 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
         if (amount1 > 0) {
             uint256 output = uint256(uint128(amount1));
-            uint256 burnAmount = (output * 10) / 100;
-            uint256 ownerAmount = output - burnAmount;
-            if (burnAmount > 0) {
-                POOL_MANAGER.take(poolKey.currency1, BURN_ADDRESS, burnAmount);
-            }
-            if (ownerAmount > 0) {
-                POOL_MANAGER.take(poolKey.currency1, owner(), ownerAmount);
-            }
+            POOL_MANAGER.take(key.currency1, owner(), output);
         }
     }
 
     /// @dev Check that the pool has been initialized.
-    function _poolInitialized() internal view returns (bool) {
+    function _poolInitialized(PoolKey memory key) internal view returns (bool) {
         if (address(POOL_MANAGER) == address(0)) {
             return false;
         }
         // slither-disable-next-line unused-return
-        (uint160 sqrtPriceX96, , , ) = POOL_MANAGER.getSlot0(poolKey.toId());
+        (uint160 sqrtPriceX96, , , ) = POOL_MANAGER.getSlot0(key.toId());
         return sqrtPriceX96 != 0;
+    }
+
+    function _requirePoolKeyMatches(PoolKey memory key, address token) private pure {
+        if (Currency.unwrap(key.currency0) != address(0)) {
+            revert InvalidPoolKey();
+        }
+        if (Currency.unwrap(key.currency1) != token) {
+            revert InvalidPoolKey();
+        }
     }
 }

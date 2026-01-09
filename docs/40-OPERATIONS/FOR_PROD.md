@@ -53,11 +53,16 @@ npm run check:no-repo-secrets
 - Environment variable names use `CUBIXLES_*` for contract/deploy compatibility.
 - `CUBIXLES_OWNER`
 - `CUBIXLES_LESS_TOKEN` (optional, defaults to mainnet $LESS address)
-- `CUBIXLES_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
+- `CUBIXLES_PNKSTR_TOKEN` (optional; required for swaps)
+- `CUBIXLES_PALETTE_IMAGES_CID` (required; base CID for palette images)
+- `CUBIXLES_PALETTE_MANIFEST_HASH` (required; keccak256 hash of the manifest JSON)
 - `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
 - `CUBIXLES_POOL_FEE` (optional, defaults to 0)
 - `CUBIXLES_POOL_TICK_SPACING` (required if pool manager is set)
 - `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
+- `CUBIXLES_PNKSTR_POOL_FEE` (optional, defaults to 0)
+- `CUBIXLES_PNKSTR_POOL_TICK_SPACING` (required if pool manager is set)
+- `CUBIXLES_PNKSTR_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid` in the deploy script)
@@ -116,8 +121,8 @@ npm run test:ui
 3) Select 1–6 NFTs.
 4) Click Mint.
 5) Verify:
-   - `tokenURI` resolves to `ipfs://<paletteMetadataCID>/<paletteIndex>.json`
-   - metadata includes palette traits + image
+   - `tokenURI` resolves to pinned IPFS metadata
+   - metadata includes palette traits + image (image points at the palette images CID)
    - `/m/<tokenId>` loads the correct cube
    - `royaltyInfo` returns splitter + 5% amount
 
@@ -162,16 +167,18 @@ npm run deploy:mainnet
    - metadata fields are correct (palette traits + image)
    - token viewer renders
    - royalties route to splitter
-   - $LESS swap output lands in the owner wallet
+   - $LESS + $PNKSTR swap outputs land in the owner wallet
 
 ## Appendix: Base ETH-only deploy (no LESS)
 
 - Set `CUBIXLES_LESS_TOKEN=0x0000000000000000000000000000000000000000`.
+- Set `CUBIXLES_PNKSTR_TOKEN=0x0000000000000000000000000000000000000000`.
 - Set `CUBIXLES_LINEAR_PRICING_ENABLED=true`.
 - Set `CUBIXLES_BASE_MINT_PRICE_WEI` and `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (defaults: 0.0012 ETH and 0.000012 ETH; immutable once deployed).
 - Leave `CUBIXLES_FIXED_MINT_PRICE_WEI=0` (unused on Base).
 - Disable swaps by leaving `CUBIXLES_POOL_MANAGER` unset (or `0x0`).
 - Set `CUBIXLES_POOL_FEE=0`, `CUBIXLES_POOL_TICK_SPACING=0`, `CUBIXLES_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to zero out pool config on Base.
+- Set `CUBIXLES_PNKSTR_POOL_FEE=0`, `CUBIXLES_PNKSTR_POOL_TICK_SPACING=0`, and `CUBIXLES_PNKSTR_POOL_HOOKS=0x0` to zero out the PNKSTR pool config.
 - Configure Base VRF coordinator + subscription id in env.
 - Deploy:
 ```sh

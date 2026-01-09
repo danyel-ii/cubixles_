@@ -8,7 +8,6 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
 import { VRFConsumerBaseV2 } from "../chainlink/VRFConsumerBaseV2.sol";
 import { VRFCoordinatorV2Interface } from "../chainlink/VRFCoordinatorV2Interface.sol";
@@ -18,7 +17,6 @@ import { VRFCoordinatorV2Interface } from "../chainlink/VRFCoordinatorV2Interfac
 /// @dev Token IDs are derived from minter + salt + canonical refs hash.
 /// @author cubixles_
 contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsumerBaseV2 {
-    using Strings for uint256;
     /// @notice Reference to an ERC-721 token used for provenance.
     struct NftRef {
         address contractAddress;
@@ -67,8 +65,24 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     error MintCommitActive();
     /// @notice Royalty receiver is required.
     error RoyaltyReceiverRequired();
-    /// @notice Metadata CID is required.
-    error PaletteMetadataCidRequired();
+    /// @notice Palette images CID is required.
+    error PaletteImagesCidRequired();
+    /// @notice Palette manifest hash is required.
+    error PaletteManifestHashRequired();
+    /// @notice Token URI is required.
+    error TokenUriRequired();
+    /// @notice Metadata hash is required.
+    error MetadataHashRequired();
+    /// @notice Image path hash is required.
+    error ImagePathHashRequired();
+    /// @notice Expected palette index does not match.
+    error PaletteIndexMismatch(uint256 expected, uint256 actual);
+    /// @notice Metadata commit is required.
+    error MintMetadataCommitRequired();
+    /// @notice Metadata commit already set.
+    error MintMetadataCommitActive();
+    /// @notice Metadata commit mismatch.
+    error MintMetadataMismatch();
     /// @notice VRF coordinator is required.
     error VrfCoordinatorRequired();
     /// @notice VRF key hash is required.
@@ -110,6 +124,11 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         uint256 requestId;
         uint256 randomness;
         bool randomnessReady;
+        uint256 paletteIndex;
+        bool paletteAssigned;
+        bytes32 metadataHash;
+        bytes32 imagePathHash;
+        bool metadataCommitted;
     }
 
     struct MintRequest {
@@ -144,8 +163,10 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     uint256 public fixedMintPriceWei;
     /// @notice Royalty receiver for ERC-2981.
     address public resaleSplitter;
-    /// @notice Base CID for palette metadata.
-    string public paletteMetadataCID;
+    /// @notice Base CID for palette images.
+    string public paletteImagesCID;
+    /// @notice Hash or Merkle root for palette manifest.
+    bytes32 public paletteManifestHash;
     /// @notice VRF coordinator contract.
     VRFCoordinatorV2Interface public immutable vrfCoordinator;
     /// @notice VRF key hash for randomness requests.
@@ -158,12 +179,20 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     uint32 public immutable vrfCallbackGasLimit;
     /// @notice Total minted count (monotonic).
     uint256 public totalMinted;
+    /// @notice Total palette indices reserved (monotonic).
+    uint256 public totalAssigned;
     /// @notice TokenId by sequential index (1-based).
     mapping(uint256 => uint256) public tokenIdByIndex;
     /// @notice Minter address per tokenId.
     mapping(uint256 => address) public minterByTokenId;
     /// @notice Mint price in wei recorded at mint time.
     mapping(uint256 => uint256) public mintPriceByTokenId;
+    /// @notice Token metadata URI per token.
+    mapping(uint256 => string) private _tokenUriByTokenId;
+    /// @notice Metadata hash per token.
+    mapping(uint256 => bytes32) public metadataHashByTokenId;
+    /// @notice Image path hash per token.
+    mapping(uint256 => bytes32) public imagePathHashByTokenId;
 
     /// @notice Emitted when a mint succeeds.
     /// @param tokenId Minted token id.
@@ -186,6 +215,15 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         uint256 indexed blockNumber,
         uint256 requestId
     );
+    /// @notice Emitted when metadata is committed for a mint.
+    /// @param minter Wallet that committed.
+    /// @param metadataHash Hash of the canonical metadata payload.
+    /// @param imagePathHash Hash of the palette image path.
+    event MintMetadataCommitted(
+        address indexed minter,
+        bytes32 indexed metadataHash,
+        bytes32 indexed imagePathHash
+    );
     /// @notice Emitted when VRF randomness is fulfilled for a commit.
     /// @param minter Wallet that committed.
     /// @param requestId VRF request id.
@@ -199,6 +237,10 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @param tokenId Minted token id.
     /// @param paletteIndex Random palette index assigned.
     event PaletteAssigned(uint256 indexed tokenId, uint256 indexed paletteIndex);
+    /// @notice Emitted when a token URI is set.
+    /// @param tokenId Token id updated.
+    /// @param tokenURI Token metadata URI.
+    event TokenURIUpdated(uint256 indexed tokenId, string tokenURI);
     /// @notice Emitted when last supply snapshot is updated.
     /// @param tokenId Token id updated.
     /// @param supply LESS total supply snapshot.
@@ -220,7 +262,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @param baseMintPriceWei_ Base mint price for linear pricing.
     /// @param baseMintPriceStepWei_ Price step per mint for linear pricing.
     /// @param linearPricingEnabled_ Whether linear pricing is enabled.
-    /// @param paletteMetadataCID_ Base CID for palette metadata JSON.
+    /// @param paletteImagesCID_ Base CID for palette images.
+    /// @param paletteManifestHash_ Hash or Merkle root of palette manifest.
     /// @param vrfCoordinator_ Chainlink VRF coordinator address.
     /// @param vrfKeyHash_ Chainlink VRF key hash.
     /// @param vrfSubscriptionId_ Chainlink VRF subscription id.
@@ -234,7 +277,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         uint256 baseMintPriceWei_,
         uint256 baseMintPriceStepWei_,
         bool linearPricingEnabled_,
-        string memory paletteMetadataCID_,
+        string memory paletteImagesCID_,
+        bytes32 paletteManifestHash_,
         address vrfCoordinator_,
         bytes32 vrfKeyHash_,
         uint64 vrfSubscriptionId_,
@@ -251,8 +295,11 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         if (resaleRoyaltyBps > 1000) {
             revert RoyaltyTooHigh();
         }
-        if (bytes(paletteMetadataCID_).length == 0) {
-            revert PaletteMetadataCidRequired();
+        if (bytes(paletteImagesCID_).length == 0) {
+            revert PaletteImagesCidRequired();
+        }
+        if (paletteManifestHash_ == bytes32(0)) {
+            revert PaletteManifestHashRequired();
         }
         if (vrfCoordinator_ == address(0)) {
             revert VrfCoordinatorRequired();
@@ -275,7 +322,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         linearPricingEnabled = linearPricingEnabled_;
         baseMintPriceWei = baseMintPriceWei_;
         baseMintPriceStepWei = baseMintPriceStepWei_;
-        paletteMetadataCID = paletteMetadataCID_;
+        paletteImagesCID = paletteImagesCID_;
+        paletteManifestHash = paletteManifestHash_;
         vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinator_);
         vrfKeyHash = vrfKeyHash_;
         vrfSubscriptionId = vrfSubscriptionId_;
@@ -310,8 +358,21 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @return tokenId Newly minted token ID.
     function mint(
         bytes32 salt,
-        NftRef[] calldata refs
+        NftRef[] calldata refs,
+        uint256 expectedPaletteIndex,
+        string calldata tokenURI_,
+        bytes32 metadataHash,
+        bytes32 imagePathHash
     ) external payable nonReentrant returns (uint256 tokenId) {
+        if (bytes(tokenURI_).length == 0) {
+            revert TokenUriRequired();
+        }
+        if (metadataHash == bytes32(0)) {
+            revert MetadataHashRequired();
+        }
+        if (imagePathHash == bytes32(0)) {
+            revert ImagePathHashRequired();
+        }
         _requireValidRefs(refs);
         if (!(totalMinted < MAX_MINTS)) {
             revert MintCapReached();
@@ -323,25 +384,31 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         }
 
         bytes32 refsHash = _hashRefsCanonical(refs);
-        uint256 randomness = _consumeCommit(salt, refsHash);
+        uint256 paletteIndex = _consumeCommit(salt, refsHash, metadataHash, imagePathHash);
         tokenId = _computeTokenId(msg.sender, salt, refsHash);
         if (_ownerOf(tokenId) != address(0)) {
             revert TokenIdExists();
         }
 
-        uint256 paletteIndex = _assignPaletteIndex(randomness);
+        if (paletteIndex != expectedPaletteIndex) {
+            revert PaletteIndexMismatch(expectedPaletteIndex, paletteIndex);
+        }
 
         ++totalMinted;
         tokenIdByIndex[totalMinted] = tokenId;
         minterByTokenId[tokenId] = msg.sender;
         mintPriceByTokenId[tokenId] = price;
         paletteIndexByTokenId[tokenId] = paletteIndex;
+        _tokenUriByTokenId[tokenId] = tokenURI_;
+        metadataHashByTokenId[tokenId] = metadataHash;
+        imagePathHashByTokenId[tokenId] = imagePathHash;
         _snapshotSupply(tokenId, true);
 
         _safeMint(msg.sender, tokenId);
 
         emit Minted(tokenId, msg.sender, salt, refsHash);
         emit PaletteAssigned(tokenId, paletteIndex);
+        emit TokenURIUpdated(tokenId, tokenURI_);
 
         _transferEth(resaleSplitter, price);
 
@@ -362,7 +429,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
                 revert MintCommitActive();
             }
         }
-        if (!(totalMinted < MAX_MINTS)) {
+        if (!(totalAssigned < MAX_MINTS)) {
             revert MintCapReached();
         }
         uint256 requestId = vrfCoordinator.requestRandomWords(
@@ -377,10 +444,42 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
             blockNumber: block.number,
             requestId: requestId,
             randomness: 0,
-            randomnessReady: false
+            randomnessReady: false,
+            paletteIndex: 0,
+            paletteAssigned: false,
+            metadataHash: bytes32(0),
+            imagePathHash: bytes32(0),
+            metadataCommitted: false
         });
         _mintRequestById[requestId] = MintRequest({ minter: msg.sender, commitment: commitment });
         emit MintCommitCreated(msg.sender, commitment, block.number, requestId);
+    }
+
+    /// @notice Commit metadata hashes after randomness is fulfilled.
+    /// @param metadataHash Hash of the canonical metadata JSON.
+    /// @param imagePathHash Hash of the palette image path (relative to paletteImagesCID).
+    function commitMetadata(bytes32 metadataHash, bytes32 imagePathHash) external {
+        if (metadataHash == bytes32(0)) {
+            revert MetadataHashRequired();
+        }
+        if (imagePathHash == bytes32(0)) {
+            revert ImagePathHashRequired();
+        }
+        MintCommit storage commit = mintCommitByMinter[msg.sender];
+        _requireValidCommit(commit);
+        if (!commit.randomnessReady) {
+            revert MintRandomnessPending();
+        }
+        if (!commit.paletteAssigned) {
+            revert MintCapReached();
+        }
+        if (commit.metadataCommitted) {
+            revert MintMetadataCommitActive();
+        }
+        commit.metadataHash = metadataHash;
+        commit.imagePathHash = imagePathHash;
+        commit.metadataCommitted = true;
+        emit MintMetadataCommitted(msg.sender, metadataHash, imagePathHash);
     }
 
     /// @notice Current mint price for this deployment.
@@ -429,20 +528,31 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         return _computeCommitment(minter, salt, refsHash);
     }
 
+    /// @notice Preview palette index for a minter's active commit.
+    /// @param minter Address with an active commit.
+    /// @return paletteIndex Expected palette index if minted now.
+    function previewPaletteIndex(address minter) external view returns (uint256) {
+        MintCommit memory commit = mintCommitByMinter[minter];
+        _requireValidCommit(commit);
+        if (!commit.randomnessReady) {
+            revert MintRandomnessPending();
+        }
+        if (!commit.paletteAssigned) {
+            revert MintCapReached();
+        }
+        return commit.paletteIndex;
+    }
+
     /// @notice Metadata URI derived from palette index.
     /// @param tokenId Token id to query.
     /// @return uri Token metadata URI.
     function tokenURI(uint256 tokenId) public view override(ERC721) returns (string memory) {
         _requireOwned(tokenId);
-        uint256 paletteIndex = paletteIndexByTokenId[tokenId];
-        return
-            string.concat(
-                "ipfs://",
-                paletteMetadataCID,
-                "/",
-                paletteIndex.toString(),
-                ".json"
-            );
+        string memory uri = _tokenUriByTokenId[tokenId];
+        if (bytes(uri).length == 0) {
+            revert TokenUriRequired();
+        }
+        return uri;
     }
 
     /// @notice Current LESS total supply.
@@ -652,23 +762,40 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         }
         commit.randomness = randomWords[0];
         commit.randomnessReady = true;
+        if (totalAssigned < MAX_MINTS) {
+            uint256 paletteIndex = _assignPaletteIndex(randomWords[0]);
+            commit.paletteIndex = paletteIndex;
+            commit.paletteAssigned = true;
+            ++totalAssigned;
+        }
         delete _mintRequestById[requestId];
         emit MintRandomnessFulfilled(request.minter, requestId, randomWords[0]);
     }
 
     function _consumeCommit(
         bytes32 salt,
-        bytes32 refsHash
-    ) private returns (uint256 randomness) {
+        bytes32 refsHash,
+        bytes32 metadataHash,
+        bytes32 imagePathHash
+    ) private returns (uint256 paletteIndex) {
         MintCommit memory commit = mintCommitByMinter[msg.sender];
         _requireValidCommit(commit);
         if (!commit.randomnessReady) {
             revert MintRandomnessPending();
         }
+        if (!commit.paletteAssigned) {
+            revert MintCapReached();
+        }
+        if (!commit.metadataCommitted) {
+            revert MintMetadataCommitRequired();
+        }
+        if (commit.metadataHash != metadataHash || commit.imagePathHash != imagePathHash) {
+            revert MintMetadataMismatch();
+        }
         if (_computeCommitment(msg.sender, salt, refsHash) != commit.commitment) {
             revert MintCommitMismatch();
         }
-        randomness = commit.randomness;
+        paletteIndex = commit.paletteIndex;
         delete mintCommitByMinter[msg.sender];
     }
 
@@ -720,7 +847,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     }
 
     function _drawPaletteIndex(uint256 randomness) private returns (uint256) {
-        uint256 remaining = MAX_MINTS - totalMinted;
+        uint256 remaining = MAX_MINTS - totalAssigned;
         if (remaining == 0) {
             revert MintCapReached();
         }
@@ -738,5 +865,14 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
 
     function _assignPaletteIndex(uint256 randomness) private returns (uint256) {
         return _drawPaletteIndex(randomness);
+    }
+
+    function _previewPaletteIndex(uint256 randomness) private view returns (uint256) {
+        uint256 remaining = MAX_MINTS - totalAssigned;
+        if (remaining == 0) {
+            revert MintCapReached();
+        }
+        uint256 rand = randomness % remaining;
+        return _resolvePaletteIndex(rand);
     }
 }

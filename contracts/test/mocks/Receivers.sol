@@ -25,6 +25,8 @@ contract MaliciousReceiverReenter {
     uint256[] public refTokenIds;
     bytes32 public salt;
     bool public attempted;
+    bytes32 private constant METADATA_HASH = keccak256("metadata");
+    bytes32 private constant IMAGE_PATH_HASH = keccak256("image-path");
 
     function configure(
         CubixlesMinter minter_,
@@ -52,6 +54,13 @@ contract MaliciousReceiverReenter {
                 tokenId: refTokenIds[i]
             });
         }
-        try minter.mint{ value: 0 }(salt, refs) {} catch {}
+        try minter.mint{ value: 0 }(
+            salt,
+            refs,
+            0,
+            "ipfs://metadata/0",
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        ) {} catch {}
     }
 }

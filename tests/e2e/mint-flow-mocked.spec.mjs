@@ -7,12 +7,15 @@ function buildEthereumMock() {
   const selectors = {
     currentMintPrice: id("currentMintPrice()").slice(0, 10),
     previewTokenId: id("previewTokenId(bytes32,(address,uint256)[])").slice(0, 10),
+    previewPaletteIndex: id("previewPaletteIndex(address)").slice(0, 10),
     lessSupplyNow: id("lessSupplyNow()").slice(0, 10),
     mintCommitByMinter: id("mintCommitByMinter(address)").slice(0, 10),
+    commitMint: id("commitMint(bytes32)").slice(0, 10),
   };
   const responses = {
     currentMintPrice: coder.encode(["uint256"], [1_500_000_000_000_000n]),
     previewTokenId: coder.encode(["uint256"], [123n]),
+    previewPaletteIndex: coder.encode(["uint256"], [7n]),
     lessSupplyNow: coder.encode(["uint256"], [900_000_000n * 1_000_000_000_000_000_000n]),
   };
   return { selectors, responses };
@@ -51,6 +54,8 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await page.addInitScript(({ selectors, responses }) => {
     window.__CUBIXLES_TEST_HOOKS__ = true;
     window.localStorage?.setItem("cubixles:chainId", "1");
+    let commitCreated = false;
+    let commitHash = "0x" + "00".repeat(32);
     const mockBlock = {
       number: "0x1",
       hash: "0x" + "11".repeat(32),
@@ -74,6 +79,44 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
       baseFeePerGas: "0x0",
       mixHash: "0x" + "77".repeat(32),
     };
+    const pad32 = (hex) => hex.replace(/^0x/, "").padStart(64, "0");
+    const encodeUint = (value) => pad32(BigInt(value).toString(16));
+    const encodeBool = (value) => pad32(value ? "1" : "0");
+    const encodeCommit = () => {
+      if (!commitCreated) {
+        return (
+          "0x" +
+          [
+            pad32("0x0"),
+            encodeUint(0),
+            encodeUint(0),
+            encodeUint(0),
+            encodeBool(false),
+            encodeUint(0),
+            encodeBool(false),
+            pad32("0x0"),
+            pad32("0x0"),
+            encodeBool(false),
+          ].join("")
+        );
+      }
+      return (
+        "0x" +
+        [
+          pad32(commitHash),
+          encodeUint(2),
+          encodeUint(1),
+          encodeUint(42),
+          encodeBool(true),
+          encodeUint(7),
+          encodeBool(true),
+          pad32("0x0"),
+          pad32("0x0"),
+          encodeBool(false),
+        ].join("")
+      );
+    };
+
     window.ethereum = {
       request: async ({ method, params }) => {
         if (method === "eth_chainId") {
@@ -90,11 +133,14 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
           if (data.startsWith(selectors.previewTokenId)) {
             return responses.previewTokenId;
           }
+          if (data.startsWith(selectors.previewPaletteIndex)) {
+            return responses.previewPaletteIndex;
+          }
           if (data.startsWith(selectors.lessSupplyNow)) {
             return responses.lessSupplyNow;
           }
           if (data.startsWith(selectors.mintCommitByMinter)) {
-            throw new Error("commit reveal unavailable");
+            return encodeCommit();
           }
           return responses.currentMintPrice;
         }
@@ -108,6 +154,11 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
           return "0x1";
         }
         if (method === "eth_sendTransaction") {
+          const data = params?.[0]?.data || "";
+          if (data.startsWith(selectors.commitMint)) {
+            commitHash = `0x${data.slice(10, 74)}`;
+            commitCreated = true;
+          }
           return "0xdeadbeef";
         }
         if (method === "eth_getTransactionReceipt") {
@@ -143,7 +194,10 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ tokenURI: "ipfs://cid123" }),
+      body: JSON.stringify({
+        tokenURI: "ipfs://cid123",
+        metadataHash: "0x" + "aa".repeat(32),
+      }),
     });
   });
 
@@ -237,7 +291,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await mintButton.click();
 
   await expect(page.locator("#mint-status")).toContainText(
-    /step 1\/2: confirm commit|step 2\/2: confirm mint|waiting for randomness|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps|preparing mint/i,
+    /step 1\/3: confirm commit|step 2\/3: confirm metadata|step 3\/3: confirm mint|pinning metadata|waiting for randomness|waiting for metadata confirmation|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps|preparing mint/i,
     {
       timeout: 5000,
     }

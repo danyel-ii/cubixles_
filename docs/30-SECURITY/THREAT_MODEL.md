@@ -45,8 +45,8 @@ Last updated: 2026-01-09
    - Fork tests and UI data may fail under provider degradation.
 9. **VRF dependency**
    - If the VRF subscription is underfunded or not configured with the minter as a consumer, minting will stall.
-10. **Metadata CID misconfiguration**
-   - `tokenURI` is computed from `paletteMetadataCID`; a wrong CID requires redeploy.
+10. **Metadata misconfiguration**
+   - Wrong `tokenURI` pinning or mismatched `paletteImagesCID`/`paletteManifestHash` causes incorrect assets; fixing requires repinning + redeploy if the onchain commitments are wrong.
 
 ## Security posture decisions
 - **Receiver failure policy (mint)**: strict. If owner or refund transfer fails, mint reverts.

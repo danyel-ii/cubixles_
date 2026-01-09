@@ -35,7 +35,7 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
 5. **URI normalization**: store `{ original, resolved }` for both `tokenUri` and `image`.
    - `original` is the exact value returned by the source.
    - `resolved` converts `ipfs://…` to an HTTPS gateway URL.
-6. **Raw metadata**: provenance captures full source metadata during fetch; onchain tokenURI now points to palette metadata and does not include raw provenance data.
+6. **Raw metadata**: provenance captures full source metadata during fetch; per-mint tokenURI metadata includes the curated provenance fields, while raw source metadata stays offchain.
 7. **Floor snapshot (optional)**: store collection floor ETH + retrieval timestamp at mint time.
    - Default: `0` when floor data is unavailable.
 
@@ -91,7 +91,7 @@ type ProvenanceNft = {
 ```
 
 Notes:
-- The in-memory provenance bundle includes `sourceMetadata.raw` for offchain diagnostics; it is not embedded in onchain tokenURI metadata.
+- The in-memory provenance bundle includes `sourceMetadata.raw` for offchain diagnostics; tokenURI metadata includes curated provenance fields, not the raw source JSON.
 
 ### `ProvenanceBundle`
 
@@ -134,8 +134,9 @@ v0 mapping order (fixed):
 
 ## Palette Metadata Schema (tokenURI JSON)
 
-`tokenURI` is computed onchain as `ipfs://<paletteMetadataCID>/<paletteIndex>.json`. Metadata is
-pre-generated from the palette manifest and does **not** include per-mint provenance.
+`tokenURI` is pinned per mint (for example: `ipfs://<metadataCid>`). Metadata is generated at mint
+time and includes palette traits plus per-mint provenance. The contract stores
+`paletteImagesCID` + `paletteManifestHash` to commit to the palette image set + manifest.
 
 Notes:
 - `external_url` is optional; it can point to `https://<domain>/m/<tokenId>` if precomputed offchain.
@@ -165,7 +166,7 @@ type PaletteMetadata = {
 - Mint accepts `msg.value >= currentMintPrice()` and refunds overpayment.
 - Mint supply is capped at 10,000 total mints.
 - Mint fee is forwarded to RoyaltySplitter (same split logic as royalties).
-- Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn).
+- Resale royalty (ERC-2981): `5%` with receiver = RoyaltySplitter (sends 25% ETH to owner, swaps 25% to $LESS for the owner, swaps 50% to $PNKSTR for the owner).
 
 Base ETH-only mode:
 - On Base deployments, `LESS_TOKEN` is disabled and linear pricing is enabled (0.0012 ETH base + 0.000012 ETH per mint).

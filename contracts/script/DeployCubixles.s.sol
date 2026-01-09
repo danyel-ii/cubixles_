@@ -20,12 +20,19 @@ contract DeployCubixles is Script {
         }
         if (cfg.poolManager != address(0)) {
             require(cfg.tickSpacing != 0, "CUBIXLES_POOL_TICK_SPACING required");
+            require(cfg.pnkTickSpacing != 0, "CUBIXLES_PNKSTR_POOL_TICK_SPACING required");
         }
-        PoolKey memory poolKey = _buildPoolKey(
+        PoolKey memory lessPoolKey = _buildPoolKey(
             cfg.lessToken,
             cfg.poolFee,
             cfg.tickSpacing,
             cfg.hooks
+        );
+        PoolKey memory pnkPoolKey = _buildPoolKey(
+            cfg.pnkstrToken,
+            cfg.pnkPoolFee,
+            cfg.pnkTickSpacing,
+            cfg.pnkHooks
         );
 
         vm.startBroadcast();
@@ -33,10 +40,11 @@ contract DeployCubixles is Script {
         RoyaltySplitter splitter = new RoyaltySplitter(
             cfg.owner,
             cfg.lessToken,
+            cfg.pnkstrToken,
             IPoolManager(cfg.poolManager),
-            poolKey,
-            cfg.swapMaxSlippageBps,
-            cfg.burnAddress
+            lessPoolKey,
+            pnkPoolKey,
+            cfg.swapMaxSlippageBps
         );
         CubixlesMinter minter = new CubixlesMinter(
             address(splitter),
@@ -46,7 +54,8 @@ contract DeployCubixles is Script {
             cfg.baseMintPriceWei,
             cfg.baseMintPriceStepWei,
             cfg.linearPricingEnabled,
-            cfg.paletteMetadataCID,
+            cfg.paletteImagesCID,
+            cfg.paletteManifestHash,
             cfg.vrfCoordinator,
             cfg.vrfKeyHash,
             cfg.vrfSubscriptionId,
@@ -77,18 +86,22 @@ contract DeployCubixles is Script {
         uint256 chainId;
         address owner;
         address lessToken;
-        address burnAddress;
+        address pnkstrToken;
         address poolManager;
         uint24 poolFee;
         int24 tickSpacing;
         address hooks;
+        uint24 pnkPoolFee;
+        int24 pnkTickSpacing;
+        address pnkHooks;
         uint96 resaleRoyaltyBps;
         uint16 swapMaxSlippageBps;
         uint256 fixedMintPriceWei;
         bool linearPricingEnabled;
         uint256 baseMintPriceWei;
         uint256 baseMintPriceStepWei;
-        string paletteMetadataCID;
+        string paletteImagesCID;
+        bytes32 paletteManifestHash;
         address vrfCoordinator;
         bytes32 vrfKeyHash;
         uint64 vrfSubscriptionId;
@@ -103,14 +116,14 @@ contract DeployCubixles is Script {
             ? address(0)
             : address(0x9C2CA573009F181EAc634C4d6e44A0977C24f335);
         cfg.lessToken = vm.envOr("CUBIXLES_LESS_TOKEN", lessTokenDefault);
-        cfg.burnAddress = vm.envOr(
-            "CUBIXLES_BURN_ADDRESS",
-            address(0x000000000000000000000000000000000000dEaD)
-        );
+        cfg.pnkstrToken = vm.envOr("CUBIXLES_PNKSTR_TOKEN", address(0));
         cfg.poolManager = vm.envOr("CUBIXLES_POOL_MANAGER", address(0));
         cfg.poolFee = uint24(vm.envOr("CUBIXLES_POOL_FEE", uint256(0)));
         cfg.tickSpacing = int24(int256(vm.envOr("CUBIXLES_POOL_TICK_SPACING", uint256(0))));
         cfg.hooks = vm.envOr("CUBIXLES_POOL_HOOKS", address(0));
+        cfg.pnkPoolFee = uint24(vm.envOr("CUBIXLES_PNKSTR_POOL_FEE", uint256(0)));
+        cfg.pnkTickSpacing = int24(int256(vm.envOr("CUBIXLES_PNKSTR_POOL_TICK_SPACING", uint256(0))));
+        cfg.pnkHooks = vm.envOr("CUBIXLES_PNKSTR_POOL_HOOKS", address(0));
         cfg.resaleRoyaltyBps = uint96(vm.envOr("CUBIXLES_RESALE_BPS", uint256(500)));
         cfg.swapMaxSlippageBps = uint16(vm.envOr("CUBIXLES_SWAP_MAX_SLIPPAGE_BPS", uint256(0)));
         cfg.fixedMintPriceWei = vm.envOr("CUBIXLES_FIXED_MINT_PRICE_WEI", uint256(0));
@@ -126,7 +139,8 @@ contract DeployCubixles is Script {
             "CUBIXLES_BASE_MINT_PRICE_STEP_WEI",
             cfg.chainId == 8453 ? 12_000_000_000_000 : 0
         );
-        cfg.paletteMetadataCID = vm.envString("CUBIXLES_PALETTE_METADATA_CID");
+        cfg.paletteImagesCID = vm.envString("CUBIXLES_PALETTE_IMAGES_CID");
+        cfg.paletteManifestHash = vm.envBytes32("CUBIXLES_PALETTE_MANIFEST_HASH");
         cfg.vrfCoordinator = vm.envAddress("CUBIXLES_VRF_COORDINATOR");
         cfg.vrfKeyHash = vm.envBytes32("CUBIXLES_VRF_KEY_HASH");
         cfg.vrfSubscriptionId = uint64(vm.envUint("CUBIXLES_VRF_SUBSCRIPTION_ID"));

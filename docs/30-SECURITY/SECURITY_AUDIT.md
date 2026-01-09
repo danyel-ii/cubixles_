@@ -28,7 +28,7 @@ Previous full scan: 2026-01-08T12:20:11Z
 - Receiver failure policy is strict: mint/royalty transfers revert on failed ETH or token transfer.
 - `ownerOf` revert or mismatch causes mint revert.
 - Refund exactness: `msg.value - currentMintPrice()` is returned to minter.
-- RoyaltySplitter sends 50% ETH to owner, swaps 50% to $LESS, then sends 90% $LESS to owner and 10% to burn.
+- RoyaltySplitter sends 25% ETH to owner, swaps 25% to $LESS (owner), swaps 50% to $PNKSTR (owner), and forwards any remaining ETH to owner on failure.
 
 ## Test results
 ### Security audit (local)

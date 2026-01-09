@@ -13,9 +13,17 @@ import {
 } from "../../config/chains.js";
 import { buildTokenViewUrl } from "../../config/links.js";
 import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
+import {
+  buildPaletteImagePath,
+  buildPaletteImageUrl,
+  getPaletteEntryByIndex,
+  loadPaletteManifest,
+} from "../../data/palette/manifest.js";
 import { subscribeWallet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
+import { buildMintMetadata } from "./mint-metadata.js";
 import { computeRefsHash, sortRefsCanonically } from "./refs.js";
+import { pinTokenMetadata } from "./token-uri-provider.js";
 
 const FALLBACK_BASE_PRICE_WEI = 2_200_000_000_000_000n;
 const ONE_BILLION = 1_000_000_000n;
@@ -38,6 +46,11 @@ const CUSTOM_ERROR_MESSAGES = {
   MintCommitEmpty: "Commit missing. Please retry.",
   MintCommitActive:
     "Existing commit still active. Use the same selection or wait for it to expire.",
+  MintMetadataCommitRequired: "Metadata commit required before minting.",
+  MintMetadataCommitActive: "Metadata already committed for this mint.",
+  MintMetadataMismatch: "Metadata mismatch. Please retry.",
+  MetadataHashRequired: "Metadata hash missing. Please retry.",
+  ImagePathHashRequired: "Image path hash missing. Please retry.",
   InvalidReferenceCount: "Select 1 to 6 NFTs.",
   RefNotOwned: "You do not own one of the selected NFTs.",
   RefOwnershipCheckFailed:
@@ -161,6 +174,62 @@ function computeCommitmentHash({ minter, salt, refsHash }) {
     ["string", "address", "bytes32", "bytes32"],
     ["cubixles_:commit:v1", minter, salt, refsHash]
   );
+}
+
+function normalizeBytes32(value, label) {
+  if (!value || typeof value !== "string") {
+    throw new Error(`${label} unavailable.`);
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error(`${label} unavailable.`);
+  }
+  const normalized = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
+  if (!/^0x[0-9a-fA-F]{64}$/.test(normalized)) {
+    throw new Error(`${label} must be 32 bytes.`);
+  }
+  return normalized;
+}
+
+function toTokenIdString(value) {
+  if (typeof value === "bigint") {
+    return value.toString();
+  }
+  if (typeof value === "number") {
+    return Math.trunc(value).toString();
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return String(value);
+}
+
+function normalizeRefsForMetadata(refs) {
+  return refs.map((ref) => ({
+    contractAddress: ref.contractAddress,
+    tokenId: toTokenIdString(ref.tokenId),
+  }));
+}
+
+function buildProvenanceBundle(selection, minter, chainId) {
+  return {
+    chainId,
+    selectedBy: minter,
+    retrievedAt: new Date().toISOString(),
+    nfts: selection.map((nft) => ({
+      chainId: nft.chainId,
+      contractAddress: nft.contractAddress,
+      tokenId: toTokenIdString(nft.tokenId),
+      tokenUri: nft.tokenUri ?? null,
+      image: nft.image ?? null,
+      sourceMetadata: { raw: null },
+      retrievedVia: "alchemy",
+      retrievedAt: new Date().toISOString(),
+      collectionFloorEth:
+        typeof nft.collectionFloorEth === "number" ? nft.collectionFloorEth : 0,
+      collectionFloorRetrievedAt: nft.collectionFloorRetrievedAt ?? null,
+    })),
+  };
 }
 
 function buildCommitStorageKey(chainId, address) {
@@ -502,6 +571,10 @@ export function initMintUi() {
         );
       }
       const ready = Boolean(commit?.randomnessReady ?? commit?.[4]);
+      const assigned = Boolean(commit?.paletteAssigned ?? commit?.[6]);
+      if (ready && !assigned) {
+        throw new Error("Mint cap reached.");
+      }
       if (ready) {
         return commit;
       }
@@ -516,7 +589,7 @@ export function initMintUi() {
     }
     const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
     if (chain?.supportsLess) {
-      mintPriceNoteEl.innerHTML = `Mint price rises as <a class="ui-link" href="https://less.ripe.wtf/about" target="_blank" rel="noreferrer">$LESS</a> supply drops (more burns = higher cost).`;
+      mintPriceNoteEl.innerHTML = `Mint price rises as <a class="ui-link" href="https://less.ripe.wtf/about" target="_blank" rel="noreferrer">$LESS</a> supply drops.`;
       return;
     }
     mintPriceNoteEl.textContent =
@@ -724,14 +797,13 @@ export function initMintUi() {
       const refsCanonical = sortRefsCanonically(refsForContract);
       const refsHash = computeRefsHash(refsCanonical);
       const latestBlock = BigInt(await readProvider.getBlockNumber());
-      let supportsCommitReveal = true;
       let existingCommit = null;
       let existingBlock = 0n;
       try {
         existingCommit = await readContract.mintCommitByMinter(walletState.address);
         existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
       } catch (error) {
-        supportsCommitReveal = false;
+        throw new Error("Commit state unavailable. Please retry.");
       }
       const storedCommit = loadStoredCommit(
         CUBIXLES_CONTRACT.chainId,
@@ -739,7 +811,7 @@ export function initMintUi() {
       );
       let commitBlockNumber = null;
       let usingExistingCommit = false;
-      if (supportsCommitReveal && existingBlock > 0n) {
+      if (existingBlock > 0n) {
         const expiryBlock =
           existingBlock + COMMIT_REVEAL_DELAY_BLOCKS + COMMIT_REVEAL_WINDOW_BLOCKS;
         if (latestBlock <= expiryBlock) {
@@ -777,7 +849,7 @@ export function initMintUi() {
           clearStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address);
         }
       }
-      if (supportsCommitReveal && existingBlock === 0n && storedCommit) {
+      if (existingBlock === 0n && storedCommit) {
         clearStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address);
       }
       if (!salt) {
@@ -801,13 +873,18 @@ export function initMintUi() {
       if (!externalUrl) {
         throw new Error("Token viewer URL is not configured.");
       }
-      if (supportsCommitReveal && commitBlockNumber === null) {
+      const needsCommitTx = commitBlockNumber === null;
+      const totalSteps = needsCommitTx ? 3 : 2;
+      const metadataStep = needsCommitTx ? 2 : 1;
+      const mintStep = needsCommitTx ? 3 : 2;
+
+      if (needsCommitTx) {
         showToast({
-          title: "Two-step mint",
-          message: "You will confirm two wallet prompts: commit, then mint.",
+          title: "Three-step mint",
+          message: "You will confirm three wallet prompts: commit, metadata, then mint.",
           tone: "neutral",
         });
-        setStatus("Step 1/2: confirm commit in your wallet.");
+        setStatus(`Step 1/${totalSteps}: confirm commit in your wallet.`);
         const commitTx = await contract.commitMint(commitment);
         showToast({
           title: "Commit submitted",
@@ -831,27 +908,117 @@ export function initMintUi() {
           refsHash,
           blockNumber: commitBlockNumber.toString(),
         });
-      } else if (supportsCommitReveal) {
+      } else {
         setStatus(
           usingExistingCommit
             ? "Using existing commit. Waiting for randomness..."
             : "Preparing mint..."
         );
+      }
+
+      setStatus("Waiting for randomness...");
+      setCommitProgress(true);
+      const commitState = await waitForRandomness({ readContract, commitment });
+      setCommitProgress(false);
+
+      const expectedPaletteIndexRaw = await readContract.previewPaletteIndex(
+        walletState.address
+      );
+      const expectedPaletteIndex = Number(expectedPaletteIndexRaw);
+      if (!Number.isFinite(expectedPaletteIndex)) {
+        throw new Error("Palette index unavailable.");
+      }
+      const paletteManifest = await loadPaletteManifest();
+      const paletteEntry = getPaletteEntryByIndex(expectedPaletteIndex, paletteManifest);
+      const paletteImagePath = buildPaletteImagePath(paletteEntry);
+      if (!paletteImagePath) {
+        throw new Error("Palette image path missing.");
+      }
+      const paletteImageIpfsUrl = buildPaletteImageUrl(paletteEntry);
+      if (!paletteImageIpfsUrl) {
+        throw new Error("Palette image URL unavailable.");
+      }
+      const imagePathHash = normalizeBytes32(
+        solidityPackedKeccak256(["string"], [paletteImagePath]),
+        "Image path hash"
+      );
+      const refsFaces = normalizeRefsForMetadata(state.nftSelection);
+      const refsCanonicalForMetadata = normalizeRefsForMetadata(refsCanonical);
+      const provenanceBundle = buildProvenanceBundle(
+        state.nftSelection,
+        walletState.address,
+        CUBIXLES_CONTRACT.chainId
+      );
+      const lessSupplyMint =
+        state.lessSupplyNow != null
+          ? state.lessSupplyNow.toString()
+          : state.lessTotalSupply != null
+            ? state.lessTotalSupply.toString()
+            : "0";
+      const metadataPayload = buildMintMetadata({
+        tokenId: tokenId.toString(),
+        minter: walletState.address,
+        chainId: CUBIXLES_CONTRACT.chainId,
+        selection: state.nftSelection,
+        provenanceBundle,
+        refsFaces,
+        refsCanonical: refsCanonicalForMetadata,
+        salt,
+        animationUrl: externalUrl,
+        externalUrl,
+        imageUrl: paletteImageIpfsUrl,
+        imageIpfsUrl: paletteImageIpfsUrl,
+        paletteEntry,
+        paletteIndex: expectedPaletteIndex,
+        paletteImageUrl: paletteImageIpfsUrl,
+        lessSupplyMint,
+      });
+
+      setStatus("Pinning metadata...");
+      const { tokenURI, metadataHash: rawMetadataHash } = await pinTokenMetadata({
+        metadata: metadataPayload,
+        signer,
+        address: walletState.address,
+      });
+      const metadataHash = normalizeBytes32(rawMetadataHash, "Metadata hash");
+      const metadataCommitted = Boolean(
+        commitState?.metadataCommitted ?? commitState?.[9]
+      );
+      if (metadataCommitted) {
+        const committedMetadataHash = normalizeBytes32(
+          commitState?.metadataHash ?? commitState?.[7] ?? "",
+          "Committed metadata hash"
+        );
+        const committedImagePathHash = normalizeBytes32(
+          commitState?.imagePathHash ?? commitState?.[8] ?? "",
+          "Committed image path hash"
+        );
+        if (
+          committedMetadataHash.toLowerCase() !== metadataHash.toLowerCase() ||
+          committedImagePathHash.toLowerCase() !== imagePathHash.toLowerCase()
+        ) {
+          throw new Error(
+            "Metadata already committed for this mint. Use the same selection or wait for it to expire."
+          );
+        }
       } else {
+        setStatus(`Step ${metadataStep}/${totalSteps}: confirm metadata in your wallet.`);
+        const metadataTx = await contract.commitMetadata(
+          metadataHash,
+          imagePathHash
+        );
         showToast({
-          title: "Legacy mint flow",
-          message:
-            "This contract does not use commit-reveal. You will confirm a single mint prompt.",
+          title: "Metadata committed",
+          message: `Metadata commitment broadcast to ${formatChainName(
+            CUBIXLES_CONTRACT.chainId
+          )}.`,
           tone: "neutral",
+          links: [{ label: "View tx", href: buildTxUrl(metadataTx.hash) }],
         });
-        setStatus("Preparing mint...");
+        setStatus("Waiting for metadata confirmation...");
+        await metadataTx.wait();
       }
-      if (supportsCommitReveal) {
-        setStatus("Waiting for randomness...");
-        setCommitProgress(true);
-        await waitForRandomness({ readContract, commitment });
-        setCommitProgress(false);
-      }
+
       if (devChecklist) {
         const diagnostics = buildDiagnostics({
           selection: state.nftSelection,
@@ -860,6 +1027,10 @@ export function initMintUi() {
           walletAddress: walletState.address,
           mintPriceWei: currentMintPriceWei,
           tokenId: tokenId.toString(),
+          tokenURI,
+          metadataHash,
+          imagePath: paletteImagePath,
+          paletteIndex: expectedPaletteIndex,
         });
         logDiagnostics(diagnostics, devChecklist);
       }
@@ -869,12 +1040,27 @@ export function initMintUi() {
       await ensureBalanceForMint({
         provider,
         contract,
-        args: [salt, refsCanonical],
+        args: [
+          salt,
+          refsCanonical,
+          expectedPaletteIndex,
+          tokenURI,
+          metadataHash,
+          imagePathHash,
+        ],
         valueWei: currentMintPriceWei,
       });
 
-      setStatus("Step 2/2: confirm mint in your wallet.");
-      const tx = await contract.mint(salt, refsCanonical, overrides);
+      setStatus(`Step ${mintStep}/${totalSteps}: confirm mint in your wallet.`);
+      const tx = await contract.mint(
+        salt,
+        refsCanonical,
+        expectedPaletteIndex,
+        tokenURI,
+        metadataHash,
+        imagePathHash,
+        overrides
+      );
       showToast({
         title: "Mint submitted",
         message: `Transaction broadcast to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`,
@@ -942,6 +1128,10 @@ function buildDiagnostics({
   walletAddress,
   mintPriceWei,
   tokenId,
+  tokenURI,
+  metadataHash,
+  imagePath,
+  paletteIndex,
 }) {
   const sumFloorEth = selection.reduce((total, nft) => {
     if (typeof nft.collectionFloorEth !== "number" || Number.isNaN(nft.collectionFloorEth)) {
@@ -963,6 +1153,13 @@ function buildDiagnostics({
     },
     uris: {
       externalUrl: externalUrl || null,
+      tokenURI: tokenURI || null,
+      imagePath: imagePath || null,
+      metadataHash: metadataHash || null,
+      paletteIndex:
+        typeof paletteIndex === "number" && Number.isFinite(paletteIndex)
+          ? paletteIndex
+          : null,
     },
   };
 }

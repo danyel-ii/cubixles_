@@ -64,10 +64,13 @@ export async function pinTokenMetadata({ metadata, signer, address }) {
     });
     if (response.ok) {
       const json = await response.json();
-      if (!json?.tokenURI) {
-        throw new Error("Pinning failed to return a token URI.");
+      if (!json?.tokenURI || !json?.metadataHash) {
+        throw new Error("Pinning failed to return metadata details.");
       }
-      return json.tokenURI;
+      return {
+        tokenURI: json.tokenURI,
+        metadataHash: json.metadataHash,
+      };
     }
     const text = await response.text();
     lastError = text || `Pinning failed (${response.status})`;

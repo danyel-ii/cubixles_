@@ -29,7 +29,7 @@ For the minting handler address, `balanceOf(handler) == mintCount`.
 ## I-8: RoyaltySplitter fallback
 - PoolManager unset or swap disabled -> forwards 100% ETH to owner.
 - Swap reverts -> forwards remaining ETH to owner.
-- Swap succeeds -> sends 50% ETH to owner, swaps 50% to $LESS, then splits $LESS 90% owner / 10% burn.
+- Swap succeeds -> sends 25% ETH to owner, swaps 25% to $LESS (owner), swaps 50% to $PNKSTR (owner), then forwards any remaining ETH to owner.
 
 ## I-9: Reentrancy safety
 Reentrancy via owner/refund/PoolManager calls must not mint extra tokens or corrupt state.

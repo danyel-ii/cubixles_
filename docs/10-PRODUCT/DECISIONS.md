@@ -8,11 +8,11 @@ Last updated: 2026-01-09
 - Review status: Updated
 - Owner: danyel-ii
 
-## 2026-01-09 — VRF commit-reveal + onchain tokenURI
+## 2026-01-09 — VRF commit-reveal + per-mint tokenURI
 
 - Commit phase stores only a commitment hash and requests VRF randomness.
-- `tokenURI` is computed onchain from the palette metadata CID and index (`ipfs://<cid>/<index>.json`).
-- Per-mint metadata pinning is optional; provenance lives offchain unless embedded in the palette metadata set.
+- `tokenURI` is pinned per mint (stored onchain) and includes curated provenance fields.
+- The contract stores `paletteImagesCID` + `paletteManifestHash` to commit to the palette set.
 - Mainnet base price updated to `0.0022 ETH` (scaled 1.0×–4.0).
 
 ## 2026-01-08 — Multi-chain provenance + metadata shaping
@@ -42,7 +42,7 @@ Last updated: 2026-01-09
   - factor `1 + (3 * (1B - supply)) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Resale royalties are handled via ERC-2981 with receiver = RoyaltySplitter.
-- RoyaltySplitter can attempt a $LESS buy, then splits $LESS 90% owner / 10% burn and forwards remaining ETH to owner (50% ETH sent upfront).
+- RoyaltySplitter can swap 25% to $LESS (owner), 50% to $PNKSTR (owner), and forward the remaining ETH to the owner.
 - The minter snapshots $LESS supply at mint and on transfer to support ΔLESS metrics.
 - Base deployments disable LESS and use immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint; no off-chain updates).
 

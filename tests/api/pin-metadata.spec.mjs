@@ -85,5 +85,6 @@ describe("/api/pin/metadata", () => {
     const json = await res.json();
     expect(json.cid).toBe("cid123");
     expect(json.tokenURI).toBe("ipfs://cid123");
+    expect(json.metadataHash).toBe("0xhash");
   });
 });

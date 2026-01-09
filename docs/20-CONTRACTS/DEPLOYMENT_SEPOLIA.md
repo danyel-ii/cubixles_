@@ -37,7 +37,7 @@ struct NftRef {
 - TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
 - Mint pays the RoyaltySplitter and refunds any excess.
 - If the payout transfer fails, the mint reverts (no partial transfers).
-- `tokenURI` is computed onchain as `ipfs://<paletteMetadataCID>/<paletteIndex>.json`.
+- `tokenURI` is stored per mint (pinned offchain), and the contract stores `paletteImagesCID` + `paletteManifestHash` to commit to the palette set.
 
 ## Gating Rules
 
@@ -49,9 +49,9 @@ struct NftRef {
 
 - Mint-time payout goes to `RoyaltySplitter`.
 - Resale royalties use ERC-2981 with default 5% BPS, paid to `RoyaltySplitter`.
-  - RoyaltySplitter swaps half the royalty via the v4 PoolManager when enabled; otherwise it forwards ETH to owner.
+  - RoyaltySplitter swaps 25% to $LESS and 50% to $PNKSTR via the v4 PoolManager when enabled; otherwise it forwards ETH to owner.
   - If the swap fails, the full amount is forwarded to owner.
-  - If the swap succeeds, 50% of ETH is sent to owner, the remaining ETH is swapped to $LESS, then $LESS is split 90% owner / 10% burn.
+  - If the swap succeeds, 25% of ETH is sent to owner, 25% is swapped to $LESS (owner), and 50% is swapped to $PNKSTR (owner).
   - If `CUBIXLES_POOL_MANAGER` is unset, swap is disabled and all ETH is forwarded.
 
 ## Admin Controls
@@ -70,12 +70,16 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_BASE_MINT_PRICE_WEI` (optional; base price for linear pricing)
 - `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (optional; step price for linear pricing)
 - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS + linear pricing are disabled)
-- `CUBIXLES_PALETTE_METADATA_CID` (required; base CID for palette metadata JSON)
-- `CUBIXLES_BURN_ADDRESS` (optional, defaults to `0x000000000000000000000000000000000000dEaD`)
+- `CUBIXLES_PALETTE_IMAGES_CID` (required; base CID for palette images)
+- `CUBIXLES_PALETTE_MANIFEST_HASH` (required; keccak256 hash of the manifest JSON)
 - `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
 - `CUBIXLES_POOL_FEE` (optional, defaults to 0)
 - `CUBIXLES_POOL_TICK_SPACING` (required if pool manager is set)
 - `CUBIXLES_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
+- `CUBIXLES_PNKSTR_TOKEN` (optional; required for swaps)
+- `CUBIXLES_PNKSTR_POOL_FEE` (optional, defaults to 0)
+- `CUBIXLES_PNKSTR_POOL_TICK_SPACING` (required if pool manager is set)
+- `CUBIXLES_PNKSTR_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
 - `CUBIXLES_VRF_COORDINATOR` (required; Chainlink VRF coordinator)

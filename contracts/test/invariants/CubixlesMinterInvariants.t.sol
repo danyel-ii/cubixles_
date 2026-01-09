@@ -16,6 +16,8 @@ contract MintHandler is Test {
     uint256 public mintCount;
     uint256 public lastTokenId;
     uint256 public immutable mintPrice;
+    bytes32 private constant METADATA_HASH = keccak256("metadata");
+    bytes32 private constant IMAGE_PATH_HASH = keccak256("image-path");
 
     constructor(
         CubixlesMinter minter_,
@@ -47,12 +49,22 @@ contract MintHandler is Test {
         bytes32 commitment = minter.computeCommitment(address(this), salt, refsHash);
         minter.commitMint(commitment);
         vm.roll(block.number + 1);
-        (, , uint256 requestId, , ) = minter.mintCommitByMinter(address(this));
+        (, , uint256 requestId, , , , , , , ) = minter.mintCommitByMinter(address(this));
         uint256[] memory words = new uint256[](1);
         words[0] = uint256(keccak256(abi.encodePacked(salt, mintCount)));
         vm.prank(vrfCoordinator);
         minter.rawFulfillRandomWords(requestId, words);
-        uint256 tokenId = minter.mint{ value: mintPrice }(salt, refs);
+        uint256 expected = minter.previewPaletteIndex(address(this));
+        string memory tokenUri = string.concat("ipfs://metadata/", vm.toString(expected));
+        minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH);
+        uint256 tokenId = minter.mint{ value: mintPrice }(
+            salt,
+            refs,
+            expected,
+            tokenUri,
+            METADATA_HASH,
+            IMAGE_PATH_HASH
+        );
         mintCount += 1;
         lastTokenId = tokenId;
     }
@@ -80,7 +92,8 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
     uint64 private constant VRF_SUB_ID = 1;
     uint16 private constant VRF_CONFIRMATIONS = 3;
     uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
-    string private constant PALETTE_CID = "bafytestcid";
+    string private constant PALETTE_IMAGES_CID = "bafyimagescid";
+    bytes32 private constant PALETTE_MANIFEST_HASH = keccak256("manifest");
 
     function setUp() public {
         vm.startPrank(owner);
@@ -93,7 +106,8 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
             0,
             0,
             false,
-            PALETTE_CID,
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
             vrfCoordinator,
             VRF_KEY_HASH,
             VRF_SUB_ID,
