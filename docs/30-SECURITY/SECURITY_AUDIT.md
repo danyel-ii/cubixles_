@@ -1,8 +1,8 @@
 # cubixles_ — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2026-01-08
-Date: 2026-01-08
-Run timestamp (local): 2026-01-08T14:48:09Z (app-only audit)
+Last updated: 2026-01-09
+Date: 2026-01-09
+Run timestamp (local): 2026-01-09T16:39:53Z (app + static analysis audit)
 Previous full scan: 2026-01-08T12:20:11Z
 
 ## Scope
@@ -31,15 +31,15 @@ Previous full scan: 2026-01-08T12:20:11Z
 - RoyaltySplitter sends 50% ETH to owner, swaps 50% to $LESS, then sends 90% $LESS to owner and 10% to burn.
 
 ## Test results
-### App security audit (no contract scans)
-Run timestamp (local): 2026-01-08T14:48:09Z
-- `npm test` — PASS (22 tests)
-- `npm run test:ui` — PASS (3 tests)
+### Security audit (local)
+Run timestamp (local): 2026-01-09T16:39:53Z
 - `npm run check:no-client-secrets` — PASS
 - `npm run check:no-repo-secrets` — PASS
 - `npm audit --audit-level=high` — PASS (0 vulnerabilities)
+- `cd contracts && npx solhint "src/**/*.sol"` — WARN (33 warnings; Natspec + style)
+- `cd contracts && slither . --config-file slither.config.json` — FINDINGS (7)
 Notes:
-- Contract-focused scans (`forge test`, `coverage:contracts`, `solhint`, `slither`, fork tests) were not run for this app-only audit.
+- Contract test suites (`forge test`, `coverage:contracts`, fork tests) were not run in this audit.
 
 ### Unit + edge + fuzz + invariants
 Command:
@@ -142,10 +142,14 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 0 warnings; latest local run 2026-01-08.
-- Local slither run (venv):
-  - Command: `cd contracts && ../.venv-slither/bin/python -m slither .`
-  - Result: 0 project findings (latest local run 2026-01-08); `naming-convention` excluded in config.
+  - Result: 0 errors, 33 warnings (Natspec + naming/style in `src/chainlink/*`, `cubixles_v.1.0..sol`, and gas/style hints in `CubixlesMinter`).
+- Local slither run:
+  - Command: `cd contracts && slither . --config-file slither.config.json`
+  - Result: 7 findings:
+    - Dangerous strict equalities (`commit.blockNumber == 0`, palette swap sentinel).
+    - Ether-locking warning for `MintBlocker` (intentional sink).
+    - Reentrancy warnings in `commitMint` due to VRF coordinator call.
+    - High cyclomatic complexity in `CubixlesMinter` constructor.
   - Dependency noise: OpenZeppelin + Uniswap v4 math/assembly/pragma warnings.
 
 ## Formal verification
@@ -163,4 +167,4 @@ plus fork checks and manual review; formal proofs are a pending work item.
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER` or `BASE_FORK_BLOCK`.
 - CI includes `forge test`, `npm test`, `npm run test:ui`, `solhint`, `slither`, coverage (90% minimum),
   `npm audit --audit-level=high`, `npm run check:no-client-secrets`, and `npm run check:no-repo-secrets`.
-- Local `npm audit --audit-level=high` (2026-01-08): 0 vulnerabilities.
+- Local `npm audit --audit-level=high` (2026-01-09): 0 vulnerabilities.

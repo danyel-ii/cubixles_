@@ -25,9 +25,9 @@ forge test -vvv
 npm run coverage:contracts
 cd contracts
 npx solhint "src/**/*.sol"
-python3 -m slither .
+slither . --config-file slither.config.json
 # If slither isn't on PATH:
-../.venv-slither/bin/python -m slither .
+../.venv-slither/bin/python -m slither . --config-file slither.config.json
 ```
 
 5) Fork tests (release gate)
@@ -116,8 +116,8 @@ npm run test:ui
 3) Select 1–6 NFTs.
 4) Click Mint.
 5) Verify:
-   - `tokenURI` resolves to `ipfs://<CID>`
-   - metadata includes `external_url` and `image`
+   - `tokenURI` resolves to `ipfs://<paletteMetadataCID>/<paletteIndex>.json`
+   - metadata includes palette traits + image
    - `/m/<tokenId>` loads the correct cube
    - `royaltyInfo` returns splitter + 5% amount
 
@@ -134,6 +134,7 @@ npm run check:no-client-secrets
    - `docs/60-STATUS/STATE_OF_REVIEW.md`
 5) Verify Vercel env secrets are set (no `.env` on mainnet).
 6) Set `CUBIXLES_CHAIN_ID=1` for server signature verification and `NEXT_PUBLIC_DEFAULT_CHAIN_ID=1`, then confirm `contracts/deployments/mainnet.json` is current.
+7) Ensure the VRF subscription is funded and the minter is added as a consumer.
 
 ## 5) Mainnet deploy (contracts)
 
@@ -158,7 +159,7 @@ npm run deploy:mainnet
 2) Open `/m/<tokenId>` from a clean browser.
 3) Verify:
    - `tokenURI` resolves
-   - metadata fields are correct
+   - metadata fields are correct (palette traits + image)
    - token viewer renders
    - royalties route to splitter
    - $LESS swap output lands in the owner wallet
@@ -171,6 +172,7 @@ npm run deploy:mainnet
 - Leave `CUBIXLES_FIXED_MINT_PRICE_WEI=0` (unused on Base).
 - Disable swaps by leaving `CUBIXLES_POOL_MANAGER` unset (or `0x0`).
 - Set `CUBIXLES_POOL_FEE=0`, `CUBIXLES_POOL_TICK_SPACING=0`, `CUBIXLES_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to zero out pool config on Base.
+- Configure Base VRF coordinator + subscription id in env.
 - Deploy:
 ```sh
 npm run deploy:base

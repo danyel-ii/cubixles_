@@ -1,6 +1,6 @@
 # Secrets and Credentials Policy
 
-Last updated: 2026-01-05
+Last updated: 2026-01-09
 
 ## Scope
 Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
@@ -8,6 +8,7 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 ## Storage
 - Store secrets only in the hosting provider's secret manager (Vercel, GitHub Actions).
 - Use `.env` / `.env.local` only for local development; never commit them.
+- Store network-specific deploy settings in `.env.mainnet` / `.env.base` (git-ignored); use the `.env.*.example` templates for placeholders.
 - Never echo secrets in logs or build output.
 - Use `.env.example` for non-sensitive placeholders.
 
@@ -37,6 +38,12 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 - `MAINNET_DEPLOYER_KEY`
 - `BASE_DEPLOYER_KEY`
 - `SEPOLIA_DEPLOYER_KEY` (if rehearsing on Sepolia)
+- `CUBIXLES_VRF_COORDINATOR`
+- `CUBIXLES_VRF_KEY_HASH`
+- `CUBIXLES_VRF_SUBSCRIPTION_ID`
+- `CUBIXLES_VRF_REQUEST_CONFIRMATIONS`
+- `CUBIXLES_VRF_CALLBACK_GAS_LIMIT`
+- Base VRF mirrors are stored with the `_BASE` suffix in GitHub/Vercel (e.g., `CUBIXLES_VRF_COORDINATOR_BASE`) to avoid clobbering mainnet values.
 
 ## Incident response
 - Remove compromised keys from providers.

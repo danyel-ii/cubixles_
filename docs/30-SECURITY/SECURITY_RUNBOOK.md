@@ -1,6 +1,6 @@
 # cubixles_ — Security Runbook
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 ## Local commands
 
@@ -17,9 +17,9 @@ npm run check:no-repo-secrets
 npm audit --audit-level=high
 cd contracts
 npx solhint "src/**/*.sol"
-python3 -m slither .
+slither . --config-file slither.config.json
 # If slither isn't on PATH:
-../.venv-slither/bin/python -m slither .
+../.venv-slither/bin/python -m slither . --config-file slither.config.json
 cd ..
 npm run fork-test
 ```
@@ -78,9 +78,9 @@ npm run fork-test
 ```sh
 cd contracts
 npx solhint "src/**/*.sol"
-python3 -m slither .
+slither . --config-file slither.config.json
 # If slither isn't on PATH:
-../.venv-slither/bin/python -m slither .
+../.venv-slither/bin/python -m slither . --config-file slither.config.json
 ```
 
 ## CI gates

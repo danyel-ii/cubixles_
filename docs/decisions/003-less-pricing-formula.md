@@ -8,7 +8,7 @@ Mint price should respond to LESS scarcity while remaining predictable.
 
 ## Decision
 Price is computed from LESS totalSupply with:
-- Base price: 0.0015 ETH.
+- Base price: 0.0022 ETH.
 - Scale factor between 1.0 and 4.0 based on remaining supply.
 - Round up to the nearest 0.0001 ETH.
 

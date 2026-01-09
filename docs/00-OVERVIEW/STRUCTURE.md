@@ -79,11 +79,11 @@ are split into smaller modules.
 - `app/_client/src/features/mint/mint-ui.js`
   - Mint flow, floor snapshot UI (Alchemy-backed; mainnet + Base), and diagnostics.
 - `app/_client/src/features/mint/mint-metadata.js`
-  - Mint metadata + provenance shaping.
+  - Offchain metadata + provenance shaping (optional; not part of onchain tokenURI).
 - `app/_client/src/features/mint/refs.js`
   - Canonical ref sorting + refsHash helper for commit-reveal.
 - `app/_client/src/features/mint/token-uri-provider.js`
-  - Token URI pinning helper.
+  - Token URI pinning helper (legacy/optional in VRF flow).
 - `app/_client/src/data/chain/alchemy-client.ts`
   - Alchemy NFT API wrapper via `/api/nfts` (mainnet + Base; optional Sepolia via env).
 - `app/_client/src/data/chain/nfts-api.js`
@@ -112,13 +112,19 @@ are split into smaller modules.
 ## Contracts Layout
 
 - `contracts/src/cubixles/CubixlesMinter.sol`
-  - ERC-721 minting contract with ownership gating + ERC-2981.
+  - ERC-721 minting contract with ownership gating + ERC-2981 + VRF commit-reveal.
+- `contracts/src/chainlink/VRFConsumerBaseV2.sol`
+  - Minimal VRF consumer base for randomness fulfillment.
+- `contracts/src/chainlink/VRFCoordinatorV2Interface.sol`
+  - Interface for VRF coordinator requests.
 - `contracts/src/royalties/RoyaltySplitter.sol`
   - Royalty receiver that can swap for $LESS and forward proceeds (no-swap mode forwards ETH only).
 - `contracts/src/mocks/Counter.sol`
   - Foundry sample contract used by tests/scripts.
 - `contracts/script/DeployCubixles.s.sol`
   - Deploys RoyaltySplitter + CubixlesMinter and writes deployment JSON (defaults to `contracts/deployments/<chain>.json`, override via `CUBIXLES_DEPLOYMENT_PATH`).
+- `contracts/script/DeployTimelock.s.sol`
+  - Deploys TimelockController and transfers ownership for minter + splitter.
 - `contracts/scripts/export-abi.mjs`
   - Exports CubixlesMinter ABI from the Foundry output directory.
 - `contracts/test/*.t.sol`
@@ -168,7 +174,7 @@ are split into smaller modules.
 - `app/api/nonce/route.js`
   - Returns a signed nonce for client auth flows.
 - `app/api/pin/metadata/route.js`
-  - Pins metadata JSON to Pinata (server-side auth).
+  - Optional Pinata metadata pinning (server-side auth).
 - `app/api/nfts/route.js`
   - Alchemy NFT proxy + RPC batch (caching + minimized responses).
 - `app/api/identity/route.js`
@@ -193,7 +199,7 @@ are split into smaller modules.
 - `src/server/metrics.js`
   - Lightweight counter metrics (console flush).
 - `src/server/pinata.js`
-  - Pinata JSON pinning + dedupe.
+  - Optional Pinata JSON pinning + dedupe.
 - `src/server/validate.js`
   - Zod validation + JSON size enforcement.
 - `src/server/json.js`

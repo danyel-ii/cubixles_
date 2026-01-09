@@ -17,7 +17,7 @@ import { subscribeWallet } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
 import { computeRefsHash, sortRefsCanonically } from "./refs.js";
 
-const FALLBACK_BASE_PRICE_WEI = 1_500_000_000_000_000n;
+const FALLBACK_BASE_PRICE_WEI = 2_200_000_000_000_000n;
 const ONE_BILLION = 1_000_000_000n;
 const WAD = 1_000_000_000_000_000_000n;
 const PRICE_STEP_WEI = 100_000_000_000_000n;

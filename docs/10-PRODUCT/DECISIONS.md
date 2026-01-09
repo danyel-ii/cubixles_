@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 ## Review Status
 
@@ -8,11 +8,18 @@ Last updated: 2026-01-08
 - Review status: Updated
 - Owner: danyel-ii
 
+## 2026-01-09 — VRF commit-reveal + onchain tokenURI
+
+- Commit phase stores only a commitment hash and requests VRF randomness.
+- `tokenURI` is computed onchain from the palette metadata CID and index (`ipfs://<cid>/<index>.json`).
+- Per-mint metadata pinning is optional; provenance lives offchain unless embedded in the palette metadata set.
+- Mainnet base price updated to `0.0022 ETH` (scaled 1.0×–4.0).
+
 ## 2026-01-08 — Multi-chain provenance + metadata shaping
 
 - Provenance chain gating supports mainnet (`chainId: 1`) and Base (`chainId: 8453`); the UI enforces the active chain.
-- Mint metadata includes `tokenId`, `chainId`, and `salt` in `provenance`, plus a `palette` object; pinning may append a `preview_gif`.
-- `sourceMetadata.raw` is retained only in the in-memory provenance bundle and stripped before pinning tokenURI JSON.
+- Mint metadata includes `tokenId`, `chainId`, and `salt` in `provenance`, plus a `palette` object; pinning may append a `preview_gif` when offchain metadata is used.
+- `sourceMetadata.raw` is retained only in the in-memory provenance bundle and stripped before pinning optional tokenURI JSON.
 
 ## 2025-12-22 — T5 Spec Shapes
 
@@ -21,7 +28,7 @@ Last updated: 2026-01-08
 - Mint gating accepts 1 to 6 referenced NFTs.
 - `contractAddress` stored in EIP-55 checksum format.
 - `tokenUri` + `image` store both `{ original, resolved }`.
-- Provenance fetch stores full `sourceMetadata.raw` JSON (stripped from pinned tokenURI payloads as of 2026-01-08).
+- Provenance fetch stores full `sourceMetadata.raw` JSON (stripped only when optional tokenURI metadata is pinned).
 
 ## 2025-12-23 — T13 Storage Decision (v0)
 
@@ -31,7 +38,7 @@ Last updated: 2026-01-08
 ## 2025-12-23 → 2025-12-24 — Mint Economics + $LESS Metrics
 
 - Mint price is **dynamic**, derived from $LESS totalSupply:
-  - base price `0.0015 ETH`
+  - base price `0.0022 ETH`
   - factor `1 + (3 * (1B - supply)) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Resale royalties are handled via ERC-2981 with receiver = RoyaltySplitter.
@@ -67,5 +74,5 @@ Last updated: 2026-01-08
 
 ## 2025-12-26 — Storage + Migration Complete
 
-- TokenURI is pinned via `/api/pin/metadata` (Pinata) and stored as `ipfs://<CID>`.
+- TokenURI was pinned via `/api/pin/metadata` (Pinata) and stored as `ipfs://<CID>` (superseded by 2026-01-09 onchain tokenURI).
 - Next.js App Router migration is complete; browser uses only `/api/*` for secrets.

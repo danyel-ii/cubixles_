@@ -1,25 +1,28 @@
 # cubixles_ — Threat Model
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
-- Assets: mint payments, ERC-721 tokens, royalties, $LESS proceeds, tokenURI integrity
+- Assets: mint payments, ERC-721 tokens, royalties, $LESS proceeds, tokenURI integrity, VRF subscription balance
 
 ## Actors
 - **Owner**: receives mint payments + royalties, can update royalty receiver and swap enablement.
 - **Minter**: mints NFTs by proving ownership of referenced NFTs.
 - **PoolManager**: optional Uniswap v4 swap target for royalties.
 - **Referenced NFT contracts**: external ERC-721 contracts used for gating.
+- **VRF coordinator**: external randomness provider for palette selection.
 
 ## Trust boundaries
 - External calls to `IERC721.ownerOf` (untrusted contract behavior).
 - External calls to PoolManager unlock/swap (external execution paths).
+- External calls to the VRF coordinator during `commitMint`.
 - ETH transfers to owner/minter (receiver-controlled code).
 - ERC-20 transfer of $LESS (token contract behavior).
 - RPC/provider availability for fork tests and UI floor queries.
 
 ## Attack surfaces
+- `CubixlesMinter.commitMint` (external, VRF request).
 - `CubixlesMinter.mint` (external, payable, external calls + transfers).
 - `RoyaltySplitter.receive/fallback` (external, payable, PoolManager swap + token transfers).
 
@@ -40,6 +43,10 @@ Last updated: 2026-01-08
    - Base linear pricing is immutable once deployed; mis-set base or step requires a redeploy.
 8. **RPC/provider outages**
    - Fork tests and UI data may fail under provider degradation.
+9. **VRF dependency**
+   - If the VRF subscription is underfunded or not configured with the minter as a consumer, minting will stall.
+10. **Metadata CID misconfiguration**
+   - `tokenURI` is computed from `paletteMetadataCID`; a wrong CID requires redeploy.
 
 ## Security posture decisions
 - **Receiver failure policy (mint)**: strict. If owner or refund transfer fails, mint reverts.
@@ -47,3 +54,4 @@ Last updated: 2026-01-08
 - **State-before-callback**: mint state is finalized before `_safeMint` callback.
 - **Rounding rule**: no splits in mint; refund exact `msg.value - MINT_PRICE`.
 - **ERC-721 behavior**: if `ownerOf` reverts or returns a different owner, mint reverts.
+- **VRF hardening**: randomness is sourced from Chainlink VRF (no blockhash dependence).

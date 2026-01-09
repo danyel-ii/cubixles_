@@ -35,7 +35,7 @@ all downstream tasks (Alchemy indexer, picker UI, mint metadata).
 5. **URI normalization**: store `{ original, resolved }` for both `tokenUri` and `image`.
    - `original` is the exact value returned by the source.
    - `resolved` converts `ipfs://…` to an HTTPS gateway URL.
-6. **Raw metadata**: provenance captures full source metadata during fetch, but tokenURI payloads strip it before pinning.
+6. **Raw metadata**: provenance captures full source metadata during fetch; onchain tokenURI now points to palette metadata and does not include raw provenance data.
 7. **Floor snapshot (optional)**: store collection floor ETH + retrieval timestamp at mint time.
    - Default: `0` when floor data is unavailable.
 
@@ -91,7 +91,7 @@ type ProvenanceNft = {
 ```
 
 Notes:
-- The in-memory provenance bundle includes `sourceMetadata.raw`, but the mint metadata strips it before pinning.
+- The in-memory provenance bundle includes `sourceMetadata.raw` for offchain diagnostics; it is not embedded in onchain tokenURI metadata.
 
 ### `ProvenanceBundle`
 
@@ -132,71 +132,34 @@ v0 mapping order (fixed):
 - Assign selected NFTs in order of selection.
 - If fewer than 6 are selected, remaining faces use a frosted glass texture.
 
-## Mint Metadata Schema (tokenURI JSON)
+## Palette Metadata Schema (tokenURI JSON)
+
+`tokenURI` is computed onchain as `ipfs://<paletteMetadataCID>/<paletteIndex>.json`. Metadata is
+pre-generated from the palette manifest and does **not** include per-mint provenance.
 
 Notes:
-- `external_url` should point to the token viewer route (e.g. `https://<domain>/m/<tokenId>`).
-- The app emits `external_url`; `animation_url` is reserved and currently unset.
-- `image` is the palette image (gateway URL), and `image_ipfs` holds the ipfs:// URI for wallets.
-- `provenance` stores the sanitized bundle (source metadata stripped) plus mint context.
-- `provenance.refsFaces` preserves face order; `provenance.refsCanonical` is the sorted list used for tokenId hashing.
-- `preview_gif` is appended during pinning when palette colors are available.
-- `attributes` include floor snapshot, LESS supply at mint, selection summary, and palette traits.
+- `external_url` is optional; it can point to `https://<domain>/m/<tokenId>` if precomputed offchain.
+- `image` should reference the palette image (gateway URL or ipfs://).
+- `attributes` should include palette index + traits (id, hex colors, rarity metrics).
 
 ```ts
-type MintMetadata = {
-  schemaVersion: 1;
+type PaletteMetadata = {
   name: string;
-  description: string;
-  tokenId?: string; // minted token id (stringified)
-  image: string | null; // palette image (gateway URL)
-  image_ipfs?: string | null; // ipfs://... for wallets
-  external_url: string | null; // https://<domain>/m/<tokenId>
-  animation_url?: string | null;
-  preview_gif?: string | null; // ipfs://... optional, added by pinning
-  palette?: {
-    index: number;
-    image_url: string | null;
-    palette_id?: string;
-    hex_colors?: string[];
-    used_hex_colors?: string[];
-    rarity_inverse_frequency?: number;
-    rarity_color_rarity_sum?: number;
-    rarity_unique_count?: number;
-  };
+  description?: string;
+  image: string;
+  external_url?: string | null;
   attributes: Array<{
     trait_type: string;
     value: string | number;
     display_type?: string;
   }>;
-  provenance: ProvenanceBundle & {
-    schemaVersion: 1;
-    mintedBy: string;
-    tokenId: string;
-    salt: string;
-    refs: Array<{ contractAddress: string; tokenId: string }>;
-    refsFaces?: Array<{ contractAddress: string; tokenId: string }>;
-    refsCanonical?: Array<{ contractAddress: string; tokenId: string }>;
-  };
-  references: Array<{
-    chainId: 1 | 8453;
-    contractAddress: string;
-    tokenId: string;
-    tokenIdNumber: number | null; // null if > MAX_SAFE_INTEGER
-    image: ResolvedUri | null;
-    collectionFloorEth?: number;
-    collectionFloorRetrievedAt?: string | null;
-  }>;
-  provenanceSummary?: {
-    sumFloorEth: number;
-  };
 };
 ```
 
 ## Mint Economics (v0)
 
 - Mint price is **dynamic** based on $LESS totalSupply:
-  - base price `0.0015 ETH`
+  - base price `0.0022 ETH`
   - factor `1 + (3 * (1B - supply)) / 1B` (clamped at 1.0 when supply ≥ 1B)
   - rounded up to the nearest `0.0001 ETH`
 - Mint accepts `msg.value >= currentMintPrice()` and refunds overpayment.
@@ -215,16 +178,17 @@ Base ETH-only mode:
 
 - `tokenId = keccak256("cubixles_:tokenid:v1", minter, salt, refsHash)`
 - `refsHash` is computed from a canonical sort of refs (by contract + tokenId).
-- Clients call `previewTokenId(salt, refs)` to build metadata before mint.
+- Clients call `previewTokenId(salt, refs)` to build external URLs or offchain metadata before mint.
 
 ## Commit-Reveal Mint Flow
 
-- Minting uses a two-step commit-reveal:
-  1. `commitMint(salt, refsHash)` stores a commitment and block number.
-  2. `mint(salt, tokenURI, refs)` reveals refs + salt and completes the mint.
+- Minting uses a hash-only commit-reveal:
+  1. `commitMint(commitment)` stores a commitment hash and requests VRF randomness.
+  2. `mint(salt, refs)` reveals refs + salt and completes the mint once randomness is ready.
+- Commitment hash = `keccak256("cubixles_:commit:v1", minter, salt, refsHash)`.
 - The reveal must occur after the commit is mined (next block or later) and within 256 blocks.
-- Random palette index is derived from `refsHash`, `salt`, minter, and the commit block hash.
-- The UI prompts two wallet confirmations and auto-advances to the mint step after the commit is confirmed.
+- Random palette index is derived from the fulfilled VRF word (random-without-replacement).
+- The UI prompts two wallet confirmations and waits for VRF fulfillment before minting.
 
 ## $LESS Delta Metric (UI/Leaderboard)
 
@@ -236,8 +200,9 @@ Base ETH-only mode:
 ## Token Viewer Route
 
 - `external_url` resolves to `https://<domain>/m/<tokenId>`.
-- The viewer reads `tokenURI`, validates the metadata, extracts refs in priority order (`refsFaces` -> `refsCanonical` -> `refs`), and renders the cube with those textures.
-- The viewer expects `provenance.chainId` to match the active chain; it uses `provenance.chainId` for floor snapshot labels/OpenSea links and the active chain config for Alchemy lookups.
+- The viewer reads `tokenURI` metadata for palette traits and image assets.
+- Provenance refs are rendered only when metadata includes `provenance` (legacy/offchain metadata). Palette-only metadata will not include refs and will skip provenance-based rendering.
+- When provenance is present, the viewer expects `provenance.chainId` to match the active chain; it uses `provenance.chainId` for floor snapshot labels/OpenSea links and the active chain config for Alchemy lookups.
 - OG previews are rendered at `/m/<tokenId>/opengraph-image` for link shares.
 
 ## Palette Mapping

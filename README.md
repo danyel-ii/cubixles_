@@ -1,6 +1,6 @@
 # cubixles_
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 cubixles_ lets users mint NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs they already own.
 The frontend runs on Next.js, and the contracts are built and tested with Foundry.
@@ -38,9 +38,9 @@ npm run check:no-client-secrets
 npm run check:no-repo-secrets
 cd contracts
 npx solhint "src/**/*.sol"
-python3 -m slither .
+slither . --config-file slither.config.json
 # If slither isn't on PATH:
-../.venv-slither/bin/python -m slither .
+../.venv-slither/bin/python -m slither . --config-file slither.config.json
 ```
 
 ## Fork tests (release gate)
@@ -57,7 +57,7 @@ npm run fork-test
 ```
 
 ## Configuration
-Copy `.env.example` to `.env` for non-secret defaults. Put secrets and mainnet-only settings in `.env.local` (git-ignored). For CI and production, store secrets in GitHub Actions and Vercel instead of local env files.
+Copy `.env.example` to `.env` for shared defaults. Put network-specific deploy values in `.env.mainnet` and `.env.base` (git-ignored). Keep secrets in `.env.local` for local use only. For CI and production, store secrets in GitHub Actions and Vercel instead of local env files.
 
 Base mint pricing is immutable (linear step), so no updater script is required.
 

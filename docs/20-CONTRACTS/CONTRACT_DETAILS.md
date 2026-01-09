@@ -10,7 +10,8 @@ Last updated: 2026-01-09
 
 ## Executive Summary
 
-CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0015 ETH`, scaled by a 1.0–4.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps half the royalty via the v4 PoolManager; on successful swap, 50% of the ETH is forwarded to the owner, the remaining ETH is swapped to $LESS, 90% of $LESS goes to the owner and 10% to the burn address, and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract also snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking. The on-chain logic verifies ownership, mints, stores the token URI, and handles the mint payment; token metadata and provenance are built in the cubixles_ miniapp and should be pinned to IPFS with the interactive p5.js app referenced via `external_url`.
+CubixlesMinter is an ERC-721 minting contract that gates minting on ownership of 1 to 6 referenced NFTs. Minting costs a **dynamic price** derived from $LESS totalSupply (base `0.0022 ETH`, scaled by a 1.0–4.0 factor, then rounded up to the nearest `0.0001 ETH`), sends mint fees to the RoyaltySplitter, and refunds overpayment. Minting uses a hash-only commit + reveal with Chainlink VRF randomness; the reveal step consumes the fulfilled VRF word to draw a palette index without replacement. Token metadata is **computed onchain**: `tokenURI` is `ipfs://<paletteMetadataCID>/<paletteIndex>.json`, so metadata integrity is anchored to the deployed CID + palette index mapping.
+Resale royalties are 5% via ERC-2981 and routed to a RoyaltySplitter contract that optionally swaps half the royalty via the v4 PoolManager; on successful swap, 50% of the ETH is forwarded to the owner, the remaining ETH is swapped to $LESS, 90% of $LESS goes to the owner and 10% to the burn address, and any leftover ETH is forwarded to the owner. If swaps are disabled or the swap fails, all ETH is forwarded to the owner. The contract snapshots $LESS supply at mint and on transfer to enable onchain delta metrics for leaderboard ranking.
 An ETH-only mode is supported when `LESS_TOKEN` is set to `0x0` on deployment; in that case mint pricing is either fixed or linear (base + step) depending on `linearPricingEnabled`, and LESS snapshots/deltas remain `0`. Base deployments use immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint).
 Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFailed`, and mismatched owners trigger `RefNotOwned`. ETH transfers use `Address.sendValue` and revert on failure, and swap failures emit `SwapFailedFallbackToOwner` before sending all ETH to the owner.
 
@@ -19,9 +20,10 @@ Ownership checks are strict: any `ownerOf` revert triggers `RefOwnershipCheckFai
 Contract: `contracts/src/cubixles/CubixlesMinter.sol`
 
 - Inherits:
-  - `ERC721URIStorage` for token URI storage.
+  - `ERC721` with a computed `tokenURI`.
   - `ERC2981` for resale royalties.
   - `Ownable` for admin updates.
+  - `VRFConsumerBaseV2` for Chainlink VRF fulfillment.
 - Constructor sets:
   - `resaleSplitter`
   - default resale royalty receiver + bps (default 5% = 500 bps, max 10%)
@@ -31,16 +33,24 @@ Contract: `contracts/src/cubixles/CubixlesMinter.sol`
 Function signature:
 
 ```solidity
-mint(bytes32 salt, string calldata tokenURI, NftRef[] calldata refs) external payable returns (uint256 tokenId)
+mint(bytes32 salt, NftRef[] calldata refs) external payable returns (uint256 tokenId)
+```
+
+Commit signature (required before mint):
+
+```solidity
+commitMint(bytes32 commitment) external
 ```
 
 Key steps:
 
-0. **Commit required**: `commitMint(salt, refsHash)` must be called first (commit must be mined in a prior block; window is 256 blocks).
+0. **Commit required**: `commitMint(commitment)` must be called first (commit must be mined in a prior block; window is 256 blocks).
+   - Commitment hash = `keccak256("cubixles_:commit:v1", minter, salt, refsHash)`.
+   - VRF request is made during `commitMint`; mint waits for `randomnessReady`.
 1. **Reference count check**: `refs.length` must be between 1 and 6.
 2. **Ownership validation**: each `NftRef` must be owned by `msg.sender` (ERC-721 `ownerOf` gating).
 3. **Pricing**: `currentMintPrice()` returns the dynamic $LESS price, linear base + step (when `linearPricingEnabled` is on), or fixed ETH pricing when LESS + linear pricing are disabled.
-   - `base = 0.0015 ETH`
+   - `base = 0.0022 ETH`
    - `factor = 1 + (3 * (1B - supply)) / 1B`, clamped at 1.0 when supply ≥ 1B
    - `price = base * factor`
    - `price` is rounded up to the nearest `0.0001 ETH`
@@ -48,8 +58,8 @@ Key steps:
    - fixed price = `fixedMintPriceWei` when LESS + linear pricing are disabled
 4. **Deterministic tokenId**: computed from `msg.sender`, `salt`, and a **canonical** `refsHash` (refs sorted by contract + tokenId).
 4.5 **Supply cap**: mint reverts once `totalMinted` reaches 10,000.
-5. **Random palette index**: derived from commit blockhash + `refsHash` + `salt` + minter.
-6. **Mint + metadata**: mint token and store `tokenURI`.
+5. **Random palette index**: derived from the fulfilled VRF word (random-without-replacement).
+6. **Mint + metadata**: mint token and compute `tokenURI` onchain using `paletteMetadataCID`.
 7. **Mint payout**: transfers `currentMintPrice()` to `resaleSplitter` and refunds any excess to `msg.sender`.
 
 Mint price at time of mint is stored as `mintPriceByTokenId(tokenId)` for UI and analytics.
@@ -70,7 +80,7 @@ Note: the UI “$LESS supply” HUD displays remaining supply as `totalSupply - 
 ## Deterministic TokenId Preview
 
 - `previewTokenId(bytes32 salt, NftRef[] refs)` returns the exact tokenId the mint will use.
-- Clients should call `previewTokenId` before pinning metadata to build a token-specific `external_url`.
+- Clients should call `previewTokenId` before committing to build a token-specific `external_url` or offchain metadata.
 - `totalMinted` and `tokenIdByIndex(index)` provide onchain enumeration for the leaderboard.
 
 ## Royalty Logic
@@ -109,6 +119,7 @@ File: `contracts/test/CubixlesMinter.t.sol`
     - `CUBIXLES_BASE_MINT_PRICE_WEI` (optional; base price for linear pricing)
     - `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (optional; step price for linear pricing)
     - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS + linear pricing are disabled)
+    - `CUBIXLES_PALETTE_METADATA_CID` (required; base CID for `tokenURI`)
     - `CUBIXLES_BURN_ADDRESS` (optional; defaults to `0x000000000000000000000000000000000000dEaD`)
     - `CUBIXLES_POOL_MANAGER` (optional)
     - `CUBIXLES_POOL_FEE` (optional)
@@ -116,9 +127,18 @@ File: `contracts/test/CubixlesMinter.t.sol`
     - `CUBIXLES_POOL_HOOKS` (optional)
     - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, max 1000)
     - `CUBIXLES_RESALE_BPS` (optional)
+    - `CUBIXLES_VRF_COORDINATOR` (required; Chainlink VRF coordinator)
+    - `CUBIXLES_VRF_KEY_HASH` (required; gas lane key hash)
+    - `CUBIXLES_VRF_SUBSCRIPTION_ID` (required; VRF subscription id)
+    - `CUBIXLES_VRF_REQUEST_CONFIRMATIONS` (optional; defaults to 3)
+    - `CUBIXLES_VRF_CALLBACK_GAS_LIMIT` (optional; defaults to 250000)
     - `CUBIXLES_CHAIN_ID` (optional; defaults to `block.chainid`)
     - `CUBIXLES_DEPLOYMENT_PATH` (optional; defaults to `contracts/deployments/<chain>.json`)
   - Writes deployment JSON to the chain-specific default path unless `CUBIXLES_DEPLOYMENT_PATH` is set.
+  - Timelock: `contracts/script/DeployTimelock.s.sol` transfers minter + splitter ownership to a TimelockController.
+    - `CUBIXLES_TIMELOCK_MIN_DELAY` (seconds)
+    - `CUBIXLES_TIMELOCK_ADMIN` / `CUBIXLES_TIMELOCK_PROPOSER` / `CUBIXLES_TIMELOCK_EXECUTOR`
+    - `CUBIXLES_MINTER_ADDRESS` / `CUBIXLES_SPLITTER_ADDRESS`
 
 - ABI export:
   - Run `node contracts/scripts/export-abi.mjs`.
@@ -130,9 +150,10 @@ File: `app/_client/src/config/contracts.ts` reads deployment + ABI.
 
 Mint UI: `app/_client/src/features/mint/mint-ui.js`
 
-- Builds provenance bundle from selected NFTs.
-- Creates a JSON metadata object with `image` (palette image via gateway), `image_ipfs` (ipfs:// for wallets), `external_url` (`/m/<tokenId>`), `tokenId`/`chainId`/`salt`, and `provenance.refsFaces` + `provenance.refsCanonical` (pinning may append `preview_gif`).
-- Pins metadata via `/api/pin/metadata` and calls `mint(salt, tokenURI, refs)` on mainnet with the resulting `ipfs://` URI.
+- Builds refs hash and commitment for the selected NFTs.
+- Calls `commitMint(commitment)` and waits for VRF fulfillment.
+- Calls `mint(salt, refs)` after randomness is ready.
+- Offchain metadata pinning is optional and no longer part of the mint path; `tokenURI` is computed onchain.
 
 ## Known Placeholders / TODOs
 
@@ -141,4 +162,4 @@ Mint UI: `app/_client/src/features/mint/mint-ui.js`
 - When the swap fails, all ETH is forwarded to owner.
 - When the swap succeeds, 50% of ETH is sent to owner, the rest is swapped to $LESS, then 90% $LESS goes to owner and 10% to burn address, followed by forwarding any remaining ETH balance to owner.
 - If PoolManager is unset, swaps are disabled and all ETH is forwarded.
-- Metadata is pinned to IPFS via the server route and references the token viewer via `external_url`.
+- Token metadata is served from the palette metadata CID (`tokenURI` is computed).

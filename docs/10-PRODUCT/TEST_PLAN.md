@@ -1,6 +1,6 @@
 # cubixles_ v0 — Test Plan
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 ## Review Status
 
@@ -12,7 +12,7 @@ This plan defines the tests needed to trust the system end-to-end:
 - Interactive p5-based NFT (`external_url`)
 - Provenance refs (1–6 NFTs)
 - Economics (dynamic mint price + ERC-2981 resale royalties)
-- Hosted tokenURI (IPFS via Pinata + Vercel endpoints)
+- Onchain tokenURI (palette metadata CID) and optional metadata pinning
 - Farcaster miniapp wallet connect + mint UX
 
 ## 0) Definitions & invariants (shared across all tests)
@@ -20,11 +20,10 @@ This plan defines the tests needed to trust the system end-to-end:
 ### Core invariants
 1. **Ownership gating**: mint must fail unless `msg.sender` owns every referenced NFT.
 2. **Ref count**: `refs.length` in `[1..6]`.
-3. **TokenURI correctness**: stored tokenURI points to metadata JSON that:
-   - includes provenance bundle (refs + sanitized provenance; raw metadata stripped)
-   - includes `external_url` pointing to `https://<domain>/m/<tokenId>`
-   - includes `image` pointing to the palette image (gateway URL)
-   - includes palette + selection traits in `attributes`
+3. **TokenURI correctness**: computed tokenURI points to palette metadata JSON that:
+   - resolves via `ipfs://<paletteMetadataCID>/<paletteIndex>.json`
+   - includes palette traits + image
+   - optional offchain metadata can extend this with provenance + `external_url`
 4. **Economics**:
    - mint requires `msg.value >= currentMintPrice()`
    - mint pays `currentMintPrice()` to RoyaltySplitter and refunds any overpayment
@@ -34,9 +33,8 @@ This plan defines the tests needed to trust the system end-to-end:
 5. **Resale royalties (ERC-2981)**:
    - `royaltyInfo(tokenId, salePrice)` returns the **splitter** as receiver
    - bps matches configured value
-6. **Hosted tokenURI**:
-   - pin metadata (with `external_url` + `image`) -> `ipfs://<metaCID>`
-   - mint uses `tokenURI = ipfs://<metaCID>` (not `data:`)
+6. **Onchain tokenURI**:
+   - mint derives `tokenURI` from palette index + metadata CID (no input tokenURI)
 
 ## 1) Contract tests (Foundry) — required
 
@@ -52,8 +50,8 @@ This plan defines the tests needed to trust the system end-to-end:
 - mint reverts if any ref is not owned by `msg.sender`
 - mint succeeds when all refs owned
 
-**C. TokenURI storage**
-- tokenURI stored equals input string exactly
+**C. TokenURI computation**
+- tokenURI resolves to `ipfs://<paletteMetadataCID>/<paletteIndex>.json`
 - tokenId is deterministic and unique per (minter, salt, refs)
 
 **C2. Deterministic tokenId**
@@ -65,6 +63,7 @@ This plan defines the tests needed to trust the system end-to-end:
 - mint reverts if commit is in the same block
 - mint reverts if commit expires (>256 blocks)
 - mint reverts on refsHash or salt mismatch
+- mint reverts if randomness is not yet fulfilled
 - commitMint reverts on empty hash or active commit
 
 **D. Payment requirements**
@@ -114,9 +113,9 @@ Use Foundry fuzzing to generate:
 - Coverage includes economics + refund (not just gating)
 - Coverage report generated with ≥ 90% line coverage (`npm run coverage:contracts`)
 
-## 2) Serverless tests (Vercel endpoints for Pinata) — required for hosted tokenURI
+## 2) Serverless tests (Vercel endpoints for Pinata) — optional (offchain metadata)
 
-**Goal:** Ensure the upload pipeline is correct, stable, and never leaks secrets.
+**Goal:** Ensure the upload pipeline is correct, stable, and never leaks secrets (used only for optional metadata pinning).
 
 ### 2.1 Unit tests (mock Pinata)
 For `/api/pin/metadata`:
@@ -192,16 +191,15 @@ Because Warpcast hosting is hard to automate, we split E2E into:
 ### 4.1 Automated E2E (local / CI) using a stub provider
 - Run app with a mocked EIP-1193 provider (simulates wallet)
 - Stub Alchemy responses (owned NFTs + metadata)
-- Stub Pinata endpoints (return fake CIDs)
+- (Optional) Stub Pinata endpoints if testing `/api/pin/metadata`
 - Stub contract calls (or run local Anvil with deployed contract)
   - Playwright mocked flows live under `tests/e2e/`.
 
 **Assertions**
 - connect -> inventory renders
 - select refs -> cube textures update
-- click mint -> app pins metadata -> calls mint with:
-  - commit tx sent first, then mint tx after commit confirmation
-  - `tokenURI = ipfs://<metaCID>`
+- click mint -> app commits then mints with:
+  - commit tx sent first, mint tx after VRF fulfillment
   - `refs` encoded correctly
   - `value` set to max payment
 - success state displayed
@@ -214,12 +212,11 @@ This is the “ship gate” checklist:
 3. Ensure network = mainnet
 4. Select 1..6 NFTs (owned on mainnet)
 5. Mint:
-   - observe metadata pin returning an ipfs URI
+   - wait for VRF fulfillment between commit + mint
    - wallet shows tx with correct `value`
 6. Confirm onchain:
    - transaction success
-   - tokenURI resolves to metadata JSON
-   - metadata includes `external_url` pointing to `/m/<tokenId>`
+   - tokenURI resolves to `ipfs://<paletteMetadataCID>/<paletteIndex>.json`
    - resale royalty points to splitter
    - balances reflect mint-time splits + refund
 7. Open `https://<domain>/m/<tokenId>` and verify the cube loads with the correct refs.

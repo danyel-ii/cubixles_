@@ -1,6 +1,6 @@
 # cubixles_ — Master Index
 
-Last updated: 2026-01-08
+Last updated: 2026-01-09
 
 ## Executive Overview
 
@@ -19,7 +19,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 
 ### Next.js (App Router)
 - `app/api/nonce/route.js` — Nonce endpoint for client auth flows.
-- `app/api/pin/metadata/route.js` — Server-side Pinata pinning for metadata.
+- `app/api/pin/metadata/route.js` — Server-side Pinata pinning for optional metadata.
 - `app/api/nfts/route.js` — Alchemy NFT proxy + RPC batch (cached, minimized).
 - `app/api/identity/route.js` — Farcaster/ENS identity lookup for the leaderboard.
 - `app/api/csp-report/route.js` — CSP violation report endpoint (telemetry only).
@@ -112,9 +112,9 @@ npm run test:ui
 # Static analysis
 cd contracts
 npx solhint "src/**/*.sol"
-python3 -m slither .
+slither . --config-file slither.config.json
 # If slither isn't on PATH:
-../.venv-slither/bin/python -m slither .
+../.venv-slither/bin/python -m slither . --config-file slither.config.json
 
 # Fork tests (release gate)
 export MAINNET_RPC_URL=...
