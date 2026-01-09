@@ -15,7 +15,7 @@ describe("ipfs normalization", () => {
 
   it("builds gateway fallback URLs in order", () => {
     const urls = buildGatewayUrls("ipfs://bafybeihash/asset.png");
-    expect(urls[0]).toContain("https://ipfs.runfission.com/ipfs/");
+    expect(urls[0]).toContain("https://w3s.link/ipfs/");
     expect(urls[urls.length - 1]).toContain("https://ipfs.io/ipfs/");
   });
 });

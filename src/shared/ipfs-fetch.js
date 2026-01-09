@@ -1,5 +1,4 @@
 const GATEWAYS = [
-  "https://ipfs.runfission.com/ipfs/",
   "https://w3s.link/ipfs/",
   "https://dweb.link/ipfs/",
   "https://gateway.pinata.cloud/ipfs/",
