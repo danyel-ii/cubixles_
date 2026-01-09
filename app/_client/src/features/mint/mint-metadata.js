@@ -112,6 +112,15 @@ export function buildMintMetadata({
   paletteImageUrl,
   lessSupplyMint,
 }) {
+  const paletteFilename =
+    typeof paletteEntry?.output === "string" && paletteEntry.output.trim()
+      ? paletteEntry.output.trim().split("/").pop()
+      : null;
+  const displayName = paletteFilename
+    ? paletteFilename
+    : tokenId
+      ? `cubixles_ #${tokenId}`
+      : "cubixles_";
   const provenance = sanitizeProvenance(
     enrichProvenance(provenanceBundle, selection)
   );
@@ -168,7 +177,7 @@ export function buildMintMetadata({
 
   return {
     schemaVersion: 1,
-    name: tokenId ? `cubixles_ #${tokenId}` : "cubixles_",
+    name: displayName,
     tokenId,
     description: [
       "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own.",

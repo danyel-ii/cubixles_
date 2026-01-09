@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import { Script } from "forge-std/Script.sol";
 import { CubixlesMinter } from "../src/cubixles/CubixlesMinter.sol";
+import { CubixlesV1_0 } from "../src/cubixles_v.1.0..sol";
 import { RoyaltySplitter } from "../src/royalties/RoyaltySplitter.sol";
 import { IPoolManager } from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import { IHooks } from "@uniswap/v4-core/src/interfaces/IHooks.sol";
@@ -28,6 +29,7 @@ contract DeployCubixles is Script {
         );
 
         vm.startBroadcast();
+        CubixlesV1_0 asciiArt = new CubixlesV1_0();
         RoyaltySplitter splitter = new RoyaltySplitter(
             cfg.owner,
             cfg.lessToken,
@@ -61,6 +63,7 @@ contract DeployCubixles is Script {
         vm.serializeUint(obj, "chainId", cfg.chainId);
         string memory json = vm.serializeAddress(obj, "address", address(minter));
         json = vm.serializeAddress(obj, "royaltySplitter", address(splitter));
+        json = vm.serializeAddress(obj, "asciiArt", address(asciiArt));
         vm.writeJson(json, path);
     }
 
