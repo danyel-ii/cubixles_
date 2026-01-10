@@ -197,6 +197,13 @@ contract CubixlesMinterEdgeTest is Test {
         );
     }
 
+    function testRawFulfillRandomWordsRevertsWhenCallerNotCoordinator() public {
+        uint256[] memory words = new uint256[](1);
+        words[0] = DEFAULT_RANDOMNESS;
+        vm.expectRevert();
+        minter.rawFulfillRandomWords(1, words);
+    }
+
     function testMintRevertsWhenOwnerReceiveFails() public {
         ReceiverRevertsOnReceive receiver = new ReceiverRevertsOnReceive();
         vm.prank(owner);

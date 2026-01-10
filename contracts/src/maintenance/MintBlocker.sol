@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 /// @notice Receiver that always reverts to block mint payouts.
+// slither-disable-next-line locked-ether
 contract MintBlocker {
     error MintDisabled();
 

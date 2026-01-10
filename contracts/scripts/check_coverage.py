@@ -13,7 +13,7 @@ def run_forge_coverage() -> None:
     env.setdefault("HTTPS_PROXY", "")
     env.setdefault("FOUNDRY_DISABLE_NIGHTLY_WARNING", "1")
     result = subprocess.run(
-        ["forge", "coverage", "--report", "lcov"],
+        ["forge", "coverage", "--report", "lcov", "--ir-minimum"],
         check=False,
         stdout=sys.stdout,
         stderr=sys.stderr,

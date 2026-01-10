@@ -213,6 +213,33 @@ contract CubixlesMinterTest is Test {
         _fulfillRandomness(requestId, randomness);
     }
 
+    function _deployWithConfig(
+        string memory paletteImagesCid,
+        bytes32 paletteManifestHash,
+        address vrfCoordinatorAddr,
+        bytes32 vrfKeyHash,
+        uint64 vrfSubscriptionId,
+        uint16 vrfRequestConfirmations,
+        uint32 vrfCallbackGasLimit
+    ) internal returns (CubixlesMinter) {
+        return new CubixlesMinter(
+            resaleSplitter,
+            address(lessToken),
+            500,
+            0,
+            0,
+            0,
+            false,
+            paletteImagesCid,
+            paletteManifestHash,
+            vrfCoordinatorAddr,
+            vrfKeyHash,
+            vrfSubscriptionId,
+            vrfRequestConfirmations,
+            vrfCallbackGasLimit
+        );
+    }
+
     function testMintRequiresOwnership() public {
         address minterAddr = makeAddr("minter");
         uint256 tokenA = nftA.mint(minterAddr);
@@ -640,6 +667,97 @@ contract CubixlesMinterTest is Test {
         );
     }
 
+    function testConstructorRevertsOnEmptyPaletteImagesCid() public {
+        vm.expectRevert(CubixlesMinter.PaletteImagesCidRequired.selector);
+        _deployWithConfig(
+            "",
+            PALETTE_MANIFEST_HASH,
+            address(vrfCoordinator),
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
+    }
+
+    function testConstructorRevertsOnZeroPaletteManifestHash() public {
+        vm.expectRevert(CubixlesMinter.PaletteManifestHashRequired.selector);
+        _deployWithConfig(
+            PALETTE_IMAGES_CID,
+            bytes32(0),
+            address(vrfCoordinator),
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
+    }
+
+    function testConstructorRevertsOnZeroVrfCoordinator() public {
+        vm.expectRevert(CubixlesMinter.VrfCoordinatorRequired.selector);
+        _deployWithConfig(
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
+            address(0),
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
+    }
+
+    function testConstructorRevertsOnZeroVrfKeyHash() public {
+        vm.expectRevert(CubixlesMinter.VrfKeyHashRequired.selector);
+        _deployWithConfig(
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
+            address(vrfCoordinator),
+            bytes32(0),
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
+    }
+
+    function testConstructorRevertsOnZeroVrfSubscriptionId() public {
+        vm.expectRevert(CubixlesMinter.VrfSubscriptionRequired.selector);
+        _deployWithConfig(
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
+            address(vrfCoordinator),
+            VRF_KEY_HASH,
+            0,
+            VRF_CONFIRMATIONS,
+            VRF_CALLBACK_GAS_LIMIT
+        );
+    }
+
+    function testConstructorRevertsOnZeroVrfRequestConfirmations() public {
+        vm.expectRevert(CubixlesMinter.VrfRequestConfirmationsRequired.selector);
+        _deployWithConfig(
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
+            address(vrfCoordinator),
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            0,
+            VRF_CALLBACK_GAS_LIMIT
+        );
+    }
+
+    function testConstructorRevertsOnZeroVrfCallbackGasLimit() public {
+        vm.expectRevert(CubixlesMinter.VrfCallbackGasLimitRequired.selector);
+        _deployWithConfig(
+            PALETTE_IMAGES_CID,
+            PALETTE_MANIFEST_HASH,
+            address(vrfCoordinator),
+            VRF_KEY_HASH,
+            VRF_SUB_ID,
+            VRF_CONFIRMATIONS,
+            0
+        );
+    }
+
     function testFixedPriceWhenLessDisabled() public {
         uint256 fixedPrice = 2_000_000_000_000_000;
         CubixlesMinter fixedMinter = new CubixlesMinter(
@@ -948,6 +1066,45 @@ contract CubixlesMinterTest is Test {
         minter.commitMint(bytes32(0));
     }
 
+    function testPreviewPaletteIndexRevertsWhenRandomnessPending() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+
+        vm.prank(minterAddr);
+        vm.expectRevert(CubixlesMinter.MintRandomnessPending.selector);
+        minter.previewPaletteIndex(minterAddr);
+    }
+
+    function testPreviewPaletteIndexRevertsWhenPaletteNotAssigned() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        uint256 requestId = _commitMint(minterAddr, DEFAULT_SALT, refs);
+        stdstore
+            .target(address(minter))
+            .sig("totalAssigned()")
+            .checked_write(minter.MAX_MINTS());
+        _fulfillRandomness(requestId, DEFAULT_RANDOMNESS);
+
+        vm.prank(minterAddr);
+        vm.expectRevert(CubixlesMinter.MintCapReached.selector);
+        minter.previewPaletteIndex(minterAddr);
+    }
+
+    function testSweepExpiredCommitRevertsWithoutCommit() public {
+        address minterAddr = makeAddr("minter");
+        vm.expectRevert(CubixlesMinter.MintCommitRequired.selector);
+        minter.sweepExpiredCommit(minterAddr);
+    }
+
     function testCommitFeeRequired() public {
         uint256 fee = 0.001 ether;
         vm.prank(owner);
@@ -970,6 +1127,45 @@ contract CubixlesMinterTest is Test {
         vm.prank(minterAddr);
         minter.commitMint{ value: fee }(commitment);
         assertEq(address(minter).balance, fee);
+    }
+
+    function testMintRevertsOnEmptyTokenUri() public {
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](0);
+        vm.expectRevert(CubixlesMinter.TokenUriRequired.selector);
+        minter.mint(
+            DEFAULT_SALT,
+            refs,
+            0,
+            "",
+            keccak256("metadata"),
+            keccak256("image-path")
+        );
+    }
+
+    function testMintRevertsOnEmptyMetadataHash() public {
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](0);
+        vm.expectRevert(CubixlesMinter.MetadataHashRequired.selector);
+        minter.mint(
+            DEFAULT_SALT,
+            refs,
+            0,
+            "ipfs://metadata/1",
+            bytes32(0),
+            keccak256("image-path")
+        );
+    }
+
+    function testMintRevertsOnEmptyImagePathHash() public {
+        CubixlesMinter.NftRef[] memory refs = new CubixlesMinter.NftRef[](0);
+        vm.expectRevert(CubixlesMinter.ImagePathHashRequired.selector);
+        minter.mint(
+            DEFAULT_SALT,
+            refs,
+            0,
+            "ipfs://metadata/1",
+            keccak256("metadata"),
+            bytes32(0)
+        );
     }
 
     function testCommitFeeCreditedAtMint() public {

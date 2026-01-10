@@ -173,7 +173,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @notice Base CID for palette images.
     string public paletteImagesCID;
     /// @notice Hash or Merkle root for palette manifest.
-    bytes32 public paletteManifestHash;
+    bytes32 public immutable paletteManifestHash;
     /// @notice VRF coordinator contract.
     VRFCoordinatorV2Interface public immutable vrfCoordinator;
     /// @notice VRF key hash for randomness requests.
@@ -303,36 +303,18 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         Ownable(msg.sender)
         VRFConsumerBaseV2(vrfCoordinator_)
     {
-        if (resaleSplitter_ == address(0)) {
-            revert ResaleSplitterRequired();
-        }
-        if (resaleRoyaltyBps > 1000) {
-            revert RoyaltyTooHigh();
-        }
-        if (bytes(paletteImagesCID_).length == 0) {
-            revert PaletteImagesCidRequired();
-        }
-        if (paletteManifestHash_ == bytes32(0)) {
-            revert PaletteManifestHashRequired();
-        }
-        if (vrfCoordinator_ == address(0)) {
-            revert VrfCoordinatorRequired();
-        }
-        if (vrfCoordinator_.code.length == 0) {
-            revert VrfCoordinatorNotContract(vrfCoordinator_);
-        }
-        if (vrfKeyHash_ == bytes32(0)) {
-            revert VrfKeyHashRequired();
-        }
-        if (vrfSubscriptionId_ == 0) {
-            revert VrfSubscriptionRequired();
-        }
-        if (vrfRequestConfirmations_ == 0) {
-            revert VrfRequestConfirmationsRequired();
-        }
-        if (vrfCallbackGasLimit_ == 0) {
-            revert VrfCallbackGasLimitRequired();
-        }
+        _requireConstructorConfig(
+            resaleSplitter_,
+            resaleRoyaltyBps,
+            paletteImagesCID_,
+            paletteManifestHash_,
+            vrfCoordinator_,
+            vrfKeyHash_,
+            vrfSubscriptionId_,
+            vrfRequestConfirmations_,
+            vrfCallbackGasLimit_
+        );
+        // slither-disable-next-line missing-zero-check
         resaleSplitter = resaleSplitter_;
         // slither-disable-next-line missing-zero-check
         LESS_TOKEN = lessToken_;
@@ -346,23 +328,16 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         vrfSubscriptionId = vrfSubscriptionId_;
         vrfRequestConfirmations = vrfRequestConfirmations_;
         vrfCallbackGasLimit = vrfCallbackGasLimit_;
-        if (lessToken_ != address(0)) {
-            if (linearPricingEnabled_) {
-                revert LinearPricingNotAllowed();
-            }
-            lessEnabled = true;
-        } else {
-            lessEnabled = false;
-            if (linearPricingEnabled_) {
-                if (baseMintPriceWei_ == 0 || baseMintPriceStepWei_ == 0) {
-                    revert LinearPricingConfigRequired();
-                }
-            } else {
-                if (fixedMintPriceWei_ == 0) {
-                    revert FixedPriceRequired();
-                }
-                fixedMintPriceWei = fixedMintPriceWei_;
-            }
+        (bool lessEnabled_, uint256 resolvedFixedPrice) = _resolvePricing(
+            lessToken_,
+            linearPricingEnabled_,
+            fixedMintPriceWei_,
+            baseMintPriceWei_,
+            baseMintPriceStepWei_
+        );
+        lessEnabled = lessEnabled_;
+        if (!lessEnabled_ && !linearPricingEnabled_) {
+            fixedMintPriceWei = resolvedFixedPrice;
         }
 
         _setDefaultRoyalty(resaleSplitter_, resaleRoyaltyBps);
@@ -381,59 +356,20 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         bytes32 metadataHash,
         bytes32 imagePathHash
     ) external payable nonReentrant returns (uint256 tokenId) {
-        if (bytes(tokenURI_).length == 0) {
-            revert TokenUriRequired();
-        }
-        if (metadataHash == bytes32(0)) {
-            revert MetadataHashRequired();
-        }
-        if (imagePathHash == bytes32(0)) {
-            revert ImagePathHashRequired();
-        }
+        _requireMintInputs(tokenURI_, metadataHash, imagePathHash);
         _requireValidRefs(refs);
-        if (!(totalMinted < MAX_MINTS)) {
-            revert MintCapReached();
-        }
-
-        uint256 commitFeePaid = mintCommitByMinter[msg.sender].commitFee;
         uint256 price = currentMintPrice();
-        uint256 totalPaid = msg.value + commitFeePaid;
-        if (totalPaid < price) {
-            revert InsufficientEth();
-        }
-
-        bytes32 refsHash = _hashRefsCanonical(refs);
-        uint256 paletteIndex = _consumeCommit(salt, refsHash, metadataHash, imagePathHash);
-        tokenId = _computeTokenId(msg.sender, salt, refsHash);
-        if (_ownerOf(tokenId) != address(0)) {
-            revert TokenIdExists();
-        }
-
-        if (paletteIndex != expectedPaletteIndex) {
-            revert PaletteIndexMismatch(expectedPaletteIndex, paletteIndex);
-        }
-
-        ++totalMinted;
-        tokenIdByIndex[totalMinted] = tokenId;
-        minterByTokenId[tokenId] = msg.sender;
-        mintPriceByTokenId[tokenId] = price;
-        paletteIndexByTokenId[tokenId] = paletteIndex;
-        _tokenUriByTokenId[tokenId] = tokenURI_;
-        metadataHashByTokenId[tokenId] = metadataHash;
-        imagePathHashByTokenId[tokenId] = imagePathHash;
-        _snapshotSupply(tokenId, true);
-
-        _safeMint(msg.sender, tokenId);
-
-        emit Minted(tokenId, msg.sender, salt, refsHash);
-        emit PaletteAssigned(tokenId, paletteIndex);
-        emit TokenURIUpdated(tokenId, tokenURI_);
-
-        _transferEth(resaleSplitter, price);
-
-        if (totalPaid > price) {
-            _transferEth(msg.sender, totalPaid - price);
-        }
+        uint256 totalPaid = _requireMintPayment(price);
+        tokenId = _mintFromCommit(
+            salt,
+            refs,
+            expectedPaletteIndex,
+            tokenURI_,
+            metadataHash,
+            imagePathHash,
+            price
+        );
+        _settleMintPayment(price, totalPaid);
     }
 
     /// @notice Commit a mint request for commit-reveal.
@@ -443,7 +379,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
             revert MintCommitEmpty();
         }
         MintCommit memory existing = mintCommitByMinter[msg.sender];
-        if (existing.blockNumber != 0) {
+        if (existing.blockNumber > 0) {
             if (_isCommitActive(existing.blockNumber)) {
                 revert MintCommitActive();
             }
@@ -452,7 +388,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         if (msg.value != requiredFee) {
             revert CommitFeeMismatch(requiredFee, msg.value);
         }
-        if (existing.blockNumber != 0) {
+        if (existing.blockNumber > 0) {
             _forfeitCommit(msg.sender, existing);
         }
         if (!(totalAssigned < MAX_MINTS)) {
@@ -513,7 +449,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @param minter Address with an expired commit.
     function sweepExpiredCommit(address minter) external nonReentrant {
         MintCommit memory commit = mintCommitByMinter[minter];
-        if (commit.blockNumber == 0) {
+        if (commit.blockNumber < 1) {
             revert MintCommitRequired();
         }
         if (_isCommitActive(commit.blockNumber)) {
@@ -711,7 +647,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
 
     /// @dev Send ETH and revert on failure.
     function _transferEth(address recipient, uint256 amount) internal {
-        if (amount == 0) {
+        if (amount < 1) {
             return;
         }
         Address.sendValue(payable(recipient), amount);
@@ -774,6 +710,74 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         }
         uint256 rounded = Math.mulDiv(value + step - 1, 1, step);
         return Math.mulDiv(rounded, step, 1);
+    }
+
+    function _requireConstructorConfig(
+        address resaleSplitter_,
+        uint96 resaleRoyaltyBps,
+        string memory paletteImagesCID_,
+        bytes32 paletteManifestHash_,
+        address vrfCoordinator_,
+        bytes32 vrfKeyHash_,
+        uint64 vrfSubscriptionId_,
+        uint16 vrfRequestConfirmations_,
+        uint32 vrfCallbackGasLimit_
+    ) private view {
+        if (resaleSplitter_ == address(0)) {
+            revert ResaleSplitterRequired();
+        }
+        if (resaleRoyaltyBps > 1000) {
+            revert RoyaltyTooHigh();
+        }
+        if (bytes(paletteImagesCID_).length == 0) {
+            revert PaletteImagesCidRequired();
+        }
+        if (paletteManifestHash_ == bytes32(0)) {
+            revert PaletteManifestHashRequired();
+        }
+        if (vrfCoordinator_ == address(0)) {
+            revert VrfCoordinatorRequired();
+        }
+        if (vrfCoordinator_.code.length == 0) {
+            revert VrfCoordinatorNotContract(vrfCoordinator_);
+        }
+        if (vrfKeyHash_ == bytes32(0)) {
+            revert VrfKeyHashRequired();
+        }
+        if (vrfSubscriptionId_ == 0) {
+            revert VrfSubscriptionRequired();
+        }
+        if (vrfRequestConfirmations_ == 0) {
+            revert VrfRequestConfirmationsRequired();
+        }
+        if (vrfCallbackGasLimit_ == 0) {
+            revert VrfCallbackGasLimitRequired();
+        }
+    }
+
+    function _resolvePricing(
+        address lessToken_,
+        bool linearPricingEnabled_,
+        uint256 fixedMintPriceWei_,
+        uint256 baseMintPriceWei_,
+        uint256 baseMintPriceStepWei_
+    ) private pure returns (bool lessEnabled_, uint256 fixedPrice) {
+        if (lessToken_ != address(0)) {
+            if (linearPricingEnabled_) {
+                revert LinearPricingNotAllowed();
+            }
+            return (true, 0);
+        }
+        if (linearPricingEnabled_) {
+            if (baseMintPriceWei_ == 0 || baseMintPriceStepWei_ == 0) {
+                revert LinearPricingConfigRequired();
+            }
+            return (false, 0);
+        }
+        if (fixedMintPriceWei_ == 0) {
+            revert FixedPriceRequired();
+        }
+        return (false, fixedMintPriceWei_);
     }
 
     /// @dev Record LESS supply snapshots and emit events.
@@ -846,6 +850,76 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         delete mintCommitByMinter[msg.sender];
     }
 
+    function _requireMintInputs(
+        string calldata tokenURI_,
+        bytes32 metadataHash,
+        bytes32 imagePathHash
+    ) private pure {
+        if (bytes(tokenURI_).length == 0) {
+            revert TokenUriRequired();
+        }
+        if (metadataHash == bytes32(0)) {
+            revert MetadataHashRequired();
+        }
+        if (imagePathHash == bytes32(0)) {
+            revert ImagePathHashRequired();
+        }
+    }
+
+    function _requireMintPayment(uint256 price) private view returns (uint256 totalPaid) {
+        if (!(totalMinted < MAX_MINTS)) {
+            revert MintCapReached();
+        }
+        uint256 commitFeePaid = mintCommitByMinter[msg.sender].commitFee;
+        totalPaid = msg.value + commitFeePaid;
+        if (totalPaid < price) {
+            revert InsufficientEth();
+        }
+    }
+
+    function _mintFromCommit(
+        bytes32 salt,
+        NftRef[] calldata refs,
+        uint256 expectedPaletteIndex,
+        string calldata tokenURI_,
+        bytes32 metadataHash,
+        bytes32 imagePathHash,
+        uint256 price
+    ) private returns (uint256 tokenId) {
+        bytes32 refsHash = _hashRefsCanonical(refs);
+        uint256 paletteIndex = _consumeCommit(salt, refsHash, metadataHash, imagePathHash);
+        tokenId = _computeTokenId(msg.sender, salt, refsHash);
+        if (_ownerOf(tokenId) != address(0)) {
+            revert TokenIdExists();
+        }
+        if (paletteIndex != expectedPaletteIndex) {
+            revert PaletteIndexMismatch(expectedPaletteIndex, paletteIndex);
+        }
+
+        ++totalMinted;
+        tokenIdByIndex[totalMinted] = tokenId;
+        minterByTokenId[tokenId] = msg.sender;
+        mintPriceByTokenId[tokenId] = price;
+        paletteIndexByTokenId[tokenId] = paletteIndex;
+        _tokenUriByTokenId[tokenId] = tokenURI_;
+        metadataHashByTokenId[tokenId] = metadataHash;
+        imagePathHashByTokenId[tokenId] = imagePathHash;
+        _snapshotSupply(tokenId, true);
+
+        _safeMint(msg.sender, tokenId);
+
+        emit Minted(tokenId, msg.sender, salt, refsHash);
+        emit PaletteAssigned(tokenId, paletteIndex);
+        emit TokenURIUpdated(tokenId, tokenURI_);
+    }
+
+    function _settleMintPayment(uint256 price, uint256 totalPaid) private {
+        _transferEth(resaleSplitter, price);
+        if (totalPaid > price) {
+            _transferEth(msg.sender, totalPaid - price);
+        }
+    }
+
     function _forfeitCommit(address minter, MintCommit memory commit) private {
         uint256 fee = commit.commitFee;
         if (fee != 0) {
@@ -859,7 +933,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     }
 
     function _requireValidCommit(MintCommit memory commit) private view {
-        if (commit.blockNumber == 0) {
+        if (commit.blockNumber < 1) {
             revert MintCommitRequired();
         }
         uint256 earliestBlock = commit.blockNumber + COMMIT_REVEAL_DELAY_BLOCKS;
@@ -924,14 +998,5 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
 
     function _assignPaletteIndex(uint256 randomness) private returns (uint256) {
         return _drawPaletteIndex(randomness);
-    }
-
-    function _previewPaletteIndex(uint256 randomness) private view returns (uint256) {
-        uint256 remaining = MAX_MINTS - totalAssigned;
-        if (remaining == 0) {
-            revert MintCapReached();
-        }
-        uint256 rand = randomness % remaining;
-        return _resolvePaletteIndex(rand);
     }
 }
