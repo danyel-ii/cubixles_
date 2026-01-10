@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2026-01-09
+Last updated: 2026-01-10
 
 ## 0) Pre-flight (local)
 
@@ -152,12 +152,12 @@ npm run deploy:mainnet
 2) Export ABI + update frontend config with mainnet address.
 3) Record deployment:
    - `contracts/deployments/mainnet.json`
-   - CubixlesMinter: `0x1DF2240b266A54E6b5a8118d0d2214256ADfBBAb`
-   - RoyaltySplitter: `0x58594deAe6b192Db91cfD534D6c67e0e371cc876`
+   - CubixlesMinter: `0x5581FeBb14c00bEC1e6C81068CD281EB4e9a9180`
+   - RoyaltySplitter: `0xde51FC988DAB8A58b0a491cdFd9f25c95CeB89ba`
    - Deploy txs:
-     - RoyaltySplitter CREATE: `0x09e2eb958a6e026dd583b91f81160ffdc4e9a2968dfee3165fa83c2d18e05f42`
-     - CubixlesMinter CREATE: `0xf4bae8c43960057fecbaa68b941bb7100b1055c9db61b5107f300cb2dc39c554`
-   - Ownership transfer (minter → owner): `0xc83dd7a34f5bf357a0563dd8d51f7b0550589d74be07109f49d55fc03691350b`
+     - RoyaltySplitter CREATE: `0xaa00b5add52c1b71744a4f5ffd4124cf4ff8efbe83eaf237be37410caa75c59f`
+     - CubixlesMinter CREATE: `0x6e1d849be44cb473bd134b48650af95f6f738a0afe6dc7e08a9590dc20d1933b`
+   - Ownership transfer (minter → owner): `0xde737e7fe5eee8f77f85037785b1a14021edff3397574b57f242c3105a322dca`
 
 ## 6) Mainnet launch validation
 
@@ -187,9 +187,9 @@ npm run deploy:base
 ```
 - Record deployment:
   - `contracts/deployments/base.json`
-  - CubixlesMinter: `0xFA760797Db195d705F8f52709c447497da377Ebf`
-  - RoyaltySplitter: `0xa2F6765466D78fc2CeDeA1b3212f3a909ABc4a30`
+  - CubixlesMinter: `0xc17C3930569f799e644909313dfBed968757Df1D`
+  - RoyaltySplitter: `0xAba3835D447982e1037035b945c67A9ECbED2829`
   - Deploy txs:
-    - RoyaltySplitter CREATE: `0x35332001923615a15c0ab8d97a7b35f99b9b76eeb1f0eb8a5ee4bc6d05a4b56e`
-    - CubixlesMinter CREATE: `0xeef5aa7b4886c284d13bdf6f9f3732894bced7628426b9ffe1b6d7573eabbf00`
-    - Ownership transfer (minter → owner): `0x04a78820f65da23e482c66bb385d72adac7b7b2604000bcd77fd6a4b4d04a1f5`
+    - RoyaltySplitter CREATE: `0xd285828be6ac81befec8c975c3b509a489cf70c2e85999f9d49a949dc0749398`
+    - CubixlesMinter CREATE: `0x088c9936def0f2bc4afd19d6a1f23aa706483c6b24664353d6c04e360044815d`
+    - Ownership transfer (minter → owner): `0xb3cae316dbdaecd8fd3d79773ad8a4c2d716c3d26a0cc4704f566eaa90caa153`
