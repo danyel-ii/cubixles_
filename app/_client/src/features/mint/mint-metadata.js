@@ -185,6 +185,7 @@ export function buildMintMetadata({
       externalUrl || animationUrl,
     ].join("\n"),
     image: imageUrl,
+    image_url: imageUrl || imageIpfsUrl,
     image_ipfs: imageIpfsUrl?.startsWith("ipfs://") ? imageIpfsUrl : undefined,
     external_url: externalUrl || animationUrl,
     palette: paletteEntry
