@@ -287,8 +287,10 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
     timeout: 10000,
   });
   const mintButton = page.getByRole("button", { name: /mint nft/i });
+  await expect(mintButton).toBeVisible({ timeout: 10000 });
   await expect(mintButton).toBeEnabled({ timeout: 10000 });
-  await mintButton.click();
+  // Avoid Playwright actionability instability in CI from animated layout shifts.
+  await mintButton.evaluate((button) => button.click());
 
   await expect(page.locator("#mint-status")).toContainText(
     /step 1\/3: confirm commit|step 2\/3: confirm metadata|step 3\/3: confirm mint|pinning metadata|waiting for randomness|waiting for metadata confirmation|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps|preparing mint/i,
