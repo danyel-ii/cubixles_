@@ -1,7 +1,8 @@
 import { JsonRpcProvider, Interface } from "ethers";
 
 const RPC_URL = process.env.MAINNET_RPC_URL;
-const SPLITTER = process.env.ROYALTY_SPLITTER_ADDRESS;
+const SPLITTER =
+  process.env.ROYALTY_SPLITTER_ADDRESS || process.env.CUBIXLES_SPLITTER_ADDRESS;
 const FROM_BLOCK = process.env.SWAP_FAIL_FROM_BLOCK
   ? Number(process.env.SWAP_FAIL_FROM_BLOCK)
   : undefined;
@@ -11,7 +12,9 @@ const TO_BLOCK = process.env.SWAP_FAIL_TO_BLOCK
 const ALERT_WEBHOOK_URL = process.env.ALERT_WEBHOOK_URL;
 
 if (!RPC_URL || !SPLITTER) {
-  console.error("Missing MAINNET_RPC_URL or ROYALTY_SPLITTER_ADDRESS.");
+  console.error(
+    "Missing MAINNET_RPC_URL or splitter address (ROYALTY_SPLITTER_ADDRESS/CUBIXLES_SPLITTER_ADDRESS)."
+  );
   process.exit(1);
 }
 

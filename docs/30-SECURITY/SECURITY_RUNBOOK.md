@@ -123,7 +123,7 @@ slither . --config-file slither.config.json
 
 ## Monitoring alerts
 - Configure `ALERT_WEBHOOK_URL` for mint spikes and pin failures.
-- Track swap failures with `npm run monitor:swaps` (requires `MAINNET_RPC_URL` and `ROYALTY_SPLITTER_ADDRESS`).
+- Track swap failures with `npm run monitor:swaps` (requires `MAINNET_RPC_URL` and `ROYALTY_SPLITTER_ADDRESS` or `CUBIXLES_SPLITTER_ADDRESS`).
 
 ## Formal verification (specs)
 - Specs live in `contracts/specs/` for royalty receiver and swap invariants.
