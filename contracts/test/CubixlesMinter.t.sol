@@ -41,18 +41,24 @@ contract CubixlesMinterHarness is CubixlesMinter {
             splitter,
             lessToken,
             bps,
-            0,
-            0,
-            0,
-            false,
-            paletteImagesCID,
-            paletteManifestHash,
-            address(vrfCoordinator),
-            vrfKeyHash,
-            vrfSubscriptionId,
-            vrfNativePayment,
-            vrfRequestConfirmations,
-            vrfCallbackGasLimit
+            CubixlesMinter.PricingConfig({
+                fixedMintPriceWei: 0,
+                baseMintPriceWei: 0,
+                baseMintPriceStepWei: 0,
+                linearPricingEnabled: false
+            }),
+            CubixlesMinter.PaletteConfig({
+                paletteImagesCID: paletteImagesCID,
+                paletteManifestHash: paletteManifestHash
+            }),
+            CubixlesMinter.VrfConfig({
+                coordinator: address(vrfCoordinator),
+                keyHash: vrfKeyHash,
+                subscriptionId: vrfSubscriptionId,
+                nativePayment: vrfNativePayment,
+                requestConfirmations: vrfRequestConfirmations,
+                callbackGasLimit: vrfCallbackGasLimit
+            })
         )
     {}
 
@@ -89,6 +95,48 @@ contract CubixlesMinterTest is Test {
     bytes32 private constant METADATA_HASH = keccak256("metadata");
     bytes32 private constant IMAGE_PATH_HASH = keccak256("image-path");
 
+    function _pricingConfig(
+        uint256 fixedPrice,
+        uint256 basePrice,
+        uint256 stepPrice,
+        bool linearEnabled
+    ) internal pure returns (CubixlesMinter.PricingConfig memory) {
+        return CubixlesMinter.PricingConfig({
+            fixedMintPriceWei: fixedPrice,
+            baseMintPriceWei: basePrice,
+            baseMintPriceStepWei: stepPrice,
+            linearPricingEnabled: linearEnabled
+        });
+    }
+
+    function _paletteConfig(
+        string memory imagesCid,
+        bytes32 manifestHash
+    ) internal pure returns (CubixlesMinter.PaletteConfig memory) {
+        return CubixlesMinter.PaletteConfig({
+            paletteImagesCID: imagesCid,
+            paletteManifestHash: manifestHash
+        });
+    }
+
+    function _vrfConfig(
+        address coordinator,
+        bytes32 keyHash,
+        uint256 subscriptionId,
+        bool nativePayment,
+        uint16 confirmations,
+        uint32 gasLimit
+    ) internal pure returns (CubixlesMinter.VrfConfig memory) {
+        return CubixlesMinter.VrfConfig({
+            coordinator: coordinator,
+            keyHash: keyHash,
+            subscriptionId: subscriptionId,
+            nativePayment: nativePayment,
+            requestConfirmations: confirmations,
+            callbackGasLimit: gasLimit
+        });
+    }
+
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
@@ -97,18 +145,16 @@ contract CubixlesMinterTest is Test {
             resaleSplitter,
             address(lessToken),
             500,
-            0,
-            0,
-            0,
-            false,
-            PALETTE_IMAGES_CID,
-            PALETTE_MANIFEST_HASH,
-            address(vrfCoordinator),
-            VRF_KEY_HASH,
-            VRF_SUB_ID,
-            VRF_NATIVE_PAYMENT,
-            VRF_CONFIRMATIONS,
-            VRF_CALLBACK_GAS_LIMIT
+            _pricingConfig(0, 0, 0, false),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
+            _vrfConfig(
+                address(vrfCoordinator),
+                VRF_KEY_HASH,
+                VRF_SUB_ID,
+                VRF_NATIVE_PAYMENT,
+                VRF_CONFIRMATIONS,
+                VRF_CALLBACK_GAS_LIMIT
+            )
         );
         vm.stopPrank();
 
@@ -231,18 +277,16 @@ contract CubixlesMinterTest is Test {
             resaleSplitter,
             address(lessToken),
             500,
-            0,
-            0,
-            0,
-            false,
-            paletteImagesCid,
-            paletteManifestHash,
-            vrfCoordinatorAddr,
-            vrfKeyHash,
-            vrfSubscriptionId,
-            vrfNativePayment,
-            vrfRequestConfirmations,
-            vrfCallbackGasLimit
+            _pricingConfig(0, 0, 0, false),
+            _paletteConfig(paletteImagesCid, paletteManifestHash),
+            _vrfConfig(
+                vrfCoordinatorAddr,
+                vrfKeyHash,
+                vrfSubscriptionId,
+                vrfNativePayment,
+                vrfRequestConfirmations,
+                vrfCallbackGasLimit
+            )
         );
     }
 
@@ -620,18 +664,16 @@ contract CubixlesMinterTest is Test {
             address(0),
             address(lessToken),
             500,
-            0,
-            0,
-            0,
-            false,
-            PALETTE_IMAGES_CID,
-            PALETTE_MANIFEST_HASH,
-            address(vrfCoordinator),
-            VRF_KEY_HASH,
-            VRF_SUB_ID,
-            VRF_NATIVE_PAYMENT,
-            VRF_CONFIRMATIONS,
-            VRF_CALLBACK_GAS_LIMIT
+            _pricingConfig(0, 0, 0, false),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
+            _vrfConfig(
+                address(vrfCoordinator),
+                VRF_KEY_HASH,
+                VRF_SUB_ID,
+                VRF_NATIVE_PAYMENT,
+                VRF_CONFIRMATIONS,
+                VRF_CALLBACK_GAS_LIMIT
+            )
         );
     }
 
@@ -641,18 +683,16 @@ contract CubixlesMinterTest is Test {
             resaleSplitter,
             address(0),
             500,
-            0,
-            0,
-            0,
-            false,
-            PALETTE_IMAGES_CID,
-            PALETTE_MANIFEST_HASH,
-            address(vrfCoordinator),
-            VRF_KEY_HASH,
-            VRF_SUB_ID,
-            VRF_NATIVE_PAYMENT,
-            VRF_CONFIRMATIONS,
-            VRF_CALLBACK_GAS_LIMIT
+            _pricingConfig(0, 0, 0, false),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
+            _vrfConfig(
+                address(vrfCoordinator),
+                VRF_KEY_HASH,
+                VRF_SUB_ID,
+                VRF_NATIVE_PAYMENT,
+                VRF_CONFIRMATIONS,
+                VRF_CALLBACK_GAS_LIMIT
+            )
         );
     }
 
@@ -662,18 +702,16 @@ contract CubixlesMinterTest is Test {
             resaleSplitter,
             address(lessToken),
             1001,
-            0,
-            0,
-            0,
-            false,
-            PALETTE_IMAGES_CID,
-            PALETTE_MANIFEST_HASH,
-            address(vrfCoordinator),
-            VRF_KEY_HASH,
-            VRF_SUB_ID,
-            VRF_NATIVE_PAYMENT,
-            VRF_CONFIRMATIONS,
-            VRF_CALLBACK_GAS_LIMIT
+            _pricingConfig(0, 0, 0, false),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
+            _vrfConfig(
+                address(vrfCoordinator),
+                VRF_KEY_HASH,
+                VRF_SUB_ID,
+                VRF_NATIVE_PAYMENT,
+                VRF_CONFIRMATIONS,
+                VRF_CALLBACK_GAS_LIMIT
+            )
         );
     }
 
@@ -781,18 +819,16 @@ contract CubixlesMinterTest is Test {
             resaleSplitter,
             address(0),
             500,
-            fixedPrice,
-            0,
-            0,
-            false,
-            PALETTE_IMAGES_CID,
-            PALETTE_MANIFEST_HASH,
-            address(vrfCoordinator),
-            VRF_KEY_HASH,
-            VRF_SUB_ID,
-            VRF_NATIVE_PAYMENT,
-            VRF_CONFIRMATIONS,
-            VRF_CALLBACK_GAS_LIMIT
+            _pricingConfig(fixedPrice, 0, 0, false),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
+            _vrfConfig(
+                address(vrfCoordinator),
+                VRF_KEY_HASH,
+                VRF_SUB_ID,
+                VRF_NATIVE_PAYMENT,
+                VRF_CONFIRMATIONS,
+                VRF_CALLBACK_GAS_LIMIT
+            )
         );
         assertEq(fixedMinter.currentMintPrice(), fixedPrice);
         assertEq(fixedMinter.lessSupplyNow(), 0);
@@ -804,18 +840,16 @@ contract CubixlesMinterTest is Test {
             resaleSplitter,
             address(0),
             500,
-            0,
-            0,
-            0,
-            true,
-            PALETTE_IMAGES_CID,
-            PALETTE_MANIFEST_HASH,
-            address(vrfCoordinator),
-            VRF_KEY_HASH,
-            VRF_SUB_ID,
-            VRF_NATIVE_PAYMENT,
-            VRF_CONFIRMATIONS,
-            VRF_CALLBACK_GAS_LIMIT
+            _pricingConfig(0, 0, 0, true),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
+            _vrfConfig(
+                address(vrfCoordinator),
+                VRF_KEY_HASH,
+                VRF_SUB_ID,
+                VRF_NATIVE_PAYMENT,
+                VRF_CONFIRMATIONS,
+                VRF_CALLBACK_GAS_LIMIT
+            )
         );
     }
 
@@ -825,18 +859,16 @@ contract CubixlesMinterTest is Test {
             resaleSplitter,
             address(lessToken),
             500,
-            0,
-            1,
-            1,
-            true,
-            PALETTE_IMAGES_CID,
-            PALETTE_MANIFEST_HASH,
-            address(vrfCoordinator),
-            VRF_KEY_HASH,
-            VRF_SUB_ID,
-            VRF_NATIVE_PAYMENT,
-            VRF_CONFIRMATIONS,
-            VRF_CALLBACK_GAS_LIMIT
+            _pricingConfig(0, 1, 1, true),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
+            _vrfConfig(
+                address(vrfCoordinator),
+                VRF_KEY_HASH,
+                VRF_SUB_ID,
+                VRF_NATIVE_PAYMENT,
+                VRF_CONFIRMATIONS,
+                VRF_CALLBACK_GAS_LIMIT
+            )
         );
     }
 
@@ -847,18 +879,16 @@ contract CubixlesMinterTest is Test {
             resaleSplitter,
             address(0),
             500,
-            0,
-            basePrice,
-            step,
-            true,
-            PALETTE_IMAGES_CID,
-            PALETTE_MANIFEST_HASH,
-            address(vrfCoordinator),
-            VRF_KEY_HASH,
-            VRF_SUB_ID,
-            VRF_NATIVE_PAYMENT,
-            VRF_CONFIRMATIONS,
-            VRF_CALLBACK_GAS_LIMIT
+            _pricingConfig(0, basePrice, step, true),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
+            _vrfConfig(
+                address(vrfCoordinator),
+                VRF_KEY_HASH,
+                VRF_SUB_ID,
+                VRF_NATIVE_PAYMENT,
+                VRF_CONFIRMATIONS,
+                VRF_CALLBACK_GAS_LIMIT
+            )
         );
         assertEq(linearMinter.currentMintPrice(), basePrice);
         stdstore

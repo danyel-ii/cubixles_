@@ -98,6 +98,48 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
     string private constant PALETTE_IMAGES_CID = "bafyimagescid";
     bytes32 private constant PALETTE_MANIFEST_HASH = keccak256("manifest");
 
+    function _pricingConfig(
+        uint256 fixedPrice,
+        uint256 basePrice,
+        uint256 stepPrice,
+        bool linearEnabled
+    ) internal pure returns (CubixlesMinter.PricingConfig memory) {
+        return CubixlesMinter.PricingConfig({
+            fixedMintPriceWei: fixedPrice,
+            baseMintPriceWei: basePrice,
+            baseMintPriceStepWei: stepPrice,
+            linearPricingEnabled: linearEnabled
+        });
+    }
+
+    function _paletteConfig(
+        string memory imagesCid,
+        bytes32 manifestHash
+    ) internal pure returns (CubixlesMinter.PaletteConfig memory) {
+        return CubixlesMinter.PaletteConfig({
+            paletteImagesCID: imagesCid,
+            paletteManifestHash: manifestHash
+        });
+    }
+
+    function _vrfConfig(
+        address coordinator,
+        bytes32 keyHash,
+        uint256 subscriptionId,
+        bool nativePayment,
+        uint16 confirmations,
+        uint32 gasLimit
+    ) internal pure returns (CubixlesMinter.VrfConfig memory) {
+        return CubixlesMinter.VrfConfig({
+            coordinator: coordinator,
+            keyHash: keyHash,
+            subscriptionId: subscriptionId,
+            nativePayment: nativePayment,
+            requestConfirmations: confirmations,
+            callbackGasLimit: gasLimit
+        });
+    }
+
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
@@ -106,18 +148,16 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
             resaleSplitter,
             address(lessToken),
             500,
-            0,
-            0,
-            0,
-            false,
-            PALETTE_IMAGES_CID,
-            PALETTE_MANIFEST_HASH,
-            address(vrfCoordinator),
-            VRF_KEY_HASH,
-            VRF_SUB_ID,
-            VRF_NATIVE_PAYMENT,
-            VRF_CONFIRMATIONS,
-            VRF_CALLBACK_GAS_LIMIT
+            _pricingConfig(0, 0, 0, false),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
+            _vrfConfig(
+                address(vrfCoordinator),
+                VRF_KEY_HASH,
+                VRF_SUB_ID,
+                VRF_NATIVE_PAYMENT,
+                VRF_CONFIRMATIONS,
+                VRF_CALLBACK_GAS_LIMIT
+            )
         );
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");

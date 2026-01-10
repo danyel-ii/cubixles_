@@ -52,22 +52,31 @@ contract DeployCubixles is Script {
             pnkPoolKey,
             cfg.swapMaxSlippageBps
         );
+        CubixlesMinter.PricingConfig memory pricing = CubixlesMinter.PricingConfig({
+            fixedMintPriceWei: cfg.fixedMintPriceWei,
+            baseMintPriceWei: cfg.baseMintPriceWei,
+            baseMintPriceStepWei: cfg.baseMintPriceStepWei,
+            linearPricingEnabled: cfg.linearPricingEnabled
+        });
+        CubixlesMinter.PaletteConfig memory palette = CubixlesMinter.PaletteConfig({
+            paletteImagesCID: cfg.paletteImagesCID,
+            paletteManifestHash: cfg.paletteManifestHash
+        });
+        CubixlesMinter.VrfConfig memory vrf = CubixlesMinter.VrfConfig({
+            coordinator: cfg.vrfCoordinator,
+            keyHash: cfg.vrfKeyHash,
+            subscriptionId: cfg.vrfSubscriptionId,
+            nativePayment: cfg.vrfNativePayment,
+            requestConfirmations: cfg.vrfRequestConfirmations,
+            callbackGasLimit: cfg.vrfCallbackGasLimit
+        });
         CubixlesMinter minter = new CubixlesMinter(
             address(splitter),
             cfg.lessToken,
             cfg.resaleRoyaltyBps,
-            cfg.fixedMintPriceWei,
-            cfg.baseMintPriceWei,
-            cfg.baseMintPriceStepWei,
-            cfg.linearPricingEnabled,
-            cfg.paletteImagesCID,
-            cfg.paletteManifestHash,
-            cfg.vrfCoordinator,
-            cfg.vrfKeyHash,
-            cfg.vrfSubscriptionId,
-            cfg.vrfNativePayment,
-            cfg.vrfRequestConfirmations,
-            cfg.vrfCallbackGasLimit
+            pricing,
+            palette,
+            vrf
         );
         if (cfg.commitFeeWei != 0) {
             minter.setCommitFee(cfg.commitFeeWei);

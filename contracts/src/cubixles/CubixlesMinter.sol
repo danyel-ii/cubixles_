@@ -142,6 +142,27 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         bytes32 commitment;
     }
 
+    struct PricingConfig {
+        uint256 fixedMintPriceWei;
+        uint256 baseMintPriceWei;
+        uint256 baseMintPriceStepWei;
+        bool linearPricingEnabled;
+    }
+
+    struct PaletteConfig {
+        string paletteImagesCID;
+        bytes32 paletteManifestHash;
+    }
+
+    struct VrfConfig {
+        address coordinator;
+        bytes32 keyHash;
+        uint256 subscriptionId;
+        bool nativePayment;
+        uint16 requestConfirmations;
+        uint32 callbackGasLimit;
+    }
+
     /// @notice LESS supply at mint time by tokenId.
     mapping(uint256 => uint256) private _mintSupply;
     /// @notice LESS supply at last transfer by tokenId.
@@ -275,74 +296,51 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @param resaleSplitter_ Royalty receiver for ERC-2981.
     /// @param lessToken_ LESS token address.
     /// @param resaleRoyaltyBps Royalty rate in basis points.
-    /// @param fixedMintPriceWei_ Fixed mint price when LESS is disabled.
-    /// @param baseMintPriceWei_ Base mint price for linear pricing.
-    /// @param baseMintPriceStepWei_ Price step per mint for linear pricing.
-    /// @param linearPricingEnabled_ Whether linear pricing is enabled.
-    /// @param paletteImagesCID_ Base CID for palette images.
-    /// @param paletteManifestHash_ Hash or Merkle root of palette manifest.
-    /// @param vrfCoordinator_ Chainlink VRF coordinator address.
-    /// @param vrfKeyHash_ Chainlink VRF key hash.
-    /// @param vrfSubscriptionId_ Chainlink VRF subscription id.
-    /// @param vrfNativePayment_ Whether VRF requests use native token billing.
-    /// @param vrfRequestConfirmations_ Chainlink VRF request confirmations.
-    /// @param vrfCallbackGasLimit_ Chainlink VRF callback gas limit.
+    /// @param pricing Pricing configuration (fixed/linear).
+    /// @param palette Palette configuration (CID + manifest hash).
+    /// @param vrf VRF configuration.
     constructor(
         address resaleSplitter_,
         address lessToken_,
         uint96 resaleRoyaltyBps,
-        uint256 fixedMintPriceWei_,
-        uint256 baseMintPriceWei_,
-        uint256 baseMintPriceStepWei_,
-        bool linearPricingEnabled_,
-        string memory paletteImagesCID_,
-        bytes32 paletteManifestHash_,
-        address vrfCoordinator_,
-        bytes32 vrfKeyHash_,
-        uint256 vrfSubscriptionId_,
-        bool vrfNativePayment_,
-        uint16 vrfRequestConfirmations_,
-        uint32 vrfCallbackGasLimit_
+        PricingConfig memory pricing,
+        PaletteConfig memory palette,
+        VrfConfig memory vrf
     )
         ERC721("cubixles_", "cubixles_")
         Ownable(msg.sender)
-        VRFConsumerBaseV2(vrfCoordinator_)
+        VRFConsumerBaseV2(vrf.coordinator)
     {
         _requireConstructorConfig(
             resaleSplitter_,
             resaleRoyaltyBps,
-            paletteImagesCID_,
-            paletteManifestHash_,
-            vrfCoordinator_,
-            vrfKeyHash_,
-            vrfSubscriptionId_,
-            vrfRequestConfirmations_,
-            vrfCallbackGasLimit_
+            palette,
+            vrf
         );
         // slither-disable-next-line missing-zero-check
         resaleSplitter = resaleSplitter_;
         // slither-disable-next-line missing-zero-check
         LESS_TOKEN = lessToken_;
-        linearPricingEnabled = linearPricingEnabled_;
-        baseMintPriceWei = baseMintPriceWei_;
-        baseMintPriceStepWei = baseMintPriceStepWei_;
-        paletteImagesCID = paletteImagesCID_;
-        paletteManifestHash = paletteManifestHash_;
-        vrfCoordinator = VRFCoordinatorV2_5Interface(vrfCoordinator_);
-        vrfKeyHash = vrfKeyHash_;
-        vrfSubscriptionId = vrfSubscriptionId_;
-        vrfNativePayment = vrfNativePayment_;
-        vrfRequestConfirmations = vrfRequestConfirmations_;
-        vrfCallbackGasLimit = vrfCallbackGasLimit_;
+        linearPricingEnabled = pricing.linearPricingEnabled;
+        baseMintPriceWei = pricing.baseMintPriceWei;
+        baseMintPriceStepWei = pricing.baseMintPriceStepWei;
+        paletteImagesCID = palette.paletteImagesCID;
+        paletteManifestHash = palette.paletteManifestHash;
+        vrfCoordinator = VRFCoordinatorV2_5Interface(vrf.coordinator);
+        vrfKeyHash = vrf.keyHash;
+        vrfSubscriptionId = vrf.subscriptionId;
+        vrfNativePayment = vrf.nativePayment;
+        vrfRequestConfirmations = vrf.requestConfirmations;
+        vrfCallbackGasLimit = vrf.callbackGasLimit;
         (bool lessEnabled_, uint256 resolvedFixedPrice) = _resolvePricing(
             lessToken_,
-            linearPricingEnabled_,
-            fixedMintPriceWei_,
-            baseMintPriceWei_,
-            baseMintPriceStepWei_
+            pricing.linearPricingEnabled,
+            pricing.fixedMintPriceWei,
+            pricing.baseMintPriceWei,
+            pricing.baseMintPriceStepWei
         );
         lessEnabled = lessEnabled_;
-        if (!lessEnabled_ && !linearPricingEnabled_) {
+        if (!lessEnabled_ && !pricing.linearPricingEnabled) {
             fixedMintPriceWei = resolvedFixedPrice;
         }
 
@@ -400,30 +398,22 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         if (!(totalAssigned < MAX_MINTS)) {
             revert MintCapReached();
         }
-        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
-            keyHash: vrfKeyHash,
-            subId: vrfSubscriptionId,
-            requestConfirmations: vrfRequestConfirmations,
-            callbackGasLimit: vrfCallbackGasLimit,
-            numWords: VRF_NUM_WORDS,
-            extraArgs: VRFV2PlusClient._argsToBytes(
-                VRFV2PlusClient.ExtraArgsV1({ nativePayment: vrfNativePayment })
-            )
-        });
+        VRFV2PlusClient.RandomWordsRequest memory request;
+        request.keyHash = vrfKeyHash;
+        request.subId = vrfSubscriptionId;
+        request.requestConfirmations = vrfRequestConfirmations;
+        request.callbackGasLimit = vrfCallbackGasLimit;
+        request.numWords = VRF_NUM_WORDS;
+        request.extraArgs = VRFV2PlusClient._argsToBytes(
+            VRFV2PlusClient.ExtraArgsV1({ nativePayment: vrfNativePayment })
+        );
         uint256 requestId = vrfCoordinator.requestRandomWords(request);
-        mintCommitByMinter[msg.sender] = MintCommit({
-            commitment: commitment,
-            blockNumber: block.number,
-            requestId: requestId,
-            randomness: 0,
-            randomnessReady: false,
-            paletteIndex: 0,
-            paletteAssigned: false,
-            metadataHash: bytes32(0),
-            imagePathHash: bytes32(0),
-            metadataCommitted: false,
-            commitFee: msg.value
-        });
+        MintCommit memory commit;
+        commit.commitment = commitment;
+        commit.blockNumber = block.number;
+        commit.requestId = requestId;
+        commit.commitFee = msg.value;
+        mintCommitByMinter[msg.sender] = commit;
         _mintRequestById[requestId] = MintRequest({ minter: msg.sender, commitment: commitment });
         emit MintCommitCreated(msg.sender, commitment, block.number, requestId);
     }
@@ -678,9 +668,18 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
             }
             sorted[j] = key;
         }
-        bytes memory packed = "";
+        bytes memory packed = new bytes(sorted.length * 52);
+        uint256 offset = 0;
         for (uint256 i = 0; i < sorted.length; ++i) {
-            packed = abi.encodePacked(packed, sorted[i].contractAddress, sorted[i].tokenId);
+            address contractAddress = sorted[i].contractAddress;
+            uint256 tokenId = sorted[i].tokenId;
+            // Pack as address (20 bytes) + tokenId (32 bytes) to match abi.encodePacked.
+            assembly {
+                let ptr := add(add(packed, 32), offset)
+                mstore(ptr, shl(96, contractAddress))
+                mstore(add(ptr, 20), tokenId)
+            }
+            offset += 52;
         }
         return keccak256(packed);
     }
@@ -725,13 +724,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     function _requireConstructorConfig(
         address resaleSplitter_,
         uint96 resaleRoyaltyBps,
-        string memory paletteImagesCID_,
-        bytes32 paletteManifestHash_,
-        address vrfCoordinator_,
-        bytes32 vrfKeyHash_,
-        uint256 vrfSubscriptionId_,
-        uint16 vrfRequestConfirmations_,
-        uint32 vrfCallbackGasLimit_
+        PaletteConfig memory palette,
+        VrfConfig memory vrf
     ) private view {
         if (resaleSplitter_ == address(0)) {
             revert ResaleSplitterRequired();
@@ -739,28 +733,28 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         if (resaleRoyaltyBps > 1000) {
             revert RoyaltyTooHigh();
         }
-        if (bytes(paletteImagesCID_).length == 0) {
+        if (bytes(palette.paletteImagesCID).length == 0) {
             revert PaletteImagesCidRequired();
         }
-        if (paletteManifestHash_ == bytes32(0)) {
+        if (palette.paletteManifestHash == bytes32(0)) {
             revert PaletteManifestHashRequired();
         }
-        if (vrfCoordinator_ == address(0)) {
+        if (vrf.coordinator == address(0)) {
             revert VrfCoordinatorRequired();
         }
-        if (vrfCoordinator_.code.length == 0) {
-            revert VrfCoordinatorNotContract(vrfCoordinator_);
+        if (vrf.coordinator.code.length == 0) {
+            revert VrfCoordinatorNotContract(vrf.coordinator);
         }
-        if (vrfKeyHash_ == bytes32(0)) {
+        if (vrf.keyHash == bytes32(0)) {
             revert VrfKeyHashRequired();
         }
-        if (vrfSubscriptionId_ == 0) {
+        if (vrf.subscriptionId == 0) {
             revert VrfSubscriptionRequired();
         }
-        if (vrfRequestConfirmations_ == 0) {
+        if (vrf.requestConfirmations == 0) {
             revert VrfRequestConfirmationsRequired();
         }
-        if (vrfCallbackGasLimit_ == 0) {
+        if (vrf.callbackGasLimit == 0) {
             revert VrfCallbackGasLimitRequired();
         }
     }
