@@ -871,7 +871,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard {
     function _commitEntropy(MintCommit memory commit) private view returns (uint256) {
         uint256 revealBlock = commit.blockNumber + COMMIT_REVEAL_DELAY_BLOCKS;
         bytes32 revealHash = blockhash(revealBlock);
-        // slither-disable-next-line dangerous-strict-equalities
+        // slither-disable-next-line incorrect-equality
         if (revealHash == bytes32(0)) {
             revert MintCommitExpired();
         }
@@ -959,7 +959,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
     function _resolvePaletteIndex(uint256 offset) private view returns (uint256) {
         uint256 mapped = _paletteIndexSwap[offset];
-        // slither-disable-next-line dangerous-strict-equalities
+        // slither-disable-next-line incorrect-equality
         return mapped == 0 ? offset : mapped - 1;
     }
 
