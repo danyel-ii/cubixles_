@@ -39,6 +39,31 @@ contract MockToken is ERC20 {
     }
 }
 
+contract MockWETH is ERC20 {
+    bool public transferSucceeds = true;
+
+    constructor() ERC20("Wrapped ETH", "WETH") {}
+
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
+
+    function setTransferSucceeds(bool value) external {
+        transferSucceeds = value;
+    }
+
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        if (!transferSucceeds) {
+            return false;
+        }
+        return super.transfer(to, amount);
+    }
+
+    function withdraw(uint256 amount) external {
+        _burn(msg.sender, amount);
+    }
+}
+
 contract MockPoolManager {
     MockToken public immutable less;
     MockToken public immutable pnk;
@@ -279,7 +304,8 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 2 ether);
-        address(splitter).call{ value: 2 ether }("");
+        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
+        assertTrue(ok);
         assertEq(owner.balance, 2 ether);
     }
 
@@ -298,7 +324,8 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 2 ether);
-        address(splitter).call{ value: 2 ether }("");
+        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
+        assertTrue(ok);
         assertEq(owner.balance, 2 ether);
     }
 
@@ -347,8 +374,8 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 1 ether);
-        vm.expectRevert();
-        address(splitter).call{ value: 1 ether }("");
+        (bool ok, ) = address(splitter).call{ value: 1 ether }("");
+        assertFalse(ok);
     }
 
     function testSwapOutputTooLowFallsBackToOwner() public {
@@ -366,7 +393,8 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 2 ether);
-        address(splitter).call{ value: 2 ether }("");
+        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
+        assertTrue(ok);
         assertEq(owner.balance, 2 ether);
     }
 
@@ -405,7 +433,8 @@ contract RoyaltySplitterTest is Test {
         );
 
         vm.deal(address(this), 2 ether);
-        address(splitter).call{ value: 2 ether }("");
+        (bool ok, ) = address(splitter).call{ value: 2 ether }("");
+        assertTrue(ok);
         assertEq(owner.balance, 2 ether);
     }
 
@@ -740,5 +769,113 @@ contract RoyaltySplitterTest is Test {
         (int128 amount0, int128 amount1) = abi.decode(result, (int128, int128));
         assertTrue(amount0 < 0);
         assertTrue(amount1 > 0);
+    }
+
+    function testSweepWethRevertsOnZeroRecipient() public {
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockWETH weth = new MockWETH();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            address(pnk),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            _poolKey(address(pnk)),
+            0
+        );
+
+        vm.prank(owner);
+        vm.expectRevert(RoyaltySplitter.RecipientRequired.selector);
+        splitter.sweepWeth(address(weth), address(0), false);
+    }
+
+    function testSweepWethNoopWhenEmpty() public {
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockWETH weth = new MockWETH();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            address(pnk),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            _poolKey(address(pnk)),
+            0
+        );
+
+        vm.prank(owner);
+        splitter.sweepWeth(address(weth), owner, false);
+        assertEq(weth.balanceOf(owner), 0);
+    }
+
+    function testSweepWethUnwrapsToEth() public {
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockWETH weth = new MockWETH();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            address(pnk),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            _poolKey(address(pnk)),
+            0
+        );
+
+        uint256 amount = 1 ether;
+        weth.mint(address(splitter), amount);
+        vm.deal(address(splitter), amount);
+
+        vm.prank(owner);
+        splitter.sweepWeth(address(weth), owner, true);
+
+        assertEq(weth.balanceOf(address(splitter)), 0);
+        assertEq(owner.balance, amount);
+    }
+
+    function testSweepWethTransfersToken() public {
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockWETH weth = new MockWETH();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            address(pnk),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            _poolKey(address(pnk)),
+            0
+        );
+
+        uint256 amount = 2 ether;
+        weth.mint(address(splitter), amount);
+
+        vm.prank(owner);
+        splitter.sweepWeth(address(weth), owner, false);
+
+        assertEq(weth.balanceOf(owner), amount);
+    }
+
+    function testSweepWethRevertsOnTransferFailure() public {
+        MockToken less = new MockToken("LESS", "LESS");
+        MockToken pnk = new MockToken("PNKSTR", "PNK");
+        MockWETH weth = new MockWETH();
+        RoyaltySplitter splitter = new RoyaltySplitter(
+            owner,
+            address(less),
+            address(pnk),
+            IPoolManager(address(0)),
+            _poolKey(address(less)),
+            _poolKey(address(pnk)),
+            0
+        );
+
+        weth.mint(address(splitter), 1 ether);
+        weth.setTransferSucceeds(false);
+
+        vm.prank(owner);
+        vm.expectRevert(RoyaltySplitter.WethTransferFailed.selector);
+        splitter.sweepWeth(address(weth), owner, false);
     }
 }

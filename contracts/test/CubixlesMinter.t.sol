@@ -201,6 +201,14 @@ contract CubixlesMinterTest is Test {
         vm.roll(revealBlock + 1);
     }
 
+    function _advancePastExpiry(address minterAddr) internal {
+        (, uint256 commitBlock, , , , , ) = minter.mintCommitByMinter(minterAddr);
+        uint256 expiryBlock = commitBlock
+            + minter.COMMIT_REVEAL_DELAY_BLOCKS()
+            + minter.COMMIT_REVEAL_WINDOW_BLOCKS();
+        vm.roll(expiryBlock + 1);
+    }
+
     function _commitAndFulfill(
         address minterAddr,
         bytes32 salt,
@@ -978,6 +986,168 @@ contract CubixlesMinterTest is Test {
             abi.encodeWithSelector(CubixlesMinter.MintCommitCooldown.selector, untilBlock)
         );
         minter.commitMint(commitmentB);
+    }
+
+    function testCommitMetadataRevertsOnEmptyMetadataHash() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _advanceToReveal(minterAddr);
+
+        vm.prank(minterAddr);
+        vm.expectRevert(CubixlesMinter.MetadataHashRequired.selector);
+        minter.commitMetadata(bytes32(0), IMAGE_PATH_HASH, 0);
+    }
+
+    function testCommitMetadataRevertsOnEmptyImagePathHash() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _advanceToReveal(minterAddr);
+
+        vm.prank(minterAddr);
+        vm.expectRevert(CubixlesMinter.ImagePathHashRequired.selector);
+        minter.commitMetadata(METADATA_HASH, bytes32(0), 0);
+    }
+
+    function testCommitMetadataRevertsWhenAlreadyCommitted() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _advanceToReveal(minterAddr);
+
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
+        vm.prank(minterAddr);
+        minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH, expected);
+
+        vm.prank(minterAddr);
+        vm.expectRevert(CubixlesMinter.MintMetadataCommitActive.selector);
+        minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH, expected);
+    }
+
+    function testCommitMetadataRevertsOnPaletteMismatch() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _advanceToReveal(minterAddr);
+
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
+        vm.prank(minterAddr);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CubixlesMinter.PaletteIndexMismatch.selector,
+                expected + 1,
+                expected
+            )
+        );
+        minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH, expected + 1);
+    }
+
+    function testCancelCommitForfeitsExpiredCommit() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _advancePastExpiry(minterAddr);
+
+        vm.prank(minterAddr);
+        minter.cancelCommit();
+
+        (, uint256 blockNumber, , , , , ) = minter.mintCommitByMinter(minterAddr);
+        assertEq(blockNumber, 0);
+    }
+
+    function testSweepExpiredCommitRevertsWhenActive() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+
+        vm.expectRevert(CubixlesMinter.MintCommitActive.selector);
+        minter.sweepExpiredCommit(minterAddr);
+    }
+
+    function testSweepExpiredCommitClearsState() public {
+        address minterAddr = makeAddr("minter");
+        uint256 tokenA = nftA.mint(minterAddr);
+        uint256 tokenB = nftB.mint(minterAddr);
+        uint256 tokenC = nftC.mint(minterAddr);
+
+        CubixlesMinter.NftRef[] memory refs = _buildRefs(tokenA, tokenB, tokenC);
+        _commitMint(minterAddr, DEFAULT_SALT, refs);
+        _advancePastExpiry(minterAddr);
+
+        minter.sweepExpiredCommit(minterAddr);
+
+        (, uint256 blockNumber, , , , , ) = minter.mintCommitByMinter(minterAddr);
+        assertEq(blockNumber, 0);
+    }
+
+    function testSetCommitConfigUpdatesValues() public {
+        vm.startPrank(owner);
+        minter.setCommitCooldownBlocks(12);
+        minter.setCommitCancelThreshold(3);
+        vm.stopPrank();
+
+        assertEq(minter.commitCooldownBlocks(), 12);
+        assertEq(minter.commitCancelThreshold(), 3);
+    }
+
+    function testSetFixedMintPriceRevertsWhenLessEnabled() public {
+        vm.prank(owner);
+        vm.expectRevert(CubixlesMinter.FixedPriceNotAllowed.selector);
+        minter.setFixedMintPrice(1 ether);
+    }
+
+    function testSetFixedMintPriceUpdatesWhenAllowed() public {
+        vm.startPrank(owner);
+        CubixlesMinter fixedMinter = new CubixlesMinter(
+            resaleSplitter,
+            address(0),
+            500,
+            _pricingConfig(1 ether, 0, 0, false),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH)
+        );
+        fixedMinter.setFixedMintPrice(2 ether);
+        vm.stopPrank();
+
+        assertEq(fixedMinter.fixedMintPriceWei(), 2 ether);
+    }
+
+    function testSetFixedMintPriceRevertsOnZero() public {
+        vm.startPrank(owner);
+        CubixlesMinter fixedMinter = new CubixlesMinter(
+            resaleSplitter,
+            address(0),
+            500,
+            _pricingConfig(1 ether, 0, 0, false),
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH)
+        );
+        vm.expectRevert(CubixlesMinter.FixedPriceRequired.selector);
+        fixedMinter.setFixedMintPrice(0);
+        vm.stopPrank();
     }
 
     function testMintRevertsOnEmptyTokenUri() public {
