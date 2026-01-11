@@ -171,8 +171,15 @@ async function handleRequest(request) {
         body: JSON.stringify(payload),
       });
       if (!rpcResponse.ok) {
+        let detail = "";
+        try {
+          detail = await rpcResponse.text();
+        } catch (error) {
+          void error;
+        }
+        const suffix = detail ? `: ${detail}` : "";
         return NextResponse.json(
-          { error: `RPC call failed (${rpcResponse.status})`, requestId },
+          { error: `RPC call failed (${rpcResponse.status})${suffix}`, requestId },
           { status: rpcResponse.status }
         );
       }
@@ -234,8 +241,28 @@ async function handleRequest(request) {
         logRequest({ route: "/api/nfts", status: 200, requestId, bodySize });
         return fallbackResponse;
       }
+      let detail = "";
+      try {
+        const cloned = alchemyResponse.clone();
+        const json = await cloned.json();
+        if (json?.error) {
+          detail = json.error;
+        } else if (json?.message) {
+          detail = json.message;
+        }
+      } catch (error) {
+        void error;
+      }
+      if (!detail) {
+        try {
+          detail = await alchemyResponse.text();
+        } catch (error) {
+          void error;
+        }
+      }
+      const suffix = detail ? `: ${detail}` : "";
       return NextResponse.json(
-        { error: `Alchemy request failed (${alchemyResponse.status})`, requestId },
+        { error: `Alchemy request failed (${alchemyResponse.status})${suffix}`, requestId },
         { status: alchemyResponse.status }
       );
     }

@@ -133,8 +133,12 @@ function formatError(error, { iface } = {}) {
   if (code === 4001 || code === "ACTION_REJECTED") {
     return "Transaction cancelled in wallet.";
   }
-  if (code === "INSUFFICIENT_FUNDS" || /insufficient funds/i.test(message)) {
-    return "Insufficient ETH to cover gas + value.";
+  if (
+    code === "INSUFFICIENT_FUNDS" ||
+    code === -32000 ||
+    /insufficient funds/i.test(message)
+  ) {
+    return "Insufficient ETH to cover gas (and mint price, if applicable).";
   }
   if (/user rejected|denied|cancelled/i.test(message)) {
     return "Transaction cancelled in wallet.";
@@ -557,13 +561,21 @@ export function initMintUi() {
     return fallback;
   }
 
-  async function ensureBalanceForMint({ provider, contract, args, valueWei }) {
+  async function ensureBalanceForTransaction({
+    provider,
+    contract,
+    method,
+    args,
+    valueWei,
+    label,
+  }) {
     if (!provider || !contract || !walletState?.address || valueWei == null) {
       return;
     }
+    const overrides = valueWei ? { value: valueWei } : {};
     let gasLimit = null;
     try {
-      gasLimit = await contract.estimateGas.mint(...args, { value: valueWei });
+      gasLimit = await contract.estimateGas[method](...args, overrides);
     } catch (error) {
       return;
     }
@@ -581,10 +593,23 @@ export function initMintUi() {
     if (balance < required) {
       const shortfall = required - balance;
       const shortfallEth = formatEthFromWei(shortfall);
+      const step = label ? `${label} ` : "";
+      const valueLabel = valueWei ? "price + " : "";
       throw new Error(
-        `Insufficient ETH for mint price + gas. Add about ${shortfallEth} ETH and retry.`
+        `Insufficient ETH for ${step}${valueLabel}gas. Add about ${shortfallEth} ETH and retry.`
       );
     }
+  }
+
+  async function ensureBalanceForMint({ provider, contract, args, valueWei }) {
+    return ensureBalanceForTransaction({
+      provider,
+      contract,
+      method: "mint",
+      args,
+      valueWei,
+      label: "mint",
+    });
   }
 
   async function waitForRevealBlock({ readContract, commitment, readProvider }) {
@@ -939,6 +964,14 @@ export function initMintUi() {
           message: "You will confirm three wallet prompts: commit, metadata, then mint.",
           tone: "neutral",
         });
+        await ensureBalanceForTransaction({
+          provider,
+          contract,
+          method: "commitMint",
+          args: [commitment],
+          valueWei: 0n,
+          label: "commit",
+        });
         setStatus(`Step 1/${totalSteps}: confirm commit in your wallet.`);
         await contract.commitMint.staticCall(commitment);
         const commitTx = await contract.commitMint(commitment);
@@ -1062,6 +1095,14 @@ export function initMintUi() {
           );
         }
       } else {
+        await ensureBalanceForTransaction({
+          provider,
+          contract,
+          method: "commitMetadata",
+          args: [metadataHash, imagePathHash, expectedPaletteIndex],
+          valueWei: 0n,
+          label: "metadata",
+        });
         setStatus(`Step ${metadataStep}/${totalSteps}: confirm metadata in your wallet.`);
         await contract.commitMetadata.staticCall(
           metadataHash,

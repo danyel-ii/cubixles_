@@ -40,7 +40,7 @@ function buildCsp({ nonce, frameAncestors, isProd, reportUri, reportTo, includeU
     "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com https:",
-    "connect-src 'self' https: wss:",
+    "connect-src 'self' https: wss: data: blob:",
     ...(includeUpgrade ? ["upgrade-insecure-requests"] : []),
   ];
 

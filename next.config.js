@@ -12,6 +12,15 @@ const nextConfig = {
     }
     return config;
   },
+  async redirects() {
+    return [
+      {
+        source: "/palette_cycle_512.gif",
+        destination: "/assets/palette_cycle_512.gif",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     const securityHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },
