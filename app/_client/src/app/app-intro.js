@@ -1,7 +1,7 @@
 import { config } from "./app-config.js";
 import { state } from "./app-state.js";
 
-const INTRO_DURATION_MS = 3600;
+const INTRO_DURATION_MS = 4400;
 const INTRO_HOLD_MS = 750;
 const INTRO_FADE_START = 0.55;
 const INTRO_FADE_END = 0.92;
@@ -65,7 +65,7 @@ export function initIntro() {
     typeof document !== "undefined" &&
     document.body.classList.contains("is-token-view");
   const duration = reduceMotion ? 1200 : INTRO_DURATION_MS;
-  const zoomStart = Math.max(config.zoom.max + 140, config.zoom.initial + 240);
+  const zoomStart = Math.max(config.zoom.max + 260, config.zoom.initial + 380);
 
   state.intro = {
     active: !reduceMotion && !isTokenView && !skipIntro,
