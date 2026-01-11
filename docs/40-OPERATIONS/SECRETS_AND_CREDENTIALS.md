@@ -21,6 +21,7 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 
 ## Required secrets (app)
 - `PINATA_JWT`
+- `PINATA_GROUP_ID`
 - `ALCHEMY_API_KEY`
 - `SERVER_AUTH_SALT` (HMAC nonce signing)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`

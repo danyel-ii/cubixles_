@@ -100,6 +100,7 @@ node contracts/scripts/export-abi.mjs
 
 ### Server env (Vercel or local)
 - `PINATA_JWT`
+- `PINATA_GROUP_ID`
 - `ALCHEMY_API_KEY`
 - `SERVER_AUTH_SALT`
 - `CUBIXLES_CHAIN_ID=1` (server signature verification; use `11155111` only for Sepolia rehearsal)
