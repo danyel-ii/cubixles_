@@ -5,7 +5,6 @@ import { Test } from "forge-std/Test.sol";
 import { CubixlesMinter } from "../../src/cubixles/CubixlesMinter.sol";
 import { MockERC721Standard } from "../mocks/MockERC721s.sol";
 import { MockERC20 } from "../mocks/MockERC20.sol";
-import { MockVRFCoordinatorV2 } from "../mocks/MockVRFCoordinatorV2.sol";
 import { Refs } from "../helpers/Refs.sol";
 
 contract CubixlesMinterFuzzTest is Test {
@@ -14,13 +13,6 @@ contract CubixlesMinterFuzzTest is Test {
     MockERC20 private lessToken;
     address private owner = makeAddr("owner");
     address private resaleSplitter = makeAddr("splitter");
-    MockVRFCoordinatorV2 private vrfCoordinator;
-    bytes32 private constant VRF_KEY_HASH = keccak256("vrf-key");
-    uint256 private constant VRF_SUB_ID = 1;
-    bool private constant VRF_NATIVE_PAYMENT = true;
-    uint16 private constant VRF_CONFIRMATIONS = 3;
-    uint32 private constant VRF_CALLBACK_GAS_LIMIT = 200_000;
-    uint256 private constant DEFAULT_RANDOMNESS = 123_456;
     string private constant PALETTE_IMAGES_CID = "bafyimagescid";
     bytes32 private constant PALETTE_MANIFEST_HASH = keccak256("manifest");
     string private constant TOKEN_URI_PREFIX = "ipfs://metadata/";
@@ -51,24 +43,6 @@ contract CubixlesMinterFuzzTest is Test {
         });
     }
 
-    function _vrfConfig(
-        address coordinator,
-        bytes32 keyHash,
-        uint256 subscriptionId,
-        bool nativePayment,
-        uint16 confirmations,
-        uint32 gasLimit
-    ) internal pure returns (CubixlesMinter.VrfConfig memory) {
-        return CubixlesMinter.VrfConfig({
-            coordinator: coordinator,
-            keyHash: keyHash,
-            subscriptionId: subscriptionId,
-            nativePayment: nativePayment,
-            requestConfirmations: confirmations,
-            callbackGasLimit: gasLimit
-        });
-    }
-
     function _commitMint(
         address minterAddr,
         bytes32 salt,
@@ -76,40 +50,32 @@ contract CubixlesMinterFuzzTest is Test {
     ) internal {
         bytes32 refsHash = Refs.hashCanonical(refs);
         bytes32 commitment = minter.computeCommitment(minterAddr, salt, refsHash);
-        uint256 commitFee = minter.commitFeeWei();
         vm.prank(minterAddr);
-        minter.commitMint{ value: commitFee }(commitment);
-        vm.roll(block.number + 1);
-        (, , uint256 requestId, , , , , , , , ) = minter.mintCommitByMinter(minterAddr);
-        uint256[] memory words = new uint256[](1);
-        words[0] = DEFAULT_RANDOMNESS;
-        vm.prank(address(vrfCoordinator));
-        minter.rawFulfillRandomWords(requestId, words);
+        minter.commitMint(commitment);
+        _advanceToReveal(minterAddr);
+    }
+
+    function _advanceToReveal(address minterAddr) internal {
+        (, uint256 commitBlock, , , , , ) = minter.mintCommitByMinter(minterAddr);
+        uint256 revealBlock = commitBlock + minter.COMMIT_REVEAL_DELAY_BLOCKS();
+        vm.roll(revealBlock + 1);
     }
 
     function _commitMetadata(address minterAddr) internal {
+        uint256 expected = minter.previewPaletteIndex(minterAddr);
         vm.prank(minterAddr);
-        minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH);
+        minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH, expected);
     }
 
     function setUp() public {
         vm.startPrank(owner);
         lessToken = new MockERC20("LESS", "LESS");
-        vrfCoordinator = new MockVRFCoordinatorV2();
         minter = new CubixlesMinter(
             resaleSplitter,
             address(lessToken),
             500,
             _pricingConfig(0, 0, 0, false),
-            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH),
-            _vrfConfig(
-                address(vrfCoordinator),
-                VRF_KEY_HASH,
-                VRF_SUB_ID,
-                VRF_NATIVE_PAYMENT,
-                VRF_CONFIRMATIONS,
-                VRF_CALLBACK_GAS_LIMIT
-            )
+            _paletteConfig(PALETTE_IMAGES_CID, PALETTE_MANIFEST_HASH)
         );
         vm.stopPrank();
         nft = new MockERC721Standard("MockNFT", "MNFT");

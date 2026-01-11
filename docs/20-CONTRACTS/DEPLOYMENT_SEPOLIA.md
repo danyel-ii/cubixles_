@@ -24,13 +24,13 @@ mint(
 Commit signature (required before mint):
 
 ```solidity
-commitMint(bytes32 commitment) external payable
+commitMint(bytes32 commitment) external
 ```
 
 Metadata commit (required before mint):
 
 ```solidity
-commitMetadata(bytes32 metadataHash, bytes32 imagePathHash) external
+commitMetadata(bytes32 metadataHash, bytes32 imagePathHash, uint256 expectedPaletteIndex) external
 ```
 
 `NftRef` shape:
@@ -45,12 +45,12 @@ struct NftRef {
 ## Payable Semantics
 
 - `mint` is payable.
-- `commitMint` must be called first; reveal must occur after the commit is mined (next block or later) and within 256 blocks, and after VRF randomness is fulfilled.
-- `commitMint` requires `msg.value == commitFeeWei` (can be zero). The commit fee is credited at mint and forfeited on expiry.
-- `commitMetadata` must be called after randomness is ready to lock `metadataHash` and `imagePathHash`.
+- `commitMint` must be called first; reveal must occur after the reveal block hash is available (commit block + delay) and within 256 blocks.
+- Commits are free. Repeated cancellations can trigger a cooldown (`commitCancelThreshold` + `commitCooldownBlocks`).
+- `commitMetadata` must be called after the reveal block is available to lock `metadataHash` and `imagePathHash` and assign the palette index.
 - Mint price is dynamic and derived from $LESS totalSupply (base `0.0022 ETH` with a 1.0–4.0 factor), rounded up to the nearest `0.0001 ETH`.
 - TokenId is deterministic from `msg.sender`, `salt`, and `refsHash` (previewable via `previewTokenId`).
-- Mint pays the RoyaltySplitter and refunds any excess from `msg.value + commitFeePaid`.
+- Mint pays the RoyaltySplitter and refunds any excess from `msg.value`.
 - If the payout transfer fails, the mint reverts (no partial transfers).
 - `tokenURI` is stored per mint (pinned offchain), and the contract stores `paletteImagesCID` + `paletteManifestHash` plus per-token `metadataHash` + `imagePathHash` commitments.
 
@@ -73,7 +73,8 @@ struct NftRef {
 
 - `setRoyaltyReceiver(resaleSplitter)` (resets bps to 5%)
 - `setResaleRoyalty(bps, receiver)` (bps capped at 10%)
-- `setCommitFee(fee)` updates the commit fee required for VRF requests
+- `setCommitCooldownBlocks(blocks)` updates the cooldown after repeated cancellations
+- `setCommitCancelThreshold(threshold)` updates the cancellations required before cooldown
 - `setFixedMintPrice(price)` updates fixed pricing when LESS + linear pricing are disabled
 
 ## Deployment Inputs
@@ -81,13 +82,15 @@ struct NftRef {
 Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 
 - Note: env var names use `CUBIXLES_*` for compatibility with existing deploy tooling.
+- See `.env.sepolia.example` for a ready-to-fill Sepolia config template.
 - `CUBIXLES_OWNER`
 - `CUBIXLES_LESS_TOKEN` (optional; use `0x0` to disable LESS pricing)
 - `CUBIXLES_LINEAR_PRICING_ENABLED` (optional; required for Base linear pricing)
 - `CUBIXLES_BASE_MINT_PRICE_WEI` (optional; base price for linear pricing)
 - `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (optional; step price for linear pricing)
 - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS + linear pricing are disabled)
-- `CUBIXLES_COMMIT_FEE_WEI` (optional; commit fee credited at mint)
+- `CUBIXLES_COMMIT_CANCEL_THRESHOLD` (optional; cancellations before cooldown)
+- `CUBIXLES_COMMIT_COOLDOWN_BLOCKS` (optional; cooldown length in blocks)
 - `CUBIXLES_PALETTE_IMAGES_CID` (required; base CID for palette images)
 - `CUBIXLES_PALETTE_MANIFEST_HASH` (required; keccak256 hash of the manifest JSON)
 - `CUBIXLES_POOL_MANAGER` (optional, leave unset for no-swap mode)
@@ -100,16 +103,20 @@ Environment variables read by `contracts/script/DeployCubixles.s.sol`:
 - `CUBIXLES_PNKSTR_POOL_HOOKS` (optional, defaults to `0x0000000000000000000000000000000000000000`)
 - `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS` (optional, defaults to 0; max 1000)
 - `CUBIXLES_RESALE_BPS` (optional, defaults to 500)
-- `CUBIXLES_VRF_COORDINATOR` (required; Chainlink VRF coordinator)
-- `CUBIXLES_VRF_KEY_HASH` (required; gas lane key hash)
-- `CUBIXLES_VRF_SUBSCRIPTION_ID` (required; VRF v2.5 subscription id, `uint256`)
-- `CUBIXLES_VRF_NATIVE_PAYMENT` (optional; defaults to `true` for native billing)
-- `CUBIXLES_VRF_REQUEST_CONFIRMATIONS` (optional, defaults to 3)
-- `CUBIXLES_VRF_CALLBACK_GAS_LIMIT` (optional, defaults to 250000)
 - `CUBIXLES_CHAIN_ID` (optional, defaults to `block.chainid`)
 - `CUBIXLES_DEPLOYMENT_PATH` (optional; defaults to `contracts/deployments/<chain>.json`)
 
 Base deployments require `CUBIXLES_LESS_TOKEN=0x0000000000000000000000000000000000000000` and `CUBIXLES_LINEAR_PRICING_ENABLED=true` (fixed pricing must be unset/0). Set `CUBIXLES_POOL_MANAGER=0x0`, `CUBIXLES_LESS_POOL_FEE=0`, `CUBIXLES_LESS_POOL_TICK_SPACING=0`, `CUBIXLES_LESS_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to fully disable swaps on Base.
+
+## Sepolia rehearsal
+
+```sh
+npm run deploy:sepolia
+# or dry-run:
+npm run deploy:sepolia:dry
+```
+
+The deploy script writes to `contracts/deployments/sepolia.json` by default (override with `CUBIXLES_DEPLOYMENT_PATH`).
 
 ## Timelock deployment
 

@@ -11,8 +11,7 @@ function buildEthereumMock() {
     lessSupplyNow: id("lessSupplyNow()").slice(0, 10),
     mintCommitByMinter: id("mintCommitByMinter(address)").slice(0, 10),
     commitMint: id("commitMint(bytes32)").slice(0, 10),
-    commitMetadata: id("commitMetadata(bytes32,bytes32)").slice(0, 10),
-    commitFeeWei: id("commitFeeWei()").slice(0, 10),
+    commitMetadata: id("commitMetadata(bytes32,bytes32,uint256)").slice(0, 10),
     mint: id("mint(bytes32,(address,uint256)[],uint256,string,bytes32,bytes32)").slice(0, 10),
   };
   const responses = {
@@ -20,7 +19,6 @@ function buildEthereumMock() {
     previewTokenId: coder.encode(["uint256"], [123n]),
     previewPaletteIndex: coder.encode(["uint256"], [7n]),
     lessSupplyNow: coder.encode(["uint256"], [900_000_000n * 1_000_000_000_000_000_000n]),
-    commitFeeWei: coder.encode(["uint256"], [0n]),
     mintedTokenId: coder.encode(["uint256"], [123n]),
   };
   return { selectors, responses };
@@ -95,14 +93,10 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
             pad32("0x0"),
             encodeUint(0),
             encodeUint(0),
-            encodeUint(0),
-            encodeBool(false),
-            encodeUint(0),
             encodeBool(false),
             pad32("0x0"),
             pad32("0x0"),
             encodeBool(false),
-            encodeUint(0),
           ].join("")
         );
       }
@@ -111,15 +105,11 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
         [
           pad32(commitHash),
           encodeUint(2),
-          encodeUint(1),
-          encodeUint(42),
-          encodeBool(true),
-          encodeUint(7),
-          encodeBool(true),
+          encodeUint(0),
+          encodeBool(false),
           pad32("0x0"),
           pad32("0x0"),
           encodeBool(false),
-          encodeUint(0),
         ].join("")
       );
     };
@@ -139,9 +129,6 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
           const data = params?.[0]?.data || "";
           if (data.startsWith(selectors.currentMintPrice)) {
             return responses.currentMintPrice;
-          }
-          if (data.startsWith(selectors.commitFeeWei)) {
-            return responses.commitFeeWei;
           }
           if (data.startsWith(selectors.previewTokenId)) {
             return responses.previewTokenId;
@@ -201,7 +188,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
           return mockBlock;
         }
         if (method === "eth_blockNumber") {
-          return "0x1";
+          return "0x4";
         }
         return null;
       },
@@ -321,7 +308,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await mintButton.evaluate((button) => button.click());
 
   await expect(page.locator("#mint-status")).toContainText(
-    /step 1\/3: confirm commit|step 2\/3: confirm metadata|step 3\/3: confirm mint|pinning metadata|waiting for randomness|waiting for metadata confirmation|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps|preparing mint/i,
+    /step 1\/3: confirm commit|step 2\/3: confirm metadata|step 3\/3: confirm mint|pinning metadata|waiting for reveal block|waiting for metadata confirmation|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps|preparing mint/i,
     {
       timeout: 5000,
     }

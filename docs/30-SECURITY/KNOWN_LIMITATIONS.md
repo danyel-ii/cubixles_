@@ -26,9 +26,9 @@ Last updated: 2026-01-10
 7. **Sale detection is approximated**
    - The “last sale” snapshot uses any ERC-721 transfer (excluding mint), so gifts and sales are treated identically.
 
-8. **VRF dependency + commit window**
-   - Minting depends on Chainlink VRF fulfillment and a funded subscription.
-   - Commits expire after `1 + 256` blocks (delay + window); users must re-commit if VRF fulfillment is delayed.
+8. **Blockhash-based randomness + commit window**
+   - Palette randomness uses `blockhash(revealBlock)` salted with the commitment; block producers can influence outcomes within a block.
+   - Commits expire after `1 + 256` blocks (delay + window); users must re-commit if they miss the reveal window.
 
 9. **Base pricing immutability**
    - Base mint pricing is configured at deploy time (base + step) and cannot be changed without redeploying.

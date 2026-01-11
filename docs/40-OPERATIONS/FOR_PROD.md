@@ -70,7 +70,8 @@ npm run check:no-repo-secrets
 - `CUBIXLES_BASE_MINT_PRICE_WEI` (optional; base price for linear pricing)
 - `CUBIXLES_BASE_MINT_PRICE_STEP_WEI` (optional; step price for linear pricing)
 - `CUBIXLES_FIXED_MINT_PRICE_WEI` (required when LESS + linear pricing are disabled)
-- `CUBIXLES_COMMIT_FEE_WEI` (optional; commit fee credited at mint)
+- `CUBIXLES_COMMIT_CANCEL_THRESHOLD` (optional; cancellations before cooldown)
+- `CUBIXLES_COMMIT_COOLDOWN_BLOCKS` (optional; cooldown length in blocks)
 - `CUBIXLES_DEPLOYMENT_PATH` (optional, overrides default `contracts/deployments/<chain>.json`)
 
 ### Deploy
@@ -80,12 +81,11 @@ npm run deploy:mainnet
 
 Optional Sepolia rehearsal:
 ```sh
-cd contracts
-forge script script/DeployCubixles.s.sol \
-  --rpc-url "$SEPOLIA_RPC_URL" \
-  --private-key "$SEPOLIA_DEPLOYER_KEY" \
-  --broadcast
+npm run deploy:sepolia
+# or dry-run:
+npm run deploy:sepolia:dry
 ```
+See `.env.sepolia.example` for a ready-to-fill Sepolia config template.
 
 ### Export ABI
 ```sh
@@ -140,12 +140,9 @@ npm run check:no-client-secrets
    - `docs/60-STATUS/STATE_OF_REVIEW.md`
 5) Verify Vercel env secrets are set (no `.env` on mainnet).
 6) Set `CUBIXLES_CHAIN_ID=1` for server signature verification and `NEXT_PUBLIC_DEFAULT_CHAIN_ID=1`, then confirm `contracts/deployments/mainnet.json` is current.
-7) Ensure the VRF subscription is funded (ETH if `CUBIXLES_VRF_NATIVE_PAYMENT=true`, LINK otherwise) and the minter is added as a consumer.
-8) VRF v2.5 sanity check (matches https://docs.chain.link/vrf/v2-5/supported-networks):
-   - Mainnet coordinator: `0xD7f86b4b8Cae7D942340FF628F82735b7a20893a`
-   - Mainnet key hash (500 gwei): `0x3fd2fec10d06ee8f65e7f2e95f5c56511359ece3f33960ad8a866ae24a8ff10b`
-   - Base coordinator: `0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634`
-   - Base key hash (30 gwei): `0xdc2f87677b01473c763cb0aee938ed3341512f6057324a584e5944e786144d70`
+7) Confirm commit cancellation policy matches expectations:
+   - `CUBIXLES_COMMIT_CANCEL_THRESHOLD`
+   - `CUBIXLES_COMMIT_COOLDOWN_BLOCKS`
 
 ## 5) Mainnet deploy (contracts)
 
@@ -185,7 +182,6 @@ npm run deploy:mainnet
 - Disable swaps by leaving `CUBIXLES_POOL_MANAGER` unset (or `0x0`).
 - Set `CUBIXLES_LESS_POOL_FEE=0`, `CUBIXLES_LESS_POOL_TICK_SPACING=0`, `CUBIXLES_LESS_POOL_HOOKS=0x0`, and `CUBIXLES_SWAP_MAX_SLIPPAGE_BPS=0` to zero out pool config on Base.
 - Set `CUBIXLES_PNKSTR_POOL_FEE=0`, `CUBIXLES_PNKSTR_POOL_TICK_SPACING=0`, and `CUBIXLES_PNKSTR_POOL_HOOKS=0x0` to zero out the PNKSTR pool config.
-- Configure Base VRF coordinator + subscription id in env.
 - Deploy:
 ```sh
 npm run deploy:base

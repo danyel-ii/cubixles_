@@ -25,7 +25,7 @@ This plan defines the tests needed to trust the system end-to-end:
    - includes palette traits + image + provenance
    - uses the expected palette index for the image filename
 4. **Economics**:
-   - mint requires `msg.value + commitFeePaid >= currentMintPrice()`
+   - mint requires `msg.value >= currentMintPrice()`
    - mint pays `currentMintPrice()` to RoyaltySplitter and refunds any overpayment
    - `currentMintPrice()` is rounded up to the nearest `0.0001 ETH`
    - on Base (LESS disabled), `currentMintPrice()` is linear (`base + step * totalMinted`) and LESS metrics are `0`
@@ -65,14 +65,14 @@ This plan defines the tests needed to trust the system end-to-end:
 - mint reverts if commit is in the same block
 - mint reverts if commit expires (>256 blocks)
 - mint reverts on refsHash or salt mismatch
-- mint reverts if randomness is not yet fulfilled
+- mint reverts if reveal block is not yet available
 - mint reverts if metadata is not committed or metadata hashes mismatch
 - commitMint reverts on empty hash or active commit
 
 **D. Payment requirements**
-- mint reverts if `msg.value + commitFeePaid < currentMintPrice()`
-- mint succeeds if `msg.value + commitFeePaid == currentMintPrice()`
-- mint succeeds if `msg.value + commitFeePaid > currentMintPrice()` and refunds delta
+- mint reverts if `msg.value < currentMintPrice()`
+- mint succeeds if `msg.value == currentMintPrice()`
+- mint succeeds if `msg.value > currentMintPrice()` and refunds delta
 
 **E. RoyaltySplitter behavior**
 - when swap disabled → forwards 100% ETH to owner
@@ -202,7 +202,7 @@ Because Warpcast hosting is hard to automate, we split E2E into:
 - connect -> inventory renders
 - select refs -> cube textures update
 - click mint -> app commits then commits metadata then mints with:
-  - commit tx sent first, metadata commit after VRF fulfillment, mint tx after metadata confirmation
+  - commit tx sent first, metadata commit after reveal block, mint tx after metadata confirmation
   - `refs` encoded correctly
   - `value` set to max payment
 - success state displayed
@@ -215,7 +215,7 @@ This is the “ship gate” checklist:
 3. Ensure network = mainnet
 4. Select 1..6 NFTs (owned on mainnet)
 5. Mint:
-  - wait for VRF fulfillment between commit + metadata + mint
+  - wait for reveal block between commit + metadata + mint
    - wallet shows tx with correct `value`
 6. Confirm onchain:
    - transaction success

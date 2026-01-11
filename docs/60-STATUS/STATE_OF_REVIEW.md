@@ -4,15 +4,15 @@ Last updated: 2026-01-10
 
 ## Summary
 
-The repo is aligned on the "cubixles_" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI uses a hash-only commit + VRF-driven reveal. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs), with EIP-6963 wallet picking and a WalletConnect fallback. Contracts route mint fees and resale royalties to the RoyaltySplitter (25% ETH to owner + 25% swap to $LESS + 50% swap to $PNKSTR), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. `tokenURI` is stored per mint (pinned offchain), with the contract committing to the palette set via `paletteImagesCID` + `paletteManifestHash`. The Next.js app router serves the UI, with hardened `/api/*` routes handling Alchemy and optional Pinata server-side, and CSP enforcement + report-only telemetry via middleware. Coverage gate is enforced at 90% and repo secret scans are automated (see `docs/30-SECURITY/SECURITY_AUDIT.md` for latest run).
+The repo is aligned on the "cubixles_" name, the Farcaster manifest includes both `miniapp` and `frame` blocks, and the mint UI uses a hash-only commit + blockhash reveal. Frontend code is modularized (app core, features, data/chain, UI panels + HUDs), with EIP-6963 wallet picking and a WalletConnect fallback. Contracts route mint fees and resale royalties to the RoyaltySplitter (25% ETH to owner + 25% swap to $LESS + 50% swap to $PNKSTR), and $LESS supply snapshots/deltas are stored onchain for leaderboard ranking. `tokenURI` is stored per mint (pinned offchain), with the contract committing to the palette set via `paletteImagesCID` + `paletteManifestHash`. The Next.js app router serves the UI, with hardened `/api/*` routes handling Alchemy and optional Pinata server-side, and CSP enforcement + report-only telemetry via middleware. Coverage gate is enforced at 90% and repo secret scans are automated (see `docs/30-SECURITY/SECURITY_AUDIT.md` for latest run).
 
 ## What’s working
 
 - **Frontend**: p5 miniapp loads, NFT picker and mint UI are wired; data reads proxy through `/api/nfts` (no client keys). Optional metadata pinning is protected by signed nonces.
 - **Provenance**: NFT selection -> provenance bundle pipeline is in place for offchain diagnostics and optional metadata generation.
-- **Mint UI**: builds a commitment hash, calls `commitMint`, waits for VRF fulfillment, commits metadata hashes, then calls `mint(salt, refs, expectedPaletteIndex, tokenURI, metadataHash, imagePathHash)`; diagnostics include token viewer links.
+- **Mint UI**: builds a commitment hash, calls `commitMint`, waits for the reveal block hash, commits metadata hashes, then calls `mint(salt, refs, expectedPaletteIndex, tokenURI, metadataHash, imagePathHash)`; diagnostics include token viewer links.
 - **Token viewer**: `/m/<tokenId>` loads tokenURI → palette metadata → cube render; share modal is available on token view pages. Provenance display requires metadata that includes refs.
-- **Contracts**: Foundry tests cover gating, pricing, and royalty routing; mint price is dynamic from $LESS supply on mainnet (base `0.0022 ETH`, rounded up to `0.0001 ETH`), while Base uses immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint). tokenId is deterministic via `previewTokenId`, commit-reveal uses VRF, and royalties are routed to RoyaltySplitter which swaps to LESS + PNKSTR and forwards ETH to the owner. Onchain $LESS supply snapshots + delta views are live.
+- **Contracts**: Foundry tests cover gating, pricing, and royalty routing; mint price is dynamic from $LESS supply on mainnet (base `0.0022 ETH`, rounded up to `0.0001 ETH`), while Base uses immutable linear pricing (0.0012 ETH base + 0.000012 ETH per mint). tokenId is deterministic via `previewTokenId`, commit-reveal uses blockhash entropy, and royalties are routed to RoyaltySplitter which swaps to LESS + PNKSTR and forwards ETH to the owner. Onchain $LESS supply snapshots + delta views are live.
 - **Security**: threat model, invariants, static analysis plan, runbook, and OSPS Baseline mapping in `docs/30-SECURITY/` (coverage gate 90% via `npm run coverage:contracts`).
 - **Security tooling**: CSP report endpoint is live, client + repo secret scans run in CI.
 - **Floor snapshot + Leaderboard**: per-NFT floor snapshot (default `0` when unavailable) + Leaderboard ranking by ΔLESS are live; leaderboard reads through public RPCs on mobile.
@@ -65,7 +65,7 @@ The repo is aligned on the "cubixles_" name, the Farcaster manifest includes bot
 
 - **Manifest assets missing** → Farcaster validation fails.
 - **Vercel cache / wrong repo** → stale deployment behavior.
-- **VRF subscription underfunded or not configured** → commits will stall until randomness fulfills.
+- **Commit window missed** → commit expires and the mint must be re-committed.
 - **Palette images CID/manifest hash or tokenURI pinning misconfigured** → token metadata resolves to the wrong assets.
 
 ## Next recommended actions (short list)

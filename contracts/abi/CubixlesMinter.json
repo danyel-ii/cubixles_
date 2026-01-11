@@ -18,59 +18,48 @@
         "internalType": "uint96"
       },
       {
-        "name": "fixedMintPriceWei_",
-        "type": "uint256",
-        "internalType": "uint256"
+        "name": "pricing",
+        "type": "tuple",
+        "internalType": "struct CubixlesMinter.PricingConfig",
+        "components": [
+          {
+            "name": "fixedMintPriceWei",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "baseMintPriceWei",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "baseMintPriceStepWei",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "linearPricingEnabled",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
       },
       {
-        "name": "baseMintPriceWei_",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "baseMintPriceStepWei_",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "linearPricingEnabled_",
-        "type": "bool",
-        "internalType": "bool"
-      },
-      {
-        "name": "paletteImagesCID_",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "paletteManifestHash_",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "vrfCoordinator_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "vrfKeyHash_",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "vrfSubscriptionId_",
-        "type": "uint64",
-        "internalType": "uint64"
-      },
-      {
-        "name": "vrfRequestConfirmations_",
-        "type": "uint16",
-        "internalType": "uint16"
-      },
-      {
-        "name": "vrfCallbackGasLimit_",
-        "type": "uint32",
-        "internalType": "uint32"
+        "name": "palette",
+        "type": "tuple",
+        "internalType": "struct CubixlesMinter.PaletteConfig",
+        "components": [
+          {
+            "name": "paletteImagesCID",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "paletteManifestHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
       }
     ],
     "stateMutability": "nonpayable"
@@ -104,6 +93,32 @@
   {
     "type": "function",
     "name": "COMMIT_REVEAL_WINDOW_BLOCKS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "DEFAULT_COMMIT_CANCEL_THRESHOLD",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "DEFAULT_COMMIT_COOLDOWN_BLOCKS",
     "inputs": [],
     "outputs": [
       {
@@ -194,19 +209,6 @@
   },
   {
     "type": "function",
-    "name": "VRF_NUM_WORDS",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint32",
-        "internalType": "uint32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "WAD",
     "inputs": [],
     "outputs": [
@@ -283,8 +285,66 @@
   },
   {
     "type": "function",
-    "name": "commitFeeWei",
+    "name": "cancelCommit",
     "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "commitCancelCount",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "commitCancelThreshold",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "commitCooldownBlocks",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "commitCooldownUntil",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
     "outputs": [
       {
         "name": "",
@@ -307,6 +367,11 @@
         "name": "imagePathHash",
         "type": "bytes32",
         "internalType": "bytes32"
+      },
+      {
+        "name": "expectedPaletteIndex",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -323,7 +388,7 @@
       }
     ],
     "outputs": [],
-    "stateMutability": "payable"
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -635,21 +700,6 @@
         "internalType": "uint256"
       },
       {
-        "name": "requestId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "randomness",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "randomnessReady",
-        "type": "bool",
-        "internalType": "bool"
-      },
-      {
         "name": "paletteIndex",
         "type": "uint256",
         "internalType": "uint256"
@@ -673,11 +723,6 @@
         "name": "metadataCommitted",
         "type": "bool",
         "internalType": "bool"
-      },
-      {
-        "name": "commitFee",
-        "type": "uint256",
-        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -886,24 +931,6 @@
   },
   {
     "type": "function",
-    "name": "rawFulfillRandomWords",
-    "inputs": [
-      {
-        "name": "requestId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "randomWords",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "renounceOwnership",
     "inputs": [],
     "outputs": [],
@@ -1022,10 +1049,23 @@
   },
   {
     "type": "function",
-    "name": "setCommitFee",
+    "name": "setCommitCancelThreshold",
     "inputs": [
       {
-        "name": "fee",
+        "name": "threshold",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setCommitCooldownBlocks",
+    "inputs": [
+      {
+        "name": "blocks_",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -1223,71 +1263,6 @@
     "stateMutability": "nonpayable"
   },
   {
-    "type": "function",
-    "name": "vrfCallbackGasLimit",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint32",
-        "internalType": "uint32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "vrfCoordinator",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "contract VRFCoordinatorV2Interface"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "vrfKeyHash",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "vrfRequestConfirmations",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint16",
-        "internalType": "uint16"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "vrfSubscriptionId",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint64",
-        "internalType": "uint64"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
     "type": "event",
     "name": "Approval",
     "inputs": [
@@ -1339,10 +1314,23 @@
   },
   {
     "type": "event",
-    "name": "CommitFeeUpdated",
+    "name": "CommitCancelThresholdUpdated",
     "inputs": [
       {
-        "name": "fee",
+        "name": "threshold",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CommitCooldownBlocksUpdated",
+    "inputs": [
+      {
+        "name": "blocks",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -1384,6 +1372,31 @@
   },
   {
     "type": "event",
+    "name": "MintCommitCancelled",
+    "inputs": [
+      {
+        "name": "minter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "cancelCount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "cooldownUntil",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "MintCommitCreated",
     "inputs": [
       {
@@ -1405,7 +1418,7 @@
         "internalType": "uint256"
       },
       {
-        "name": "requestId",
+        "name": "revealBlock",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -1422,12 +1435,6 @@
         "type": "address",
         "indexed": true,
         "internalType": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1453,31 +1460,6 @@
         "type": "bytes32",
         "indexed": true,
         "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "MintRandomnessFulfilled",
-    "inputs": [
-      {
-        "name": "minter",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "requestId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "randomness",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1635,22 +1617,6 @@
         "name": "account",
         "type": "address",
         "internalType": "address"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "CommitFeeMismatch",
-    "inputs": [
-      {
-        "name": "expected",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "received",
-        "type": "uint256",
-        "internalType": "uint256"
       }
     ]
   },
@@ -1888,6 +1854,17 @@
   },
   {
     "type": "error",
+    "name": "MintCommitCooldown",
+    "inputs": [
+      {
+        "name": "untilBlock",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "MintCommitEmpty",
     "inputs": []
   },
@@ -1925,27 +1902,6 @@
     "type": "error",
     "name": "MintMetadataMismatch",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "MintRandomnessPending",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "OnlyCoordinatorCanFulfill",
-    "inputs": [
-      {
-        "name": "have",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "want",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
   },
   {
     "type": "error",
@@ -2065,42 +2021,6 @@
   {
     "type": "error",
     "name": "TokenUriRequired",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "VrfCallbackGasLimitRequired",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "VrfCoordinatorNotContract",
-    "inputs": [
-      {
-        "name": "coordinator",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "VrfCoordinatorRequired",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "VrfKeyHashRequired",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "VrfRequestConfirmationsRequired",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "VrfSubscriptionRequired",
     "inputs": []
   }
 ]

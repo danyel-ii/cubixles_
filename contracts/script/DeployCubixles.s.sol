@@ -62,24 +62,18 @@ contract DeployCubixles is Script {
             paletteImagesCID: cfg.paletteImagesCID,
             paletteManifestHash: cfg.paletteManifestHash
         });
-        CubixlesMinter.VrfConfig memory vrf = CubixlesMinter.VrfConfig({
-            coordinator: cfg.vrfCoordinator,
-            keyHash: cfg.vrfKeyHash,
-            subscriptionId: cfg.vrfSubscriptionId,
-            nativePayment: cfg.vrfNativePayment,
-            requestConfirmations: cfg.vrfRequestConfirmations,
-            callbackGasLimit: cfg.vrfCallbackGasLimit
-        });
         CubixlesMinter minter = new CubixlesMinter(
             address(splitter),
             cfg.lessToken,
             cfg.resaleRoyaltyBps,
             pricing,
-            palette,
-            vrf
+            palette
         );
-        if (cfg.commitFeeWei != 0) {
-            minter.setCommitFee(cfg.commitFeeWei);
+        if (cfg.commitCooldownBlocks != 0) {
+            minter.setCommitCooldownBlocks(cfg.commitCooldownBlocks);
+        }
+        if (cfg.commitCancelThreshold != 0) {
+            minter.setCommitCancelThreshold(cfg.commitCancelThreshold);
         }
         if (cfg.owner != msg.sender) {
             minter.transferOwnership(cfg.owner);
@@ -116,18 +110,13 @@ contract DeployCubixles is Script {
         uint96 resaleRoyaltyBps;
         uint16 swapMaxSlippageBps;
         uint256 fixedMintPriceWei;
-        uint256 commitFeeWei;
+        uint256 commitCooldownBlocks;
+        uint256 commitCancelThreshold;
         bool linearPricingEnabled;
         uint256 baseMintPriceWei;
         uint256 baseMintPriceStepWei;
         string paletteImagesCID;
         bytes32 paletteManifestHash;
-        address vrfCoordinator;
-        bytes32 vrfKeyHash;
-        uint256 vrfSubscriptionId;
-        bool vrfNativePayment;
-        uint16 vrfRequestConfirmations;
-        uint32 vrfCallbackGasLimit;
     }
 
     function _loadConfig() internal view returns (DeployConfig memory cfg) {
@@ -162,7 +151,8 @@ contract DeployCubixles is Script {
         cfg.resaleRoyaltyBps = uint96(vm.envOr("CUBIXLES_RESALE_BPS", uint256(500)));
         cfg.swapMaxSlippageBps = uint16(vm.envOr("CUBIXLES_SWAP_MAX_SLIPPAGE_BPS", uint256(0)));
         cfg.fixedMintPriceWei = vm.envOr("CUBIXLES_FIXED_MINT_PRICE_WEI", uint256(0));
-        cfg.commitFeeWei = vm.envOr("CUBIXLES_COMMIT_FEE_WEI", uint256(0));
+        cfg.commitCooldownBlocks = vm.envOr("CUBIXLES_COMMIT_COOLDOWN_BLOCKS", uint256(0));
+        cfg.commitCancelThreshold = vm.envOr("CUBIXLES_COMMIT_CANCEL_THRESHOLD", uint256(0));
         cfg.linearPricingEnabled = vm.envOr(
             "CUBIXLES_LINEAR_PRICING_ENABLED",
             cfg.chainId == 8453
@@ -177,16 +167,6 @@ contract DeployCubixles is Script {
         );
         cfg.paletteImagesCID = vm.envString("CUBIXLES_PALETTE_IMAGES_CID");
         cfg.paletteManifestHash = vm.envBytes32("CUBIXLES_PALETTE_MANIFEST_HASH");
-        cfg.vrfCoordinator = vm.envAddress("CUBIXLES_VRF_COORDINATOR");
-        cfg.vrfKeyHash = vm.envBytes32("CUBIXLES_VRF_KEY_HASH");
-        cfg.vrfSubscriptionId = vm.envUint("CUBIXLES_VRF_SUBSCRIPTION_ID");
-        cfg.vrfNativePayment = vm.envOr("CUBIXLES_VRF_NATIVE_PAYMENT", true);
-        cfg.vrfRequestConfirmations = uint16(
-            vm.envOr("CUBIXLES_VRF_REQUEST_CONFIRMATIONS", uint256(3))
-        );
-        cfg.vrfCallbackGasLimit = uint32(
-            vm.envOr("CUBIXLES_VRF_CALLBACK_GAS_LIMIT", uint256(250_000))
-        );
     }
 
     function _envOrUint(

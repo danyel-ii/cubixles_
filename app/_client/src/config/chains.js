@@ -1,9 +1,11 @@
 import mainnetDeployment from "../../../../contracts/deployments/mainnet.json";
 import baseDeployment from "../../../../contracts/deployments/base.json";
+import sepoliaDeployment from "../../../../contracts/deployments/sepolia.json";
 import { readEnvValue } from "../shared/utils/env.js";
 
 const MAINNET_ID = 1;
 const BASE_ID = 8453;
+const SEPOLIA_ID = 11155111;
 const STORAGE_KEY = "cubixles:chainId";
 const DEFAULT_CHAIN_ID = Number(readEnvValue("NEXT_PUBLIC_DEFAULT_CHAIN_ID") || MAINNET_ID);
 
@@ -51,6 +53,19 @@ const CHAIN_LIST = [
       "https://mainnet.base.org",
       "https://base.llamarpc.com",
       "https://1rpc.io/base",
+    ],
+  }),
+  buildChain(SEPOLIA_ID, {
+    key: "sepolia",
+    name: "Sepolia",
+    shortName: "Sepolia",
+    explorer: "https://sepolia.etherscan.io",
+    supportsLess: false,
+    deployment: sepoliaDeployment,
+    rpcUrls: [
+      readEnvValue("NEXT_PUBLIC_SEPOLIA_RPC_URL"),
+      "https://rpc.sepolia.org",
+      "https://ethereum-sepolia.publicnode.com",
     ],
   }),
 ];

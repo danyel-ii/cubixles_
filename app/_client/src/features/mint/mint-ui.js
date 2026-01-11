@@ -44,11 +44,10 @@ const CUSTOM_ERROR_MESSAGES = {
   MintCommitExpired: "Commit expired. Please retry to create a new commit.",
   MintCommitPendingBlock: "Commit pending. Wait for the reveal window to open.",
   MintCommitMismatch: "Mint selection changed since commit. Please re-commit.",
-  MintRandomnessPending: "Randomness pending. Please retry in a moment.",
+  MintCommitCooldown: "Commit cooldown active. Please wait before retrying.",
   MintCommitEmpty: "Commit missing. Please retry.",
   MintCommitActive:
     "Existing commit still active. Use the same selection or wait for it to expire.",
-  CommitFeeMismatch: "Commit fee mismatch. Please retry.",
   MintMetadataCommitRequired: "Metadata commit required before minting.",
   MintMetadataCommitActive: "Metadata already committed for this mint.",
   MintMetadataMismatch: "Metadata mismatch. Please retry.",
@@ -585,7 +584,7 @@ export function initMintUi() {
     }
   }
 
-  async function waitForRandomness({ readContract, commitment }) {
+  async function waitForRevealBlock({ readContract, commitment, readProvider }) {
     const deadline = Date.now() + 60_000;
     const expected = commitment?.toLowerCase?.() ?? "";
     while (Date.now() < deadline) {
@@ -600,17 +599,22 @@ export function initMintUi() {
           "Pending commit does not match your selection. Please re-commit."
         );
       }
-      const ready = Boolean(commit?.randomnessReady ?? commit?.[4]);
-      const assigned = Boolean(commit?.paletteAssigned ?? commit?.[6]);
-      if (ready && !assigned) {
-        throw new Error("Mint cap reached.");
+      const commitBlock = BigInt(commit?.blockNumber ?? commit?.[1] ?? 0);
+      if (!commitBlock) {
+        throw new Error("Commit block unavailable.");
       }
-      if (ready) {
+      const revealBlock = commitBlock + COMMIT_REVEAL_DELAY_BLOCKS;
+      const expiryBlock = revealBlock + COMMIT_REVEAL_WINDOW_BLOCKS;
+      const latestBlock = BigInt(await readProvider.getBlockNumber());
+      if (latestBlock > expiryBlock) {
+        throw new Error("Commit expired. Please re-commit.");
+      }
+      if (latestBlock > revealBlock) {
         return commit;
       }
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
-    throw new Error("Randomness pending. Please retry in a moment.");
+    throw new Error("Reveal pending. Please retry in a moment.");
   }
 
   function updateMintPriceNote() {
@@ -831,13 +835,6 @@ export function initMintUi() {
         CUBIXLES_CONTRACT.abi,
         signer
       );
-      let commitFeeWei = 0n;
-      try {
-        commitFeeWei = toBigInt(await readContract.commitFeeWei());
-      } catch (error) {
-        commitFeeWei = 0n;
-      }
-      let commitFeePaidWei = 0n;
       let salt = null;
       let commitment = null;
       const refsForContract = state.nftSelection.map((nft) => ({
@@ -849,11 +846,9 @@ export function initMintUi() {
       const latestBlock = BigInt(await readProvider.getBlockNumber());
       let existingCommit = null;
       let existingBlock = 0n;
-      let existingCommitFee = 0n;
       try {
         existingCommit = await readContract.mintCommitByMinter(walletState.address);
         existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
-        existingCommitFee = toBigInt(existingCommit?.commitFee ?? existingCommit?.[10]);
       } catch (error) {
         throw new Error("Commit state unavailable. Please retry.");
       }
@@ -864,8 +859,8 @@ export function initMintUi() {
       let commitBlockNumber = null;
       let usingExistingCommit = false;
       if (existingBlock > 0n) {
-        const expiryBlock =
-          existingBlock + COMMIT_REVEAL_DELAY_BLOCKS + COMMIT_REVEAL_WINDOW_BLOCKS;
+        const revealBlock = existingBlock + COMMIT_REVEAL_DELAY_BLOCKS;
+        const expiryBlock = revealBlock + COMMIT_REVEAL_WINDOW_BLOCKS;
         if (latestBlock <= expiryBlock) {
           const storedSalt = storedCommit?.salt;
           if (!storedSalt) {
@@ -889,15 +884,13 @@ export function initMintUi() {
               "Pending commit exists. Use the same NFT selection as your last commit or wait for it to expire."
             );
           }
-          const earliestBlock = existingBlock + COMMIT_REVEAL_DELAY_BLOCKS;
-          if (latestBlock < earliestBlock) {
+          if (latestBlock <= revealBlock) {
             throw new Error("Commit pending. Wait for the reveal window to open.");
           }
           salt = storedSalt;
           commitment = candidateCommitment;
           commitBlockNumber = existingBlock;
           usingExistingCommit = true;
-          commitFeePaidWei = existingCommitFee;
         } else {
           clearStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address);
         }
@@ -938,8 +931,8 @@ export function initMintUi() {
           tone: "neutral",
         });
         setStatus(`Step 1/${totalSteps}: confirm commit in your wallet.`);
-        await contract.commitMint.staticCall(commitment, { value: commitFeeWei });
-        const commitTx = await contract.commitMint(commitment, { value: commitFeeWei });
+        await contract.commitMint.staticCall(commitment);
+        const commitTx = await contract.commitMint(commitment);
         showToast({
           title: "Commit submitted",
           message: `Commit broadcast to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`,
@@ -956,7 +949,6 @@ export function initMintUi() {
         if (!commitBlockNumber) {
           throw new Error("Commit block unavailable.");
         }
-        commitFeePaidWei = commitFeeWei;
         saveStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address, {
           commitment,
           salt,
@@ -966,14 +958,18 @@ export function initMintUi() {
       } else {
         setStatus(
           usingExistingCommit
-            ? "Using existing commit. Waiting for randomness..."
+            ? "Using existing commit. Waiting for reveal block..."
             : "Preparing mint..."
         );
       }
 
-      setStatus("Waiting for randomness...");
+      setStatus("Waiting for reveal block...");
       setCommitProgress(true);
-      const commitState = await waitForRandomness({ readContract, commitment });
+      const commitState = await waitForRevealBlock({
+        readContract,
+        commitment,
+        readProvider,
+      });
       setCommitProgress(false);
 
       const expectedPaletteIndexRaw = await readContract.previewPaletteIndex(
@@ -1037,15 +1033,15 @@ export function initMintUi() {
       });
       const metadataHash = normalizeBytes32(rawMetadataHash, "Metadata hash");
       const metadataCommitted = Boolean(
-        commitState?.metadataCommitted ?? commitState?.[9]
+        commitState?.metadataCommitted ?? commitState?.[6]
       );
       if (metadataCommitted) {
         const committedMetadataHash = normalizeBytes32(
-          commitState?.metadataHash ?? commitState?.[7] ?? "",
+          commitState?.metadataHash ?? commitState?.[4] ?? "",
           "Committed metadata hash"
         );
         const committedImagePathHash = normalizeBytes32(
-          commitState?.imagePathHash ?? commitState?.[8] ?? "",
+          commitState?.imagePathHash ?? commitState?.[5] ?? "",
           "Committed image path hash"
         );
         if (
@@ -1058,10 +1054,15 @@ export function initMintUi() {
         }
       } else {
         setStatus(`Step ${metadataStep}/${totalSteps}: confirm metadata in your wallet.`);
-        await contract.commitMetadata.staticCall(metadataHash, imagePathHash);
+        await contract.commitMetadata.staticCall(
+          metadataHash,
+          imagePathHash,
+          expectedPaletteIndex
+        );
         const metadataTx = await contract.commitMetadata(
           metadataHash,
-          imagePathHash
+          imagePathHash,
+          expectedPaletteIndex
         );
         showToast({
           title: "Metadata committed",
@@ -1092,10 +1093,7 @@ export function initMintUi() {
       }
       state.currentCubeTokenId = tokenId;
       document.dispatchEvent(new CustomEvent("cube-token-change"));
-      const mintValueWei =
-        currentMintPriceWei > commitFeePaidWei
-          ? currentMintPriceWei - commitFeePaidWei
-          : 0n;
+      const mintValueWei = currentMintPriceWei;
       const overrides = { value: mintValueWei };
       await ensureBalanceForMint({
         provider,

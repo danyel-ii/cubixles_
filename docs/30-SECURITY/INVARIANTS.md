@@ -9,10 +9,10 @@ Mint must revert if any referenced NFT is not owned by `msg.sender` or if `owner
 `refs.length` must be in `[1..6]` or mint reverts.
 
 ## I-3: Payment boundary
-`msg.value + commitFeePaid < currentMintPrice()` must revert; `msg.value + commitFeePaid >= currentMintPrice()` must succeed (subject to receiver policy).
+`msg.value < currentMintPrice()` must revert; `msg.value >= currentMintPrice()` must succeed (subject to receiver policy).
 
 ## I-4: Refund exactness
-On success, refund equals `msg.value + commitFeePaid - currentMintPrice()` (if any).
+On success, refund equals `msg.value - currentMintPrice()` (if any).
 
 ## I-5: Mint payout exactness
 RoyaltySplitter receives exactly `currentMintPrice()` on each successful mint.

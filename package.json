@@ -17,6 +17,8 @@
     "deploy:base:dry": "bash scripts/deploy-base.sh",
     "deploy:mainnet": "bash scripts/deploy-mainnet.sh --broadcast",
     "deploy:mainnet:dry": "bash scripts/deploy-mainnet.sh",
+    "deploy:sepolia": "bash scripts/deploy-sepolia.sh --broadcast",
+    "deploy:sepolia:dry": "bash scripts/deploy-sepolia.sh",
     "fork-test": "bash scripts/fork-test.sh",
     "bench:api": "node scripts/bench-api.mjs",
     "monitor:swaps": "node scripts/monitor-swaps.mjs"

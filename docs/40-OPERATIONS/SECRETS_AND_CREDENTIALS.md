@@ -8,7 +8,7 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 ## Storage
 - Store secrets only in the hosting provider's secret manager (Vercel, GitHub Actions).
 - Use `.env` / `.env.local` only for local development; never commit them.
-- Store network-specific deploy settings in `.env.mainnet` / `.env.base` (git-ignored); use the `.env.*.example` templates for placeholders.
+- Store network-specific deploy settings in `.env.mainnet` / `.env.base` / `.env.sepolia` (git-ignored); use the `.env.*.example` templates for placeholders.
 - Never echo secrets in logs or build output.
 - Use `.env.example` for non-sensitive placeholders.
 
@@ -40,12 +40,8 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 - `SEPOLIA_DEPLOYER_KEY` (if rehearsing on Sepolia)
 - `ETHERSCAN_API_KEY` (mainnet + sepolia verification)
 - `BASESCAN_API_KEY` (Base verification)
-- `CUBIXLES_VRF_COORDINATOR`
-- `CUBIXLES_VRF_KEY_HASH`
-- `CUBIXLES_VRF_SUBSCRIPTION_ID` (uint256; VRF v2.5)
-- `CUBIXLES_VRF_NATIVE_PAYMENT` (optional; defaults to true for native billing)
-- `CUBIXLES_VRF_REQUEST_CONFIRMATIONS`
-- `CUBIXLES_VRF_CALLBACK_GAS_LIMIT`
+- `CUBIXLES_COMMIT_CANCEL_THRESHOLD` (optional; cancellations before cooldown)
+- `CUBIXLES_COMMIT_COOLDOWN_BLOCKS` (optional; cooldown length in blocks)
 - Keep the same variable names across environments; use environment-scoped secrets (GitHub Actions environments, Vercel env scopes) or `.env.base` / `.env.mainnet` locally to avoid clobbering values.
 
 ## Incident response

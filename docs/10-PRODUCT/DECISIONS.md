@@ -8,13 +8,19 @@ Last updated: 2026-01-10
 - Review status: Updated
 - Owner: danyel-ii
 
-## 2026-01-09 — VRF commit-reveal + per-mint tokenURI
+## 2026-01-09 — VRF commit-reveal + per-mint tokenURI (superseded)
 
 - Commit phase stores only a commitment hash and requests VRF randomness.
 - Metadata hashes (`metadataHash`, `imagePathHash`) are committed after randomness is ready.
 - `tokenURI` is pinned per mint (stored onchain) and includes curated provenance fields.
 - The contract stores `paletteImagesCID` + `paletteManifestHash` plus per-token hash commitments.
 - Mainnet base price updated to `0.0022 ETH` (scaled 1.0×–4.0).
+
+## 2026-01-11 — Blockhash commit-reveal + cancellation cooldown
+
+- Commit-reveal now derives entropy from `blockhash(revealBlock)` salted with the commitment (no VRF dependency).
+- Palette index is assigned during `commitMetadata(metadataHash, imagePathHash, expectedPaletteIndex)`.
+- Commits are free; repeated cancellations can trigger a cooldown (`commitCancelThreshold`, `commitCooldownBlocks`).
 
 ## 2026-01-08 — Multi-chain provenance + metadata shaping
 

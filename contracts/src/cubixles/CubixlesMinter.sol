@@ -9,15 +9,12 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20Minimal } from "../interfaces/IERC20Minimal.sol";
-import { VRFConsumerBaseV2 } from "../chainlink/VRFConsumerBaseV2.sol";
-import { VRFCoordinatorV2_5Interface } from "../chainlink/VRFCoordinatorV2_5Interface.sol";
-import { VRFV2PlusClient } from "../chainlink/VRFV2PlusClient.sol";
 
 /// @title CubixlesMinter
 /// @notice Mints cubixles_ NFTs with provenance-bound refs and ERC-2981 royalties.
 /// @dev Token IDs are derived from minter + salt + canonical refs hash.
 /// @author cubixles_
-contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsumerBaseV2 {
+contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Reference to an ERC-721 token used for provenance.
     struct NftRef {
         address contractAddress;
@@ -56,16 +53,12 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     error InsufficientEth();
     /// @notice Commit refs hash mismatch.
     error MintCommitMismatch();
-    /// @notice Commit randomness not fulfilled yet.
-    error MintRandomnessPending();
     /// @notice TokenId already exists.
     error TokenIdExists();
     /// @notice Commit refs hash is empty.
     error MintCommitEmpty();
     /// @notice Commit already exists and is still active.
     error MintCommitActive();
-    /// @notice Commit fee does not match the required amount.
-    error CommitFeeMismatch(uint256 expected, uint256 received);
     /// @notice Royalty receiver is required.
     error RoyaltyReceiverRequired();
     /// @notice Palette images CID is required.
@@ -86,18 +79,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     error MintMetadataCommitActive();
     /// @notice Metadata commit mismatch.
     error MintMetadataMismatch();
-    /// @notice VRF coordinator is required.
-    error VrfCoordinatorRequired();
-    /// @notice VRF coordinator must be a deployed contract.
-    error VrfCoordinatorNotContract(address coordinator);
-    /// @notice VRF key hash is required.
-    error VrfKeyHashRequired();
-    /// @notice VRF subscription id is required.
-    error VrfSubscriptionRequired();
-    /// @notice VRF request confirmations required.
-    error VrfRequestConfirmationsRequired();
-    /// @notice VRF callback gas limit required.
-    error VrfCallbackGasLimitRequired();
+    /// @notice Commit is on cooldown after cancellations.
+    error MintCommitCooldown(uint256 untilBlock);
 
     /// @notice Default resale royalty in basis points (5%).
     uint96 public constant RESALE_ROYALTY_BPS_DEFAULT = 500; // 5%
@@ -117,8 +100,10 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     uint256 public constant COMMIT_REVEAL_DELAY_BLOCKS = 1;
     /// @notice Commit reveal window (in blocks).
     uint256 public constant COMMIT_REVEAL_WINDOW_BLOCKS = 256;
-    /// @notice VRF random words requested per commit.
-    uint32 public constant VRF_NUM_WORDS = 1;
+    /// @notice Default commit cancellation threshold before cooldown.
+    uint256 public constant DEFAULT_COMMIT_CANCEL_THRESHOLD = 2;
+    /// @notice Default cooldown blocks after repeated cancellations.
+    uint256 public constant DEFAULT_COMMIT_COOLDOWN_BLOCKS = 20;
     /// @notice Domain separator for commit hashes.
     string private constant COMMIT_DOMAIN = "cubixles_:commit:v1";
 
@@ -126,20 +111,11 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     struct MintCommit {
         bytes32 commitment;
         uint256 blockNumber;
-        uint256 requestId;
-        uint256 randomness;
-        bool randomnessReady;
         uint256 paletteIndex;
         bool paletteAssigned;
         bytes32 metadataHash;
         bytes32 imagePathHash;
         bool metadataCommitted;
-        uint256 commitFee;
-    }
-
-    struct MintRequest {
-        address minter;
-        bytes32 commitment;
     }
 
     struct PricingConfig {
@@ -154,15 +130,6 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         bytes32 paletteManifestHash;
     }
 
-    struct VrfConfig {
-        address coordinator;
-        bytes32 keyHash;
-        uint256 subscriptionId;
-        bool nativePayment;
-        uint16 requestConfirmations;
-        uint32 callbackGasLimit;
-    }
-
     /// @notice LESS supply at mint time by tokenId.
     mapping(uint256 => uint256) private _mintSupply;
     /// @notice LESS supply at last transfer by tokenId.
@@ -173,8 +140,6 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     mapping(uint256 => uint256) private _paletteIndexSwap;
     /// @notice Pending commit per minter.
     mapping(address => MintCommit) public mintCommitByMinter;
-    /// @notice Commit request tracking by VRF request id.
-    mapping(uint256 => MintRequest) private _mintRequestById;
 
     /// @notice LESS token address.
     address public immutable LESS_TOKEN; /* solhint-disable-line immutable-vars-naming */ /* slither-disable-line naming-convention,missing-zero-check */
@@ -188,26 +153,20 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     uint256 public immutable baseMintPriceStepWei; /* solhint-disable-line immutable-vars-naming */
     /// @notice Fixed mint price when LESS + linear pricing are disabled.
     uint256 public fixedMintPriceWei;
-    /// @notice Commit fee required to request VRF randomness.
-    uint256 public commitFeeWei;
+    /// @notice Commit cancellations before cooldown triggers.
+    uint256 public commitCancelThreshold;
+    /// @notice Cooldown blocks after repeated cancellations.
+    uint256 public commitCooldownBlocks;
+    /// @notice Cooldown expiry block per minter.
+    mapping(address => uint256) public commitCooldownUntil;
+    /// @notice Cancellation count per minter.
+    mapping(address => uint256) public commitCancelCount;
     /// @notice Royalty receiver for ERC-2981.
     address public resaleSplitter;
     /// @notice Base CID for palette images.
     string public paletteImagesCID;
     /// @notice Hash or Merkle root for palette manifest.
     bytes32 public immutable paletteManifestHash;
-    /// @notice VRF coordinator contract.
-    VRFCoordinatorV2_5Interface public immutable vrfCoordinator;
-    /// @notice VRF key hash for randomness requests.
-    bytes32 public immutable vrfKeyHash;
-    /// @notice VRF subscription id.
-    uint256 public immutable vrfSubscriptionId;
-    /// @notice Whether VRF requests use native token billing.
-    bool public immutable vrfNativePayment;
-    /// @notice VRF request confirmations.
-    uint16 public immutable vrfRequestConfirmations;
-    /// @notice VRF callback gas limit.
-    uint32 public immutable vrfCallbackGasLimit;
     /// @notice Total minted count (monotonic).
     uint256 public totalMinted;
     /// @notice Total palette indices reserved (monotonic).
@@ -239,17 +198,25 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @param minter Wallet that committed.
     /// @param commitment Commitment hash.
     /// @param blockNumber Block number of the commit.
-    /// @param requestId VRF request id.
+    /// @param revealBlock Block number whose hash will be used for reveal.
     event MintCommitCreated(
         address indexed minter,
         bytes32 indexed commitment,
         uint256 indexed blockNumber,
-        uint256 requestId
+        uint256 revealBlock
     );
     /// @notice Emitted when an expired commit is forfeited.
     /// @param minter Wallet whose commit was forfeited.
-    /// @param amount Commit fee forfeited.
-    event MintCommitForfeited(address indexed minter, uint256 amount);
+    event MintCommitForfeited(address indexed minter);
+    /// @notice Emitted when a commit is cancelled by the minter.
+    /// @param minter Wallet that cancelled.
+    /// @param cancelCount Updated cancellation count.
+    /// @param cooldownUntil Block number until cooldown ends (0 if none).
+    event MintCommitCancelled(
+        address indexed minter,
+        uint256 cancelCount,
+        uint256 cooldownUntil
+    );
     /// @notice Emitted when metadata is committed for a mint.
     /// @param minter Wallet that committed.
     /// @param metadataHash Hash of the canonical metadata payload.
@@ -258,15 +225,6 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         address indexed minter,
         bytes32 indexed metadataHash,
         bytes32 indexed imagePathHash
-    );
-    /// @notice Emitted when VRF randomness is fulfilled for a commit.
-    /// @param minter Wallet that committed.
-    /// @param requestId VRF request id.
-    /// @param randomness Randomness delivered.
-    event MintRandomnessFulfilled(
-        address indexed minter,
-        uint256 indexed requestId,
-        uint256 randomness
     );
     /// @notice Emitted when a palette index is assigned at mint.
     /// @param tokenId Minted token id.
@@ -287,9 +245,12 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @notice Emitted when fixed mint price is updated.
     /// @param price New fixed mint price in wei.
     event FixedMintPriceUpdated(uint256 price);
-    /// @notice Emitted when commit fee is updated.
-    /// @param fee New commit fee in wei.
-    event CommitFeeUpdated(uint256 fee);
+    /// @notice Emitted when commit cooldown blocks are updated.
+    /// @param blocks New cooldown blocks.
+    event CommitCooldownBlocksUpdated(uint256 blocks);
+    /// @notice Emitted when commit cancel threshold is updated.
+    /// @param threshold New cancellation threshold.
+    event CommitCancelThresholdUpdated(uint256 threshold);
     // solhint-enable gas-indexed-events
 
     /// @notice Create a new minter instance.
@@ -298,24 +259,20 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     /// @param resaleRoyaltyBps Royalty rate in basis points.
     /// @param pricing Pricing configuration (fixed/linear).
     /// @param palette Palette configuration (CID + manifest hash).
-    /// @param vrf VRF configuration.
     constructor(
         address resaleSplitter_,
         address lessToken_,
         uint96 resaleRoyaltyBps,
         PricingConfig memory pricing,
-        PaletteConfig memory palette,
-        VrfConfig memory vrf
+        PaletteConfig memory palette
     )
         ERC721("cubixles_", "cubixles_")
         Ownable(msg.sender)
-        VRFConsumerBaseV2(vrf.coordinator)
     {
         _requireConstructorConfig(
             resaleSplitter_,
             resaleRoyaltyBps,
-            palette,
-            vrf
+            palette
         );
         // slither-disable-next-line missing-zero-check
         resaleSplitter = resaleSplitter_;
@@ -326,12 +283,8 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         baseMintPriceStepWei = pricing.baseMintPriceStepWei;
         paletteImagesCID = palette.paletteImagesCID;
         paletteManifestHash = palette.paletteManifestHash;
-        vrfCoordinator = VRFCoordinatorV2_5Interface(vrf.coordinator);
-        vrfKeyHash = vrf.keyHash;
-        vrfSubscriptionId = vrf.subscriptionId;
-        vrfNativePayment = vrf.nativePayment;
-        vrfRequestConfirmations = vrf.requestConfirmations;
-        vrfCallbackGasLimit = vrf.callbackGasLimit;
+        commitCancelThreshold = DEFAULT_COMMIT_CANCEL_THRESHOLD;
+        commitCooldownBlocks = DEFAULT_COMMIT_COOLDOWN_BLOCKS;
         (bool lessEnabled_, uint256 resolvedFixedPrice) = _resolvePricing(
             lessToken_,
             pricing.linearPricingEnabled,
@@ -378,59 +331,64 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
 
     /// @notice Commit a mint request for commit-reveal.
     /// @param commitment Commitment hash (minter + salt + refs hash).
-    function commitMint(bytes32 commitment) external payable nonReentrant {
+    function commitMint(bytes32 commitment) external nonReentrant {
         if (commitment == bytes32(0)) {
             revert MintCommitEmpty();
         }
+        _requireNoCommitCooldown(msg.sender);
         MintCommit memory existing = mintCommitByMinter[msg.sender];
         if (existing.blockNumber > 0) {
             if (_isCommitActive(existing.blockNumber)) {
                 revert MintCommitActive();
             }
         }
-        uint256 requiredFee = commitFeeWei;
-        if (msg.value != requiredFee) {
-            revert CommitFeeMismatch(requiredFee, msg.value);
-        }
         if (existing.blockNumber > 0) {
-            _forfeitCommit(msg.sender, existing);
+            _forfeitCommit(msg.sender);
         }
         if (!(totalAssigned < MAX_MINTS)) {
             revert MintCapReached();
         }
-        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
-            keyHash: vrfKeyHash,
-            subId: vrfSubscriptionId,
-            requestConfirmations: vrfRequestConfirmations,
-            callbackGasLimit: vrfCallbackGasLimit,
-            numWords: VRF_NUM_WORDS,
-            extraArgs: VRFV2PlusClient._argsToBytes(
-                VRFV2PlusClient.ExtraArgsV1({ nativePayment: vrfNativePayment })
-            )
-        });
-        uint256 requestId = vrfCoordinator.requestRandomWords(request);
         MintCommit memory commit = MintCommit({
             commitment: commitment,
             blockNumber: block.number,
-            requestId: requestId,
-            randomness: 0,
-            randomnessReady: false,
             paletteIndex: 0,
             paletteAssigned: false,
             metadataHash: bytes32(0),
             imagePathHash: bytes32(0),
-            metadataCommitted: false,
-            commitFee: msg.value
+            metadataCommitted: false
         });
         mintCommitByMinter[msg.sender] = commit;
-        _mintRequestById[requestId] = MintRequest({ minter: msg.sender, commitment: commitment });
-        emit MintCommitCreated(msg.sender, commitment, block.number, requestId);
+        emit MintCommitCreated(
+            msg.sender,
+            commitment,
+            block.number,
+            block.number + COMMIT_REVEAL_DELAY_BLOCKS
+        );
     }
 
-    /// @notice Commit metadata hashes after randomness is fulfilled.
+    /// @notice Cancel an active commit, triggering cooldown after repeated cancellations.
+    function cancelCommit() external nonReentrant {
+        MintCommit memory commit = mintCommitByMinter[msg.sender];
+        if (commit.blockNumber < 1) {
+            revert MintCommitRequired();
+        }
+        if (!_isCommitActive(commit.blockNumber)) {
+            _forfeitCommit(msg.sender);
+            return;
+        }
+        delete mintCommitByMinter[msg.sender];
+        _recordCommitCancel(msg.sender);
+    }
+
+    /// @notice Commit metadata hashes after the reveal block is available.
     /// @param metadataHash Hash of the canonical metadata JSON.
     /// @param imagePathHash Hash of the palette image path (relative to paletteImagesCID).
-    function commitMetadata(bytes32 metadataHash, bytes32 imagePathHash) external {
+    /// @param expectedPaletteIndex Palette index expected by the minter.
+    function commitMetadata(
+        bytes32 metadataHash,
+        bytes32 imagePathHash,
+        uint256 expectedPaletteIndex
+    ) external {
         if (metadataHash == bytes32(0)) {
             revert MetadataHashRequired();
         }
@@ -439,14 +397,27 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         }
         MintCommit storage commit = mintCommitByMinter[msg.sender];
         _requireValidCommit(commit);
-        if (!commit.randomnessReady) {
-            revert MintRandomnessPending();
-        }
-        if (!commit.paletteAssigned) {
-            revert MintCapReached();
-        }
         if (commit.metadataCommitted) {
             revert MintMetadataCommitActive();
+        }
+        uint256 paletteIndex = commit.paletteIndex;
+        if (commit.paletteAssigned) {
+            if (paletteIndex != expectedPaletteIndex) {
+                revert PaletteIndexMismatch(expectedPaletteIndex, paletteIndex);
+            }
+        } else {
+            if (!(totalAssigned < MAX_MINTS)) {
+                revert MintCapReached();
+            }
+            uint256 randomness = _commitEntropy(commit);
+            uint256 previewIndex = _previewPaletteIndex(randomness);
+            if (previewIndex != expectedPaletteIndex) {
+                revert PaletteIndexMismatch(expectedPaletteIndex, previewIndex);
+            }
+            paletteIndex = _assignPaletteIndex(randomness);
+            commit.paletteIndex = paletteIndex;
+            commit.paletteAssigned = true;
+            ++totalAssigned;
         }
         commit.metadataHash = metadataHash;
         commit.imagePathHash = imagePathHash;
@@ -454,7 +425,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         emit MintMetadataCommitted(msg.sender, metadataHash, imagePathHash);
     }
 
-    /// @notice Forfeit an expired commit and forward any fee to the resale splitter.
+    /// @notice Forfeit an expired commit.
     /// @param minter Address with an expired commit.
     function sweepExpiredCommit(address minter) external nonReentrant {
         MintCommit memory commit = mintCommitByMinter[minter];
@@ -464,7 +435,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         if (_isCommitActive(commit.blockNumber)) {
             revert MintCommitActive();
         }
-        _forfeitCommit(minter, commit);
+        _forfeitCommit(minter);
     }
 
     /// @notice Current mint price for this deployment.
@@ -519,13 +490,11 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     function previewPaletteIndex(address minter) external view returns (uint256) {
         MintCommit memory commit = mintCommitByMinter[minter];
         _requireValidCommit(commit);
-        if (!commit.randomnessReady) {
-            revert MintRandomnessPending();
+        if (commit.paletteAssigned) {
+            return commit.paletteIndex;
         }
-        if (!commit.paletteAssigned) {
-            revert MintCapReached();
-        }
-        return commit.paletteIndex;
+        uint256 randomness = _commitEntropy(commit);
+        return _previewPaletteIndex(randomness);
     }
 
     /// @notice Metadata URI derived from palette index.
@@ -625,11 +594,18 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         emit FixedMintPriceUpdated(price);
     }
 
-    /// @notice Update the commit fee required for VRF requests.
-    /// @param fee New commit fee in wei.
-    function setCommitFee(uint256 fee) external onlyOwner {
-        commitFeeWei = fee;
-        emit CommitFeeUpdated(fee);
+    /// @notice Update the cooldown blocks after repeated cancellations.
+    /// @param blocks_ New cooldown length in blocks (0 disables cooldown).
+    function setCommitCooldownBlocks(uint256 blocks_) external onlyOwner {
+        commitCooldownBlocks = blocks_;
+        emit CommitCooldownBlocksUpdated(blocks_);
+    }
+
+    /// @notice Update the cancellation threshold before cooldown applies.
+    /// @param threshold New number of cancellations (0 disables cooldown).
+    function setCommitCancelThreshold(uint256 threshold) external onlyOwner {
+        commitCancelThreshold = threshold;
+        emit CommitCancelThresholdUpdated(threshold);
     }
 
     /// @notice ERC-165 support for ERC721 + ERC2981.
@@ -734,8 +710,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     function _requireConstructorConfig(
         address resaleSplitter_,
         uint96 resaleRoyaltyBps,
-        PaletteConfig memory palette,
-        VrfConfig memory vrf
+        PaletteConfig memory palette
     ) private view {
         if (resaleSplitter_ == address(0)) {
             revert ResaleSplitterRequired();
@@ -748,24 +723,6 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         }
         if (palette.paletteManifestHash == bytes32(0)) {
             revert PaletteManifestHashRequired();
-        }
-        if (vrf.coordinator == address(0)) {
-            revert VrfCoordinatorRequired();
-        }
-        if (vrf.coordinator.code.length == 0) {
-            revert VrfCoordinatorNotContract(vrf.coordinator);
-        }
-        if (vrf.keyHash == bytes32(0)) {
-            revert VrfKeyHashRequired();
-        }
-        if (vrf.subscriptionId == 0) {
-            revert VrfSubscriptionRequired();
-        }
-        if (vrf.requestConfirmations == 0) {
-            revert VrfRequestConfirmationsRequired();
-        }
-        if (vrf.callbackGasLimit == 0) {
-            revert VrfCallbackGasLimitRequired();
         }
     }
 
@@ -810,33 +767,6 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         emit LastSupplySnapshotted(tokenId, supply);
     }
 
-    function fulfillRandomWords(
-        uint256 requestId,
-        uint256[] memory randomWords
-    ) internal override {
-        if (randomWords.length == 0) {
-            return;
-        }
-        MintRequest memory request = _mintRequestById[requestId];
-        if (request.minter == address(0)) {
-            return;
-        }
-        MintCommit storage commit = mintCommitByMinter[request.minter];
-        if (commit.commitment != request.commitment || commit.requestId != requestId) {
-            return;
-        }
-        commit.randomness = randomWords[0];
-        commit.randomnessReady = true;
-        if (totalAssigned < MAX_MINTS) {
-            uint256 paletteIndex = _assignPaletteIndex(randomWords[0]);
-            commit.paletteIndex = paletteIndex;
-            commit.paletteAssigned = true;
-            ++totalAssigned;
-        }
-        delete _mintRequestById[requestId];
-        emit MintRandomnessFulfilled(request.minter, requestId, randomWords[0]);
-    }
-
     function _consumeCommit(
         bytes32 salt,
         bytes32 refsHash,
@@ -845,9 +775,6 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
     ) private returns (uint256 paletteIndex) {
         MintCommit memory commit = mintCommitByMinter[msg.sender];
         _requireValidCommit(commit);
-        if (!commit.randomnessReady) {
-            revert MintRandomnessPending();
-        }
         if (!commit.paletteAssigned) {
             revert MintCapReached();
         }
@@ -884,8 +811,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         if (!(totalMinted < MAX_MINTS)) {
             revert MintCapReached();
         }
-        uint256 commitFeePaid = mintCommitByMinter[msg.sender].commitFee;
-        totalPaid = msg.value + commitFeePaid;
+        totalPaid = msg.value;
         if (totalPaid < price) {
             revert InsufficientEth();
         }
@@ -921,6 +847,9 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         _snapshotSupply(tokenId, true);
 
         _safeMint(msg.sender, tokenId);
+        if (commitCancelCount[msg.sender] != 0) {
+            commitCancelCount[msg.sender] = 0;
+        }
 
         emit Minted(tokenId, msg.sender, salt, refsHash);
         emit PaletteAssigned(tokenId, paletteIndex);
@@ -934,27 +863,65 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, VRFConsume
         }
     }
 
-    function _forfeitCommit(address minter, MintCommit memory commit) private {
-        uint256 fee = commit.commitFee;
-        if (fee != 0) {
-            _transferEth(resaleSplitter, fee);
-        }
-        if (commit.requestId != 0) {
-            delete _mintRequestById[commit.requestId];
-        }
+    function _forfeitCommit(address minter) private {
         delete mintCommitByMinter[minter];
-        emit MintCommitForfeited(minter, fee);
+        emit MintCommitForfeited(minter);
+    }
+
+    function _commitEntropy(MintCommit memory commit) private view returns (uint256) {
+        uint256 revealBlock = commit.blockNumber + COMMIT_REVEAL_DELAY_BLOCKS;
+        bytes32 revealHash = blockhash(revealBlock);
+        if (revealHash == bytes32(0)) {
+            revert MintCommitExpired();
+        }
+        return uint256(keccak256(abi.encodePacked(revealHash, commit.commitment)));
+    }
+
+    function _previewPaletteIndex(uint256 randomness) private view returns (uint256) {
+        uint256 remaining = MAX_MINTS - totalAssigned;
+        if (remaining == 0) {
+            revert MintCapReached();
+        }
+        uint256 rand = randomness % remaining;
+        return _resolvePaletteIndex(rand);
+    }
+
+    function _requireNoCommitCooldown(address minter) private view {
+        uint256 untilBlock = commitCooldownUntil[minter];
+        if (untilBlock != 0 && block.number < untilBlock) {
+            revert MintCommitCooldown(untilBlock);
+        }
+    }
+
+    function _recordCommitCancel(address minter) private {
+        uint256 threshold = commitCancelThreshold;
+        uint256 cooldownBlocks = commitCooldownBlocks;
+        if (threshold == 0 || cooldownBlocks == 0) {
+            commitCancelCount[minter] = 0;
+            emit MintCommitCancelled(minter, 0, 0);
+            return;
+        }
+        uint256 nextCount = commitCancelCount[minter] + 1;
+        if (nextCount >= threshold) {
+            commitCancelCount[minter] = 0;
+            uint256 untilBlock = block.number + cooldownBlocks;
+            commitCooldownUntil[minter] = untilBlock;
+            emit MintCommitCancelled(minter, 0, untilBlock);
+            return;
+        }
+        commitCancelCount[minter] = nextCount;
+        emit MintCommitCancelled(minter, nextCount, 0);
     }
 
     function _requireValidCommit(MintCommit memory commit) private view {
         if (commit.blockNumber < 1) {
             revert MintCommitRequired();
         }
-        uint256 earliestBlock = commit.blockNumber + COMMIT_REVEAL_DELAY_BLOCKS;
-        if (block.number < earliestBlock) {
+        uint256 revealBlock = commit.blockNumber + COMMIT_REVEAL_DELAY_BLOCKS;
+        if (block.number <= revealBlock) {
             revert MintCommitPendingBlock();
         }
-        uint256 expiryBlock = commit.blockNumber + COMMIT_REVEAL_DELAY_BLOCKS + COMMIT_REVEAL_WINDOW_BLOCKS;
+        uint256 expiryBlock = revealBlock + COMMIT_REVEAL_WINDOW_BLOCKS;
         if (block.number > expiryBlock) {
             revert MintCommitExpired();
         }

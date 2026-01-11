@@ -4,25 +4,25 @@ Last updated: 2026-01-10
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
-- Assets: mint payments, ERC-721 tokens, royalties, $LESS proceeds, tokenURI integrity, VRF subscription balance
+- Assets: mint payments, ERC-721 tokens, royalties, $LESS proceeds, tokenURI integrity
 
 ## Actors
 - **Owner**: receives mint payments + royalties, can update royalty receiver and swap enablement.
 - **Minter**: mints NFTs by proving ownership of referenced NFTs.
 - **PoolManager**: optional Uniswap v4 swap target for royalties.
 - **Referenced NFT contracts**: external ERC-721 contracts used for gating.
-- **VRF coordinator**: external randomness provider for palette selection.
 
 ## Trust boundaries
 - External calls to `IERC721.ownerOf` (untrusted contract behavior).
 - External calls to PoolManager unlock/swap (external execution paths).
-- External calls to the VRF coordinator during `commitMint`.
+- Block producer influence on reveal blockhash.
 - ETH transfers to owner/minter (receiver-controlled code).
 - ERC-20 transfer of $LESS (token contract behavior).
 - RPC/provider availability for fork tests and UI floor queries.
 
 ## Attack surfaces
-- `CubixlesMinter.commitMint` (external, VRF request).
+- `CubixlesMinter.commitMint` (external, commit creation).
+- `CubixlesMinter.commitMetadata` (external, palette assignment + metadata commit).
 - `CubixlesMinter.mint` (external, payable, external calls + transfers).
 - `RoyaltySplitter.receive/fallback` (external, payable, PoolManager swap + token transfers).
 
@@ -43,15 +43,17 @@ Last updated: 2026-01-10
    - Base linear pricing is immutable once deployed; mis-set base or step requires a redeploy.
 8. **RPC/provider outages**
    - Fork tests and UI data may fail under provider degradation.
-9. **VRF dependency**
-   - If the VRF subscription is underfunded or not configured with the minter as a consumer, minting will stall.
-10. **Metadata misconfiguration**
+9. **Randomness bias (blockhash)**
+   - Block producers can influence `blockhash(revealBlock)` and therefore palette selection within a block.
+10. **Commit spam + cancellations**
+   - Repeated cancellations could be used to probe outcomes; cooldown settings mitigate rapid retries.
+11. **Metadata misconfiguration**
    - Wrong `tokenURI` pinning or mismatched `paletteImagesCID`/`paletteManifestHash` causes incorrect assets; fixing requires repinning + redeploy if the onchain commitments are wrong.
 
 ## Security posture decisions
 - **Receiver failure policy (mint)**: strict. If owner or refund transfer fails, mint reverts.
 - **External call containment**: `nonReentrant` on mint and splitter receive.
 - **State-before-callback**: mint state is finalized before `_safeMint` callback.
-- **Rounding rule**: no splits in mint; refund exact `msg.value + commitFeePaid - MINT_PRICE`.
+- **Rounding rule**: no splits in mint; refund exact `msg.value - MINT_PRICE`.
 - **ERC-721 behavior**: if `ownerOf` reverts or returns a different owner, mint reverts.
-- **VRF hardening**: randomness is sourced from Chainlink VRF (no blockhash dependence).
+- **Randomness source**: palette draw uses `keccak256(blockhash(revealBlock), commitment)` with commit-reveal gating.
