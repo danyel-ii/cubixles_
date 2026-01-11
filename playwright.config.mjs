@@ -1,13 +1,16 @@
 import { defineConfig } from "@playwright/test";
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000";
-const webServerUrl =
-  process.env.PLAYWRIGHT_WEB_SERVER_URL || `${baseURL}/api/csp-report`;
+const baseUrl = new URL(baseURL);
+const webServerHost = baseUrl.hostname;
+const webServerPort =
+  baseUrl.port || (baseUrl.protocol === "https:" ? "443" : "80");
+const webServerUrl = process.env.PLAYWRIGHT_WEB_SERVER_URL || baseURL;
 const webServer =
   process.env.PLAYWRIGHT_NO_SERVER === "1"
     ? undefined
     : {
-        command: "npm run dev -- --hostname 127.0.0.1 --port 3000",
+        command: `npm run dev -- --hostname ${webServerHost} --port ${webServerPort}`,
         url: webServerUrl,
         reuseExistingServer: true,
         timeout: 180_000,
