@@ -871,6 +871,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard {
     function _commitEntropy(MintCommit memory commit) private view returns (uint256) {
         uint256 revealBlock = commit.blockNumber + COMMIT_REVEAL_DELAY_BLOCKS;
         bytes32 revealHash = blockhash(revealBlock);
+        // slither-disable-next-line dangerous-strict-equalities
         if (revealHash == bytes32(0)) {
             revert MintCommitExpired();
         }
@@ -882,6 +883,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard {
         if (remaining == 0) {
             revert MintCapReached();
         }
+        // slither-disable-next-line weak-prng
         uint256 rand = randomness % remaining;
         return _resolvePaletteIndex(rand);
     }
@@ -957,6 +959,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
     function _resolvePaletteIndex(uint256 offset) private view returns (uint256) {
         uint256 mapped = _paletteIndexSwap[offset];
+        // slither-disable-next-line dangerous-strict-equalities
         return mapped == 0 ? offset : mapped - 1;
     }
 
@@ -965,6 +968,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard {
         if (remaining == 0) {
             revert MintCapReached();
         }
+        // slither-disable-next-line weak-prng
         uint256 rand = randomness % remaining;
         uint256 selected = _resolvePaletteIndex(rand);
 

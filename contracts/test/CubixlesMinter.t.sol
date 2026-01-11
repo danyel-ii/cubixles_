@@ -147,8 +147,8 @@ contract CubixlesMinterTest is Test {
     }
 
     function _commitMetadata(address minterAddr) internal {
-        vm.prank(minterAddr);
         uint256 expected = minter.previewPaletteIndex(minterAddr);
+        vm.prank(minterAddr);
         minter.commitMetadata(METADATA_HASH, IMAGE_PATH_HASH, expected);
     }
 

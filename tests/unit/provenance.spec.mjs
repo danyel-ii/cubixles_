@@ -17,7 +17,7 @@ describe("provenance shaping", () => {
   });
 
   it("rejects non-configured chainId", () => {
-    const wrongChain = CUBIXLES_CONTRACT.chainId === 1 ? 11155111 : 1;
+    const wrongChain = 10;
     expect(() => assertConfiguredChain(wrongChain)).toThrow(/unsupported/i);
   });
 
