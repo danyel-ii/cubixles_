@@ -1,4 +1,5 @@
 const IPFS_GATEWAY = "https://ipfs.io/ipfs/";
+const IMAGE_PROXY_PATH = "/api/image-proxy?url=";
 
 export function resolveUri(original: string | null | undefined): {
   original: string;
@@ -21,4 +22,32 @@ export function resolveUri(original: string | null | undefined): {
     original: trimmed,
     resolved: trimmed,
   };
+}
+
+function isProxyUrl(url: string) {
+  return url.startsWith(IMAGE_PROXY_PATH);
+}
+
+export function buildImageCandidates(
+  input: { original: string; resolved: string } | string | null | undefined
+): string[] {
+  if (!input) {
+    return [];
+  }
+  const uri =
+    typeof input === "string" ? resolveUri(input) : input;
+  if (!uri?.resolved) {
+    return [];
+  }
+  const candidates = new Set<string>();
+  candidates.add(uri.resolved);
+  const original = typeof input === "string" ? input : uri.original;
+  if (
+    typeof original === "string" &&
+    !original.startsWith("data:") &&
+    !isProxyUrl(original)
+  ) {
+    candidates.add(`${IMAGE_PROXY_PATH}${encodeURIComponent(original)}`);
+  }
+  return Array.from(candidates);
 }

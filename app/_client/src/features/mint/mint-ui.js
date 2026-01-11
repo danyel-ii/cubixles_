@@ -337,6 +337,9 @@ export function initMintUi() {
             continue;
           }
         }
+        if (walletState?.provider) {
+          return new BrowserProvider(walletState.provider);
+        }
         return null;
       })();
       return readProviderPromise;

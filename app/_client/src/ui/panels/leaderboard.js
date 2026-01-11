@@ -113,12 +113,15 @@ export function initLeaderboardUi() {
             continue;
           }
         }
+        if (provider || walletState?.provider) {
+          return new BrowserProvider(provider || walletState.provider);
+        }
         return null;
       })();
       return readProviderPromise;
     }
-    if (provider) {
-      return new BrowserProvider(provider);
+    if (provider || walletState?.provider) {
+      return new BrowserProvider(provider || walletState.provider);
     }
     return null;
   }

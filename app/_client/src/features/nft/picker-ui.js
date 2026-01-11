@@ -9,6 +9,7 @@ import {
   downscaleImageToMax,
   getMaxTextureSize,
 } from "../../app/app-utils.js";
+import { buildImageCandidates } from "../../shared/utils/uri";
 
 const MAX_SELECTION = 6;
 
@@ -127,9 +128,21 @@ export function initNftPickerUi() {
       const thumb = document.createElement("div");
       thumb.className = "nft-thumb";
       if (nft.image?.resolved) {
+        const candidates = buildImageCandidates(nft.image);
         const img = document.createElement("img");
         img.alt = safeText(nft.name, "NFT image");
-        img.src = nft.image.resolved;
+        img.src = candidates[0] || nft.image.resolved;
+        if (candidates.length > 1) {
+          img.addEventListener(
+            "error",
+            () => {
+              if (img.src !== candidates[1]) {
+                img.src = candidates[1];
+              }
+            },
+            { once: true }
+          );
+        }
         img.loading = "lazy";
         thumb.appendChild(img);
       } else {
@@ -215,11 +228,11 @@ export function initNftPickerUi() {
   }
 
   function resolveSelectedImages(selection) {
-    const urls = selection.map((nft) => nft.image?.resolved ?? null);
-    if (urls.some((url) => !url)) {
+    const urlSets = selection.map((nft) => buildImageCandidates(nft.image));
+    if (urlSets.some((urls) => !urls.length)) {
       return null;
     }
-    return urls;
+    return urlSets;
   }
 
   function loadImages(urls) {
@@ -227,21 +240,30 @@ export function initNftPickerUi() {
       return Promise.reject(new Error("Image loader unavailable."));
     }
     const maxSize = getMaxTextureSize();
-    const loaders = urls.map((url) => {
-      const cached = state.textureCache.get(url);
-      if (cached) {
-        return Promise.resolve(cached);
+    const loaders = urls.map((urlSet) => {
+      const candidates = Array.isArray(urlSet) ? urlSet.filter(Boolean) : [urlSet];
+      const cachedUrl = candidates.find((url) => state.textureCache.has(url));
+      if (cachedUrl) {
+        return Promise.resolve({ image: state.textureCache.get(cachedUrl), url: cachedUrl });
       }
       return new Promise((resolve) => {
-        loadImage(
-          url,
-          (img) => {
-            const scaled = downscaleImageToMax(img, maxSize);
-            state.textureCache.set(url, scaled);
-            resolve(scaled);
-          },
-          () => resolve(null)
-        );
+        const tryLoad = (index) => {
+          if (index >= candidates.length) {
+            resolve(null);
+            return;
+          }
+          const url = candidates[index];
+          loadImage(
+            url,
+            (img) => {
+              const scaled = downscaleImageToMax(img, maxSize);
+              state.textureCache.set(url, scaled);
+              resolve({ image: scaled, url });
+            },
+            () => tryLoad(index + 1)
+          );
+        };
+        tryLoad(0);
       });
     });
     return Promise.all(loaders);
@@ -302,16 +324,17 @@ export function initNftPickerUi() {
     setStatus("Applying NFTs to cube...");
     try {
       const images = await loadImages(imageUrls);
-      const usable = images.filter((img) => img);
+      const usable = images.map((item) => item?.image).filter((img) => img);
       if (usable.length !== imageUrls.length) {
         throw new Error("Failed to load one or more NFT images.");
       }
-      const faceTextures = mapSelectionToFaceTextures(
-        usable,
-        state.frostedTexture
-      );
+      const faceTextures = mapSelectionToFaceTextures(usable, state.frostedTexture);
       state.faceTextures = faceTextures;
-      state.selectedDataUrls = imageUrls;
+      const appliedUrls = images.map((item) => item?.url).filter(Boolean);
+      if (appliedUrls.length !== imageUrls.length) {
+        throw new Error("Failed to resolve NFT image URLs.");
+      }
+      state.selectedDataUrls = appliedUrls;
       setStatus("NFTs applied to cube.", "success");
       appliedSelectionKey = selectionKey;
     } catch (error) {

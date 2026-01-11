@@ -7,7 +7,7 @@ import {
 import { fetchMintPriceByTokenId, fetchTokenUri } from "../data/chain/cubixles-reader.js";
 import { getProvenance } from "../data/nft/indexer";
 import { getCollectionFloorSnapshot } from "../data/nft/floor.js";
-import { resolveUri } from "../shared/utils/uri";
+import { resolveUri, buildImageCandidates } from "../shared/utils/uri";
 import { CUBIXLES_CONTRACT } from "../config/contracts";
 import { fetchWithGateways } from "../../../../src/shared/ipfs-fetch.js";
 import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/metadata.js";
@@ -202,13 +202,13 @@ async function loadImages(urlSets) {
 }
 
 async function resolveMetadataImageCandidates(nft) {
-  const candidates = [];
+  const candidates = new Set();
   if (nft?.image?.resolved) {
-    candidates.push(nft.image.resolved);
+    buildImageCandidates(nft.image).forEach((url) => candidates.add(url));
   }
   const tokenUri = nft?.tokenUri?.resolved;
   if (!tokenUri) {
-    return candidates;
+    return Array.from(candidates);
   }
   try {
     let response;
@@ -221,31 +221,24 @@ async function resolveMetadataImageCandidates(nft) {
       return candidates;
     }
     const metadata = await response.json();
-    const imageCandidates = [
-      metadata?.image,
-      metadata?.image_url,
-      metadata?.imageUrl,
-    ];
+    const imageCandidates = [metadata?.image, metadata?.image_url, metadata?.imageUrl];
     imageCandidates.forEach((candidate) => {
       if (typeof candidate !== "string" || !candidate.trim()) {
         return;
       }
-      const resolved = resolveUri(candidate)?.resolved ?? null;
-      if (resolved) {
-        candidates.push(resolved);
-      }
+      buildImageCandidates(candidate).forEach((url) => candidates.add(url));
     });
     if (typeof metadata?.image_data === "string") {
       const svg = metadata.image_data.trim();
       if (!svg) {
-        return candidates;
+        return Array.from(candidates);
       }
-      candidates.push(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`);
+      candidates.add(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`);
     }
   } catch (error) {
-    return candidates;
+    return Array.from(candidates);
   }
-  return Array.from(new Set(candidates));
+  return Array.from(candidates);
 }
 
 async function waitForFrostedTexture() {

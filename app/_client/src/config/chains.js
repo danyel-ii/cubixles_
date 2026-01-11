@@ -64,7 +64,6 @@ const CHAIN_LIST = [
     deployment: sepoliaDeployment,
     rpcUrls: [
       readEnvValue("NEXT_PUBLIC_SEPOLIA_RPC_URL"),
-      "https://rpc.sepolia.org",
       "https://ethereum-sepolia.publicnode.com",
     ],
   }),
