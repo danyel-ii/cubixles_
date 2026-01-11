@@ -853,7 +853,13 @@ export function initMintUi() {
         existingCommit = await readContract.mintCommitByMinter(walletState.address);
         existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
       } catch (error) {
-        throw new Error("Commit state unavailable. Please retry.");
+        try {
+          existingCommit = await contract.mintCommitByMinter(walletState.address);
+          existingBlock = BigInt(existingCommit?.blockNumber ?? 0n);
+        } catch (fallbackError) {
+          console.warn("Commit state read failed.", error, fallbackError);
+          throw new Error("Commit state unavailable. Please retry.");
+        }
       }
       const storedCommit = loadStoredCommit(
         CUBIXLES_CONTRACT.chainId,
