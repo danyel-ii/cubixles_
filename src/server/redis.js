@@ -2,6 +2,23 @@ import { Redis } from "@upstash/redis";
 
 let client = null;
 
+function getRedisConfig() {
+  const url =
+    process.env.UPSTASH_REDIS_REST_URL ||
+    process.env.KV_REST_API_URL ||
+    process.env.KV_REDIS_REST_API_URL ||
+    "";
+  const token =
+    process.env.UPSTASH_REDIS_REST_TOKEN ||
+    process.env.KV_REST_API_TOKEN ||
+    process.env.KV_REDIS_REST_API_TOKEN ||
+    "";
+  return {
+    url: url.trim(),
+    token: token.trim(),
+  };
+}
+
 export function getRedisKeyPrefix() {
   const explicit = process.env.REDIS_KEY_PREFIX;
   if (explicit && explicit.trim()) {
@@ -25,9 +42,8 @@ export function buildRedisKey(key) {
 }
 
 export function hasRedis() {
-  return Boolean(
-    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-  );
+  const { url, token } = getRedisConfig();
+  return Boolean(url && token);
 }
 
 export function getRedis() {
@@ -35,9 +51,10 @@ export function getRedis() {
     return null;
   }
   if (!client) {
+    const { url, token } = getRedisConfig();
     client = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      url,
+      token,
     });
   }
   return client;
