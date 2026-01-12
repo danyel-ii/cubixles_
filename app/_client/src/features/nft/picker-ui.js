@@ -13,13 +13,25 @@ import { buildImageCandidates } from "../../shared/utils/uri";
 
 const MAX_SELECTION = 6;
 const IPFS_PROTOCOL = "ipfs://";
+const ARWEAVE_PROTOCOL = "ar://";
+const DATA_PROTOCOL = "data:";
+const HTTPS_PROTOCOL = "https://";
 
-function isIpfsUri(value) {
+function isAllowedNftUri(value) {
   if (!value) {
     return false;
   }
   const trimmed = value.trim();
+  if (trimmed.startsWith(HTTPS_PROTOCOL)) {
+    return true;
+  }
   if (trimmed.startsWith(IPFS_PROTOCOL)) {
+    return true;
+  }
+  if (trimmed.startsWith(ARWEAVE_PROTOCOL)) {
+    return true;
+  }
+  if (trimmed.startsWith(DATA_PROTOCOL)) {
     return true;
   }
   if (/^https?:\/\//i.test(trimmed)) {
@@ -58,14 +70,14 @@ function getNftIssues(nft) {
   const imageUri = nft?.image?.original;
   if (!imageUri) {
     issues.push("no image");
-  } else if (!isIpfsUri(imageUri)) {
-    issues.push("image not IPFS");
+  } else if (!isAllowedNftUri(imageUri)) {
+    issues.push("image not allowed");
   }
   const metadataUri = nft?.tokenUri?.original;
   if (!metadataUri) {
     issues.push("no metadata");
-  } else if (!isIpfsUri(metadataUri)) {
-    issues.push("metadata not IPFS");
+  } else if (!isAllowedNftUri(metadataUri)) {
+    issues.push("metadata not allowed");
   }
   return issues;
 }
@@ -76,7 +88,7 @@ function isBlockedNft(nft) {
 
 function formatBlockedMessage(count) {
   const suffix = count === 1 ? "NFT" : "NFTs";
-  return `Blocked ${count} ${suffix} without IPFS metadata/images. Only IPFS-hosted NFTs can be selected.`;
+  return `Blocked ${count} ${suffix} without supported metadata/images. Allowed: IPFS, HTTPS, Arweave, data URLs.`;
 }
 
 function formatIssueMessage(nft, issues) {
@@ -255,7 +267,7 @@ export function initNftPickerUi() {
         renderInventory();
         if (selectedKeys.has(key) && issues.length) {
           setStatus(
-            `${formatIssueMessage(nft, issues)} Consider choosing IPFS-hosted NFTs.`,
+            `${formatIssueMessage(nft, issues)} Consider choosing NFTs with supported metadata.`,
             "error"
           );
           return;
