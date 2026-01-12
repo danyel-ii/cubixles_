@@ -237,6 +237,7 @@ export async function POST(request) {
       requestId,
       status,
       message: error?.message,
+      stack: error?.stack,
     });
     logRequest({ route: "/api/pin/metadata", status, requestId, bodySize });
     return NextResponse.json(
