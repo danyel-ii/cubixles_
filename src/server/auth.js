@@ -118,11 +118,18 @@ export function issueNonce() {
 async function markNonceUsed(nonce, ttlMs, issuedAt) {
   const redis = getRedis();
   if (redis) {
-    const result = await redis.set(buildRedisKey(`nonce:${nonce}`), "1", { nx: true, px: ttlMs });
-    if (!result) {
-      return { ok: false, error: "Nonce already used" };
+    try {
+      const result = await redis.set(buildRedisKey(`nonce:${nonce}`), "1", {
+        nx: true,
+        px: ttlMs,
+      });
+      if (!result) {
+        return { ok: false, error: "Nonce already used" };
+      }
+      return { ok: true };
+    } catch (error) {
+      recordMetric("auth.nonce.redis_error");
     }
-    return { ok: true };
   }
 
   cleanupNonces();
