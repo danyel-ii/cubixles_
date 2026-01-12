@@ -19,7 +19,59 @@ const walletUiState = {
   pickerRoot: null,
   pickerList: null,
   pickerClose: null,
+  updateStatus: null,
+  identityCache: new Map(),
+  identityInFlight: new Set(),
 };
+
+function shortenAddress(address) {
+  if (!address) {
+    return "";
+  }
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function getCachedIdentityLabel(address) {
+  if (!address) {
+    return "";
+  }
+  const key = address.toLowerCase();
+  if (walletUiState.identityCache.has(key)) {
+    return walletUiState.identityCache.get(key);
+  }
+  const fallback = shortenAddress(address);
+  walletUiState.identityCache.set(key, fallback);
+  return fallback;
+}
+
+async function fetchIdentityLabel(address) {
+  if (!address) {
+    return;
+  }
+  const key = address.toLowerCase();
+  if (walletUiState.identityInFlight.has(key)) {
+    return;
+  }
+  walletUiState.identityInFlight.add(key);
+  try {
+    const response = await fetch(`/api/identity?address=${address}`);
+    if (!response.ok) {
+      return;
+    }
+    const json = await response.json();
+    const ens = typeof json?.ens === "string" ? json.ens.trim() : "";
+    if (ens) {
+      walletUiState.identityCache.set(key, ens);
+      if (typeof walletUiState.updateStatus === "function") {
+        walletUiState.updateStatus(getWalletState());
+      }
+    }
+  } catch (error) {
+    void error;
+  } finally {
+    walletUiState.identityInFlight.delete(key);
+  }
+}
 
 function startProviderDiscovery() {
   if (discoveryStarted || typeof window === "undefined") {
@@ -103,6 +155,7 @@ export async function requestWalletConnection(selectedProvider = null) {
     return;
   }
   isConnecting = true;
+  connectButton.classList.add("is-hooked");
   try {
     if (selectedProvider) {
       statusEl.textContent = "Wallet: connecting…";
@@ -182,14 +235,21 @@ export function initWalletUi() {
     if (safeState.status === "connected") {
       const chainId = safeState.chainId;
       const expected = CUBIXLES_CONTRACT.chainId;
+      const addressLabel = getCachedIdentityLabel(safeState.address);
+      if (safeState.address) {
+        void fetchIdentityLabel(safeState.address);
+      }
       if (chainId && chainId !== expected) {
-        statusEl.textContent = `Wallet: connected (wrong network: ${formatChainName(chainId)})`;
+        const labelPrefix = addressLabel ? `${addressLabel}, ` : "";
+        statusEl.textContent = `Wallet: connected (${labelPrefix}wrong network: ${formatChainName(chainId)})`;
         if (switchButton) {
           switchButton.classList.remove("is-hidden");
           switchButton.disabled = false;
         }
       } else {
-        statusEl.textContent = "Wallet: connected";
+        statusEl.textContent = addressLabel
+          ? `Wallet: connected (${addressLabel})`
+          : "Wallet: connected";
         if (switchButton) {
           switchButton.classList.add("is-hidden");
           switchButton.disabled = true;
@@ -241,6 +301,8 @@ export function initWalletUi() {
       switchButton.disabled = true;
     }
   }
+
+  walletUiState.updateStatus = updateWalletStatus;
 
   subscribeWallet((state) => {
     updateWalletStatus(state);

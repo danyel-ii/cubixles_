@@ -308,6 +308,7 @@ export function initNftPickerUi() {
   });
 
   applyButton.addEventListener("click", async () => {
+    applyButton.classList.add("is-hooked");
     const selection = state.nftSelection;
     if (selection.length < 1 || selection.length > MAX_SELECTION) {
       setStatus("Select 1 to 6 NFTs to continue.", "error");

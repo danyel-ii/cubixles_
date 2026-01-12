@@ -813,6 +813,7 @@ export function initMintUi() {
 
   mintButton.addEventListener("click", async () => {
     let contract = null;
+    mintButton.classList.add("is-hooked");
     if (!walletState || walletState.status !== "connected") {
       setStatus("Connect your wallet to mint.", "error");
       return;

@@ -27,6 +27,8 @@
   --glass-strong: rgba(247, 241, 232, 0.92);
   --shadow-soft: 0 18px 46px rgba(47, 34, 22, 0.18);
   --shadow-tight: 0 10px 24px rgba(47, 34, 22, 0.12);
+  --hook-muted: rgba(27, 22, 17, 0.45);
+  --hook-active: #2f9b63;
   --font-body: "Instrument Sans", "Space Grotesk", sans-serif;
   --font-display: var(--font-body);
   --font-logo: "Cubixles Logo", var(--font-body);
@@ -869,6 +871,53 @@ body.is-preview.ui-pointer-active .p5Canvas {
   border: 1px solid rgba(27, 22, 17, 0.45);
   box-shadow: 0 10px 22px rgba(27, 22, 17, 0.15);
   transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.ui-button--hook {
+  gap: 6px;
+}
+
+.ui-button-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ui-button-hook {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  opacity: 0.85;
+}
+
+.ui-button-hook-icon {
+  width: 12px;
+  height: 12px;
+  stroke: var(--hook-muted);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  transition: stroke 200ms ease, opacity 200ms ease;
+}
+
+.ui-button.is-hooked .ui-button-hook-icon {
+  stroke: var(--hook-active);
+  opacity: 1;
+}
+
+.ui-button--stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.ui-button--stacked .ui-button-subtitle {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 10px;
+  color: var(--ink-soft);
 }
 
 .ui-button input {

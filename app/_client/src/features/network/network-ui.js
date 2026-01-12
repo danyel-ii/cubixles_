@@ -13,6 +13,7 @@ const networkUiState = {
   pickerClose: null,
   statusEl: null,
   selectButton: null,
+  selectSubtitle: null,
 };
 
 function showNetworkPicker() {
@@ -59,7 +60,11 @@ function updateNetworkStatus(chainId) {
   if (!statusEl) {
     return;
   }
-  statusEl.textContent = `Network: ${formatChainName(chainId)}`;
+  const label = formatChainName(chainId);
+  statusEl.textContent = `Network: ${label}`;
+  if (networkUiState.selectSubtitle) {
+    networkUiState.selectSubtitle.textContent = `currently connected to: ${label}`;
+  }
 }
 
 export function initNetworkUi() {
@@ -68,12 +73,14 @@ export function initNetworkUi() {
   const pickerClose = document.getElementById("network-picker-close");
   const statusEl = document.getElementById("network-status");
   const selectButton = document.getElementById("network-select");
+  const selectSubtitle = document.getElementById("network-select-subtitle");
 
   networkUiState.pickerRoot = pickerRoot;
   networkUiState.pickerList = pickerList;
   networkUiState.pickerClose = pickerClose;
   networkUiState.statusEl = statusEl;
   networkUiState.selectButton = selectButton;
+  networkUiState.selectSubtitle = selectSubtitle;
 
   renderNetworkOptions();
   updateNetworkStatus(getActiveChainId());

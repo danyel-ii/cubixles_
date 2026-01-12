@@ -178,8 +178,13 @@ export default function AppShell() {
           NFTs you already own.
         </div>
         <div className="ui-row">
-          <button id="wallet-connect" className="ui-button" type="button">
-            Connect Wallet
+          <button id="wallet-connect" className="ui-button ui-button--hook" type="button">
+            <span className="ui-button-label">Connect Wallet</span>
+            <span className="ui-button-hook" aria-hidden="true">
+              <svg viewBox="0 0 16 16" className="ui-button-hook-icon" focusable="false">
+                <path d="M5 3v5a3 3 0 0 0 3 3h4" />
+              </svg>
+            </span>
           </button>
           <button id="wallet-disconnect" className="ui-button is-ghost" type="button">
             Disconnect
@@ -192,8 +197,11 @@ export default function AppShell() {
           Network: —
         </div>
         <div className="ui-row">
-          <button id="network-select" className="ui-button is-ghost" type="button">
-            Choose network
+          <button id="network-select" className="ui-button is-ghost ui-button--stacked" type="button">
+            <span className="ui-button-label">Choose network</span>
+            <span id="network-select-subtitle" className="ui-button-subtitle">
+              currently connected to: —
+            </span>
           </button>
         </div>
         <div className="ui-row">
@@ -213,8 +221,13 @@ export default function AppShell() {
             <button id="nft-clear" className="ui-button is-ghost" type="button">
               Clear selection
             </button>
-            <button id="nft-apply" className="ui-button" type="button">
-              Apply to cube
+            <button id="nft-apply" className="ui-button ui-button--hook" type="button">
+              <span className="ui-button-label">Apply to cube</span>
+              <span className="ui-button-hook" aria-hidden="true">
+                <svg viewBox="0 0 16 16" className="ui-button-hook-icon" focusable="false">
+                  <path d="M5 3v5a3 3 0 0 0 3 3h4" />
+                </svg>
+              </span>
             </button>
             <button id="ui-preview" className="ui-button ui-preview-btn is-preview-dark" type="button">
               Preview
@@ -246,8 +259,13 @@ export default function AppShell() {
               step="0.0001"
               placeholder="ETH amount"
             />
-            <button id="mint-submit" className="ui-button" type="button">
-              Mint NFT
+            <button id="mint-submit" className="ui-button ui-button--hook" type="button">
+              <span className="ui-button-label">Mint NFT</span>
+              <span className="ui-button-hook" aria-hidden="true">
+                <svg viewBox="0 0 16 16" className="ui-button-hook-icon" focusable="false">
+                  <path d="M5 3v5a3 3 0 0 0 3 3h4" />
+                </svg>
+              </span>
             </button>
           </div>
           <div id="mint-price" className="ui-hint">
