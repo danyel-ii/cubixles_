@@ -248,7 +248,10 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
           name: "Mock NFT",
           tokenUri: { raw: "ipfs://token" },
           collection: { name: "Mock Collection" },
-          image: { cachedUrl: "https://example.com/nft.png", originalUrl: "https://example.com/nft.png" },
+          image: {
+            cachedUrl: "ipfs://bafybeigdyrmockednftimage",
+            originalUrl: "ipfs://bafybeigdyrmockednftimage",
+          },
           metadata: { name: "Mock NFT" },
           raw: { metadata: { name: "Mock NFT" } },
         }),
@@ -267,7 +270,10 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
             name: "Mock NFT",
             collection: { name: "Mock Collection" },
             tokenUri: { raw: "ipfs://token" },
-            image: { cachedUrl: "https://example.com/nft.png", originalUrl: "https://example.com/nft.png" },
+            image: {
+              cachedUrl: "ipfs://bafybeigdyrmockednftimage",
+              originalUrl: "ipfs://bafybeigdyrmockednftimage",
+            },
             metadata: { name: "Mock NFT" },
             raw: { metadata: { name: "Mock NFT" } },
           },
