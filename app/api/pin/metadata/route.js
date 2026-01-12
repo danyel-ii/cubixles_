@@ -7,6 +7,7 @@ import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/meta
 import { canonicalJson } from "../../../../src/server/json.js";
 import { generateCubeGif } from "../../../../src/server/cube-gif.js";
 import { hashPayload, getCachedCid, setCachedCid, pinJson, pinFile } from "../../../../src/server/pinata.js";
+import { recordPinLog } from "../../../../src/server/pin-log.js";
 import { verifyNonce, verifySignature } from "../../../../src/server/auth.js";
 import { recordMetric } from "../../../../src/server/metrics.js";
 import { readEnvBool } from "../../../../src/server/env.js";
@@ -72,6 +73,11 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    const resolvedChainId = Number.isFinite(payloadChainId)
+      ? Number(payloadChainId)
+      : Number.isFinite(chainId)
+        ? Number(chainId)
+        : undefined;
 
     const sigStatus = await verifySignature({ address, nonce, signature, chainId });
     if (!sigStatus.ok) {
@@ -129,7 +135,14 @@ export async function POST(request) {
       try {
         const gifBuffer = await generateCubeGif({ colors: paletteColors });
         const gifName = `cubixles_${tokenId}.gif`;
-        const gifCid = await pinFile(gifBuffer, { name: gifName });
+        const gifCid = await pinFile(gifBuffer, {
+          name: gifName,
+          keyvalues: {
+            kind: "preview_gif",
+            chainId: resolvedChainId,
+            tokenId,
+          },
+        });
         if (gifCid) {
           finalPayload = {
             ...payload,
@@ -156,6 +169,17 @@ export async function POST(request) {
         payloadHash,
         actor,
       });
+      await recordPinLog({
+        cid: cachedCid,
+        tokenURI,
+        metadataHash,
+        payloadHash,
+        chainId: resolvedChainId,
+        tokenId,
+        minter: actor,
+        cached: true,
+        requestId,
+      });
       return NextResponse.json(
         { cid: cachedCid, tokenURI, metadataHash, cached: true, requestId },
         { status: 200 }
@@ -163,7 +187,17 @@ export async function POST(request) {
     }
 
     const name = tokenId ? `cubixles_${tokenId}.json` : "cubixles_metadata.json";
-    const cid = await pinJson(payloadText, { name });
+    const cid = await pinJson(payloadText, {
+      name,
+      keyvalues: {
+        kind: "metadata",
+        chainId: resolvedChainId,
+        tokenId,
+        metadataHash,
+        payloadHash,
+        minter: actor,
+      },
+    });
     if (!cid) {
       recordMetric("mint.pin.pinata_missing_cid");
       await recordPinFailure({ reason: "missing_cid" });
@@ -174,6 +208,17 @@ export async function POST(request) {
     }
     await setCachedCid(payloadHash, cid);
     const tokenURI = `ipfs://${cid}`;
+    await recordPinLog({
+      cid,
+      tokenURI,
+      metadataHash,
+      payloadHash,
+      chainId: resolvedChainId,
+      tokenId,
+      minter: actor,
+      cached: false,
+      requestId,
+    });
     recordMetric("mint.pin.success");
     logRequest({
       route: "/api/pin/metadata",
