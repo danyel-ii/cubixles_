@@ -20,7 +20,7 @@ import {
   getPaletteEntryByIndex,
   loadPaletteManifest,
 } from "../../data/palette/manifest.js";
-import { subscribeWallet } from "../wallet/wallet.js";
+import { subscribeWallet, switchToActiveChain } from "../wallet/wallet.js";
 import { state } from "../../app/app-state.js";
 import { buildMintMetadata } from "./mint-metadata.js";
 import { computeRefsHash, sortRefsCanonically } from "./refs.js";
@@ -835,11 +835,29 @@ export function initMintUi() {
         throw new Error("Unsupported wallet network. Switch to mainnet or Base.");
       }
       if (walletChainId !== CUBIXLES_CONTRACT.chainId) {
-        throw new Error(
-          `Wallet on ${formatChainName(walletChainId)}. Switch to ${formatChainName(
+        setStatus(
+          `Approve network switch to ${formatChainName(
             CUBIXLES_CONTRACT.chainId
-          )} to mint.`
+          )} in your wallet.`,
+          "error"
         );
+        const switched = await switchToActiveChain();
+        if (!switched) {
+          throw new Error(
+            `Wallet on ${formatChainName(walletChainId)}. Switch to ${formatChainName(
+              CUBIXLES_CONTRACT.chainId
+            )} to mint.`
+          );
+        }
+        const refreshedNetwork = await provider.getNetwork();
+        const refreshedChainId = Number(refreshedNetwork.chainId);
+        if (refreshedChainId !== CUBIXLES_CONTRACT.chainId) {
+          throw new Error(
+            `Wallet on ${formatChainName(refreshedChainId)}. Switch to ${formatChainName(
+              CUBIXLES_CONTRACT.chainId
+            )} to mint.`
+          );
+        }
       }
       const readProvider = await getReadProvider();
       if (!readProvider) {
