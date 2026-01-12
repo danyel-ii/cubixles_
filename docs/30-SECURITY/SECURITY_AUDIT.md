@@ -1,9 +1,9 @@
 # cubixles_ — Security & Edge-Case Coverage Implementation Results
 
-Last updated: 2026-01-10
-Date: 2026-01-10
-Run timestamp (local): 2026-01-10T13:31:31Z (app + contracts verification)
-Previous full scan: 2026-01-09T16:39:53Z
+Last updated: 2026-01-12
+Date: 2026-01-12
+Run timestamp (local): 2026-01-12T02:52:08Z (app + contracts verification)
+Previous full scan: 2026-01-10T13:31:31Z
 
 ## Scope
 - Contracts: `CubixlesMinter`, `RoyaltySplitter`
@@ -32,14 +32,16 @@ Previous full scan: 2026-01-09T16:39:53Z
 
 ## Test results
 ### Security audit (local)
-Run timestamp (local): 2026-01-10T13:31:31Z
-- `npm test` — PASS (31 tests, Vitest).
+Run timestamp (local): 2026-01-12T02:52:08Z
+- `npm test` — PASS (28 tests, Vitest).
 - `npm run test:ui` — PASS (3 tests, Playwright).
-- `cd contracts && forge test --fuzz-timeout 120` — PASS (118 tests; fuzz + invariants included).
-- `cd contracts && npx solhint "src/**/*.sol"` — WARN (43 warnings; Natspec + naming/style).
+- `cd contracts && forge test --fuzz-timeout 120` — PASS (126 tests; fuzz + invariants + fork tests included).
+- `cd contracts && npx solhint "src/**/*.sol"` — WARN (19 warnings; Natspec + naming/style + gas).
 - `cd contracts && slither . --config-file slither.config.json` — PASS (0 findings).
-Notes:
-- Coverage, fork tests, secret scans, and `npm audit` were not re-run in this pass.
+- `npm run coverage:contracts` — PASS (93.57% line coverage; minimum 90%).
+- `npm run check:no-client-secrets` — PASS.
+- `npm run check:no-repo-secrets` — PASS.
+- `npm audit --audit-level=high` — PASS.
 
 ### Unit + edge + fuzz + invariants
 Command:
@@ -47,21 +49,20 @@ Command:
 cd contracts
 forge test --fuzz-timeout 120
 ```
-Result: PASS (118 tests; includes fuzz + invariants).
+Result: PASS (126 tests; includes fuzz + invariants + fork tests).
 
 ### Coverage (Solidity)
 Command:
 ```sh
 npm run coverage:contracts
 ```
-Result: PASS (90.95% line coverage; minimum is 90%).
+Result: PASS (93.57% line coverage; minimum is 90%).
 - Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
 - Excluded: `contracts/script/**` from the coverage gate.
 - Action: keep coverage at or above 90% before mainnet release.
 Warnings during coverage:
-- Low-level call return values ignored in test helpers (`RoyaltySplitter.t.sol`).
+- `forge coverage` uses `--ir-minimum` (viaIR) to avoid stack-too-deep issues; line mapping can be less precise.
 - Some test functions could be marked `view` (test-only warnings).
-- Foundry coverage anchors missing for a few lines in test/mocks (informational).
 
 ### Invariants (via `forge test -vvv`)
 Result: PASS (3 tests, 128k handler calls; included in the full forge run).
@@ -95,14 +96,14 @@ Command:
 ```sh
 npm test
 ```
-Result: PASS (31 tests, Vitest unit/component/API; v4.0.16).
+Result: PASS (28 tests, Vitest unit/component/API; v4.0.16).
 
 ### Frontend smoke (Playwright)
 Command:
 ```sh
 npm run test:ui
 ```
-Result: PASS (3 tests, ~7s)
+Result: PASS (3 tests, ~49s)
 
 ### Client secret scan
 Command:
@@ -138,7 +139,7 @@ Results (local):
 ## Static analysis
 - Local solhint run:
   - Command: `cd contracts && npx solhint "src/**/*.sol"`
-  - Result: 0 errors, 43 warnings (Natspec + naming/style in `src/chainlink/*`, `cubixles_v.1.0..sol`, and gas/style hints in `CubixlesMinter`).
+  - Result: 0 errors, 19 warnings (Natspec + naming/style in `cubixles_v.1.0..sol`, plus gas/style hints in `CubixlesMinter`).
 - Local slither run:
   - Command: `cd contracts && slither . --config-file slither.config.json`
   - Result: 0 findings.
@@ -159,4 +160,4 @@ plus fork checks and manual review; formal proofs are a pending work item.
 - Release gate uses `npm run fork-test` with a pinned block via `FORK_BLOCK_NUMBER` or `BASE_FORK_BLOCK`.
 - CI includes `forge test`, `npm test`, `npm run test:ui`, `solhint`, `slither`, coverage (90% minimum),
   `npm audit --audit-level=high`, `npm run check:no-client-secrets`, and `npm run check:no-repo-secrets`.
-- Local `npm audit --audit-level=high` (2026-01-09): 0 vulnerabilities.
+- Local `npm audit --audit-level=high` (2026-01-12): 0 vulnerabilities.
