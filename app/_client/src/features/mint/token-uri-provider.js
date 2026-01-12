@@ -81,6 +81,7 @@ export async function pinTokenMetadata({ metadata, signer, address }) {
         address,
         nonce,
         signature,
+        chainId: CUBIXLES_CONTRACT.chainId,
         payload: metadata,
       }),
     });

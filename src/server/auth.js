@@ -28,6 +28,7 @@ const EIP1271_ABI = [
   "function isValidSignature(bytes32,bytes) view returns (bytes4)",
   "function isValidSignature(bytes,bytes) view returns (bytes4)",
 ];
+const SUPPORTED_CHAIN_IDS = new Set([1, 8453, 11155111]);
 
 function nowMs() {
   return Date.now();
@@ -66,10 +67,21 @@ function parseNonce(nonce) {
 
 function getAuthChainId() {
   const chainId = Number(process.env.CUBIXLES_CHAIN_ID || 1);
-  return Number.isFinite(chainId) ? chainId : 1;
+  if (!Number.isFinite(chainId)) {
+    return 1;
+  }
+  return SUPPORTED_CHAIN_IDS.has(chainId) ? chainId : 1;
 }
 
-function buildPinTypedData(nonce) {
+function resolveAuthChainId(chainId) {
+  const parsed = Number(chainId);
+  if (Number.isFinite(parsed) && SUPPORTED_CHAIN_IDS.has(parsed)) {
+    return parsed;
+  }
+  return getAuthChainId();
+}
+
+function buildPinTypedData(nonce, chainId) {
   const parsed = parseNonce(nonce);
   if (!parsed.ok) {
     return parsed;
@@ -81,7 +93,7 @@ function buildPinTypedData(nonce) {
     domain: {
       name: PIN_DOMAIN_NAME,
       version: PIN_DOMAIN_VERSION,
-      chainId: getAuthChainId(),
+      chainId: resolveAuthChainId(chainId),
     },
     types: PIN_TYPES,
     value: {
@@ -172,8 +184,8 @@ async function callSignatureMethod(contract, method, args) {
   }
 }
 
-async function verifyContractSignature(checksum, domain, types, value, signature) {
-  const rpcUrl = getRpcUrl();
+async function verifyContractSignature(checksum, domain, types, value, signature, chainId) {
+  const rpcUrl = resolveRpcUrlForChain(resolveAuthChainId(chainId));
   if (!rpcUrl) {
     return false;
   }
@@ -199,7 +211,7 @@ async function verifyContractSignature(checksum, domain, types, value, signature
   return false;
 }
 
-export async function verifySignature({ address, nonce, signature }) {
+export async function verifySignature({ address, nonce, signature, chainId }) {
   if (!address || !signature) {
     recordMetric("auth.signature.missing");
     return { ok: false, error: "Missing address or signature" };
@@ -211,7 +223,7 @@ export async function verifySignature({ address, nonce, signature }) {
     recordMetric("auth.signature.invalid_address");
     return { ok: false, error: "Invalid address" };
   }
-  const typedData = buildPinTypedData(nonce);
+  const typedData = buildPinTypedData(nonce, chainId);
   if (!typedData.ok) {
     recordMetric("auth.signature.invalid_nonce");
     return { ok: false, error: typedData.error || "Invalid nonce" };
@@ -227,7 +239,14 @@ export async function verifySignature({ address, nonce, signature }) {
     return { ok: true, address: checksum };
   }
 
-  const valid1271 = await verifyContractSignature(checksum, domain, types, value, signature);
+  const valid1271 = await verifyContractSignature(
+    checksum,
+    domain,
+    types,
+    value,
+    signature,
+    chainId
+  );
   if (!valid1271) {
     recordMetric("auth.signature.mismatch");
     return { ok: false, error: "Signature mismatch" };

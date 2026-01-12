@@ -1,17 +1,18 @@
 import { z } from "zod";
 
-export const pinRequestSchema = z.object({
-  address: z.string(),
-  nonce: z.string(),
-  signature: z.string(),
-  payload: z.record(z.unknown()),
-});
-
 const CHAIN_ID_SCHEMA = z.union([
   z.literal(1),
   z.literal(8453),
   z.literal(11155111),
 ]);
+
+export const pinRequestSchema = z.object({
+  address: z.string(),
+  nonce: z.string(),
+  signature: z.string(),
+  chainId: CHAIN_ID_SCHEMA.optional(),
+  payload: z.record(z.unknown()),
+});
 
 export const nftRequestSchema = z.object({
   mode: z.enum(["alchemy", "rpc"]).optional(),

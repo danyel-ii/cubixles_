@@ -6,7 +6,7 @@ import {
   switchToActiveChain,
 } from "./wallet.js";
 import { CUBIXLES_CONTRACT } from "../../config/contracts";
-import { formatChainName, subscribeActiveChain } from "../../config/chains.js";
+import { subscribeActiveChain } from "../../config/chains.js";
 
 const providerRegistry = new Map();
 let discoveryStarted = false;
@@ -243,8 +243,9 @@ export function initWalletUi() {
         void fetchIdentityLabel(safeState.address);
       }
       if (chainId && chainId !== expected) {
-        const labelPrefix = addressLabel ? `${addressLabel}, ` : "";
-        statusEl.textContent = `Wallet: connected (${labelPrefix}wrong network: ${formatChainName(chainId)})`;
+        statusEl.textContent = addressLabel
+          ? `Wallet: connected (${addressLabel})`
+          : "Wallet: connected";
         if (switchButton) {
           switchButton.classList.remove("is-hidden");
           switchButton.disabled = false;

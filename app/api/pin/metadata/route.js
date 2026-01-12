@@ -50,7 +50,7 @@ export async function POST(request) {
       );
     }
 
-    const { address, nonce, signature, payload } = parsed.data;
+    const { address, nonce, signature, payload, chainId } = parsed.data;
     const nonceStatus = await verifyNonce(nonce);
     if (!nonceStatus.ok) {
       recordMetric("mint.pin.nonce_failed");
@@ -60,7 +60,20 @@ export async function POST(request) {
       );
     }
 
-    const sigStatus = await verifySignature({ address, nonce, signature });
+    const payloadChainId = payload?.provenance?.chainId;
+    if (
+      Number.isFinite(payloadChainId) &&
+      Number.isFinite(chainId) &&
+      Number(payloadChainId) !== Number(chainId)
+    ) {
+      recordMetric("mint.pin.chain_mismatch");
+      return NextResponse.json(
+        { error: "Pin request chain mismatch", requestId },
+        { status: 400 }
+      );
+    }
+
+    const sigStatus = await verifySignature({ address, nonce, signature, chainId });
     if (!sigStatus.ok) {
       recordMetric("mint.pin.signature_failed");
       return NextResponse.json(
