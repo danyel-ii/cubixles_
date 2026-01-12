@@ -82,20 +82,24 @@ export async function checkRateLimit(
 ) {
   const redis = getRedis();
   if (redis) {
-    const now = nowMs();
-    const refillPerMs = refillPerSec / 1000;
-    const [allowed, remaining, retryAfter] = await redis.eval(LUA, {
-      keys: [buildRedisKey(`ratelimit:${key}`)],
-      args: [capacity, refillPerMs, now, ttlMs],
-    });
-    if (!allowed) {
-      recordMetric("ratelimit.blocked", { key });
+    try {
+      const now = nowMs();
+      const refillPerMs = refillPerSec / 1000;
+      const [allowed, remaining, retryAfter] = await redis.eval(LUA, {
+        keys: [buildRedisKey(`ratelimit:${key}`)],
+        args: [capacity, refillPerMs, now, ttlMs],
+      });
+      if (!allowed) {
+        recordMetric("ratelimit.blocked", { key });
+      }
+      return {
+        ok: Boolean(allowed),
+        remaining: Number(remaining) || 0,
+        retryAfter: Number(retryAfter) || 0,
+      };
+    } catch (error) {
+      recordMetric("ratelimit.redis_error");
     }
-    return {
-      ok: Boolean(allowed),
-      remaining: Number(remaining) || 0,
-      retryAfter: Number(retryAfter) || 0,
-    };
   }
 
   const now = nowMs();
