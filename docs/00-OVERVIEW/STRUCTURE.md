@@ -98,10 +98,6 @@ are split into smaller modules.
   - Inventory + provenance fetchers.
 - `app/_client/src/data/nft/floor.js`
   - Floor price snapshot helper (Alchemy-backed; mainnet + Base).
-- `app/_client/src/gif/params.js`
-  - GIF parameter lookup tables.
-- `app/_client/src/gif/variant.js`
-  - Deterministic GIF variant selection + IPFS path builder.
 - `app/_client/src/routes/token-view.js`
   - `/m/<tokenId>` viewer route for external_url rendering and mint price snapshots.
 - `app/_client/src/shared/utils/uri.ts`
@@ -113,12 +109,6 @@ are split into smaller modules.
 
 - `contracts/src/cubixles/CubixlesMinter.sol`
   - ERC-721 minting contract with ownership gating + ERC-2981 + blockhash commit-reveal.
-- `contracts/src/chainlink/VRFConsumerBaseV2.sol`
-  - Legacy Chainlink VRF consumer base (unused by current minter).
-- `contracts/src/chainlink/VRFV2PlusClient.sol`
-  - Legacy VRF v2.5 request structs + extraArgs encoding (unused by current minter).
-- `contracts/src/chainlink/VRFCoordinatorV2_5Interface.sol`
-  - Legacy interface for VRF v2.5 coordinator requests (unused by current minter).
 - `contracts/src/royalties/RoyaltySplitter.sol`
   - Royalty receiver that can swap for $LESS and forward proceeds (no-swap mode forwards ETH only).
 - `contracts/src/mocks/Counter.sol`
@@ -245,14 +235,13 @@ are split into smaller modules.
 
 ## Debug Helpers
 
-- `scripts/gif-debug.mjs`
 - `scripts/fork-test.sh`
   - Release gate wrapper for mainnet fork tests.
 
 ## Test Layout
 
 - `tests/unit/*.spec.mjs`
-  - Pure logic tests (provenance, GIF mapping, metadata, IPFS normalization).
+  - Pure logic tests (provenance, metadata, IPFS normalization).
 - `tests/component/*.spec.mjs`
   - DOM/component tests for UI widgets (HUDs, NFT picker).
 - `tests/api/*.spec.mjs`

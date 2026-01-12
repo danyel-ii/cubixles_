@@ -1,6 +1,6 @@
 # cubixles_ — for_prod (Mainnet primary)
 
-Last updated: 2026-01-10
+Last updated: 2026-01-12
 
 ## 0) Pre-flight (local)
 
@@ -108,6 +108,7 @@ node contracts/scripts/export-abi.mjs
 ### Client env (public)
 - `NEXT_PUBLIC_DEFAULT_CHAIN_ID=1` (set to `8453` for Base)
 - `NEXT_PUBLIC_TOKEN_VIEW_BASE_URL` (prod domain for `external_url` + Farcaster meta)
+- `NEXT_PUBLIC_ANIMATION_URL` (IPFS `palette_morph.gif` for metadata `animation_url`)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
 
 ### Run dev + smoke
@@ -125,6 +126,7 @@ npm run test:ui
 5) Verify:
    - `tokenURI` resolves to pinned IPFS metadata
    - metadata includes palette traits + image (image points at the palette images CID)
+   - metadata `animation_url` points to the IPFS animation GIF
    - `/m/<tokenId>` loads the correct cube
    - `royaltyInfo` returns splitter + 5% amount
 

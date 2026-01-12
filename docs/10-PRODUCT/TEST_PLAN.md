@@ -1,10 +1,10 @@
 # cubixles_ v0 — Test Plan
 
-Last updated: 2026-01-10
+Last updated: 2026-01-12
 
 ## Review Status
 
-- Last reviewed: 2026-01-10
+- Last reviewed: 2026-01-12
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -23,6 +23,7 @@ This plan defines the tests needed to trust the system end-to-end:
 3. **TokenURI correctness**: pinned tokenURI points to metadata JSON that:
    - resolves via `ipfs://<metadataCid>`
    - includes palette traits + image + provenance
+   - includes `animation_url` when configured
    - uses the expected palette index for the image filename
 4. **Economics**:
    - mint requires `msg.value >= currentMintPrice()`

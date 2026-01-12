@@ -1,6 +1,6 @@
 # cubixles_ Contract Details (CubixlesMinter)
 
-Last updated: 2026-01-10
+Last updated: 2026-01-12
 
 ## Review Status
 
@@ -176,6 +176,7 @@ Mint UI: `app/_client/src/features/mint/mint-ui.js`
 - Resolves the palette index, pins metadata offchain, and commits hashes via `commitMetadata(metadataHash, imagePathHash, expectedPaletteIndex)`.
 - Calls `mint(salt, refs, expectedPaletteIndex, tokenURI, metadataHash, imagePathHash)` after metadata is committed.
 - Offchain metadata pinning is required; `tokenURI` + hashes are stored onchain per mint.
+- Metadata includes `animation_url` when `NEXT_PUBLIC_ANIMATION_URL` is set (IPFS GIF).
 
 ## Royalty Splitter Behavior
 

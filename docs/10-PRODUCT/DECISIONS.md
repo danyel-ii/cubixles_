@@ -1,12 +1,17 @@
 # Decision Log
 
-Last updated: 2026-01-10
+Last updated: 2026-01-12
 
 ## Review Status
 
-- Last reviewed: 2026-01-10
+- Last reviewed: 2026-01-12
 - Review status: Updated
 - Owner: danyel-ii
+
+## 2026-01-12 — Static animation_url in metadata
+
+- Metadata now includes `animation_url` pointing to a pinned `palette_morph.gif` on IPFS.
+- The URL is configured via `NEXT_PUBLIC_ANIMATION_URL` and is committed onchain through the metadata hash.
 
 ## 2026-01-09 — VRF commit-reveal + per-mint tokenURI (superseded)
 

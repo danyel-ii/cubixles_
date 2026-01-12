@@ -1,6 +1,6 @@
 # Secrets and Credentials Policy
 
-Last updated: 2026-01-10
+Last updated: 2026-01-12
 
 ## Scope
 Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
@@ -25,6 +25,7 @@ Applies to API keys, RPC URLs, Pinata credentials, and any deployment secrets.
 - `ALCHEMY_API_KEY`
 - `SERVER_AUTH_SALT` (HMAC nonce signing)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
+- `NEXT_PUBLIC_ANIMATION_URL` (public IPFS animation URL for metadata)
 
 ## Optional secrets (app)
 - `NEYNAR_API_KEY`

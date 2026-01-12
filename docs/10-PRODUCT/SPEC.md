@@ -1,10 +1,10 @@
 # cubixles_ Miniapp v0 Spec — Provenance Shapes (Mainnet + Base)
 
-Last updated: 2026-01-10
+Last updated: 2026-01-12
 
 ## Review Status
 
-- Last reviewed: 2026-01-10
+- Last reviewed: 2026-01-12
 - Review status: Updated
 - Owner: danyel-ii
 
@@ -142,13 +142,18 @@ per-token `metadataHash` + `imagePathHash` commitments.
 Notes:
 - `external_url` is optional; it can point to `https://<domain>/m/<tokenId>` if precomputed offchain.
 - `image` should reference the palette image (gateway URL or ipfs://).
+- `image_url` is included for broader marketplace compatibility.
+- `animation_url` is optional and points to the pinned `palette_morph.gif` (IPFS).
 - `attributes` should include palette index + traits (id, hex colors, rarity metrics).
 
 ```ts
 type PaletteMetadata = {
   name: string;
   description?: string;
-  image: string;
+  image?: string;
+  image_url?: string | null;
+  image_ipfs?: string | null;
+  animation_url?: string | null;
   external_url?: string | null;
   attributes: Array<{
     trait_type: string;
