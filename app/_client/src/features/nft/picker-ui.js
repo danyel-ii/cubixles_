@@ -365,6 +365,7 @@ export function initNftPickerUi() {
 
     isWalletConnected = false;
     currentAddress = null;
+    applyButton.classList.remove("is-hooked");
     inventory = [];
     selectedKeys = new Set();
     selectedOrder = [];

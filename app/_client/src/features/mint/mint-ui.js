@@ -13,7 +13,7 @@ import {
   setActiveChainId,
   subscribeActiveChain,
 } from "../../config/chains.js";
-import { buildTokenViewUrl } from "../../config/links.js";
+import { buildTokenViewUrl, getAnimationUrl } from "../../config/links.js";
 import { getCollectionFloorSnapshot } from "../../data/nft/floor.js";
 import {
   buildPaletteImagePath,
@@ -751,6 +751,9 @@ export function initMintUi() {
 
   function updateEligibility() {
     if (!walletState || walletState.status !== "connected") {
+      if (mintButton) {
+        mintButton.classList.remove("is-hooked");
+      }
       setStatus("Connect your wallet to mint.");
       setDisabled(true);
       return;
@@ -1049,6 +1052,7 @@ export function initMintUi() {
           : state.lessTotalSupply != null
             ? state.lessTotalSupply.toString()
             : "0";
+      const animationUrl = getAnimationUrl();
       const metadataPayload = buildMintMetadata({
         tokenId: tokenId.toString(),
         minter: walletState.address,
@@ -1058,7 +1062,7 @@ export function initMintUi() {
         refsFaces,
         refsCanonical: refsCanonicalForMetadata,
         salt,
-        animationUrl: externalUrl,
+        animationUrl,
         externalUrl,
         imageUrl: paletteImageIpfsUrl,
         imageIpfsUrl: paletteImageIpfsUrl,

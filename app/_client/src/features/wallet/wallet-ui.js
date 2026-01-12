@@ -231,6 +231,9 @@ export function initWalletUi() {
     }
     const isConnected = safeState.status === "connected";
     connectButton.classList.toggle("is-pulse-magenta", !isConnected);
+    if (!isConnected) {
+      connectButton.classList.remove("is-hooked");
+    }
 
     if (safeState.status === "connected") {
       const chainId = safeState.chainId;

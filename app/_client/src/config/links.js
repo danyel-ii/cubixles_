@@ -32,6 +32,10 @@ export function getPaletteManifestCid() {
   return readEnvValue("NEXT_PUBLIC_PALETTE_MANIFEST_CID");
 }
 
+export function getAnimationUrl() {
+  return readEnvValue("NEXT_PUBLIC_ANIMATION_URL");
+}
+
 export function buildTokenViewUrl(tokenId) {
   const base = getTokenViewBaseUrl();
   if (!base) {
