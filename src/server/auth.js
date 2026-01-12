@@ -7,7 +7,7 @@ import {
   verifyTypedData,
 } from "ethers";
 import { requireEnv } from "./env.js";
-import { getRedis } from "./redis.js";
+import { buildRedisKey, getRedis } from "./redis.js";
 import { recordMetric } from "./metrics.js";
 
 const NONCE_TTL_MS = 5 * 60 * 1000;
@@ -118,7 +118,7 @@ export function issueNonce() {
 async function markNonceUsed(nonce, ttlMs, issuedAt) {
   const redis = getRedis();
   if (redis) {
-    const result = await redis.set(`nonce:${nonce}`, "1", { nx: true, px: ttlMs });
+    const result = await redis.set(buildRedisKey(`nonce:${nonce}`), "1", { nx: true, px: ttlMs });
     if (!result) {
       return { ok: false, error: "Nonce already used" };
     }

@@ -1,4 +1,4 @@
-import { getRedis } from "./redis.js";
+import { buildRedisKey, getRedis } from "./redis.js";
 
 const LIST_KEY = "pinlog:entries";
 const SET_KEY = "pinlog:cids";
@@ -28,9 +28,9 @@ export async function recordPinLog(entry) {
     recordedAt: nowIso(),
   };
   const serialized = JSON.stringify(payload);
-  await redis.sadd(SET_KEY, entry.cid);
-  await redis.lpush(LIST_KEY, serialized);
-  await redis.ltrim(LIST_KEY, 0, MAX_ENTRIES - 1);
+  await redis.sadd(buildRedisKey(SET_KEY), entry.cid);
+  await redis.lpush(buildRedisKey(LIST_KEY), serialized);
+  await redis.ltrim(buildRedisKey(LIST_KEY), 0, MAX_ENTRIES - 1);
   return { ok: true };
 }
 
@@ -40,11 +40,11 @@ export async function getPinLog({ limit = 100, unique = false } = {}) {
     return { ok: false, error: "Pin log unavailable" };
   }
   if (unique) {
-    const cids = await redis.smembers(SET_KEY);
+    const cids = await redis.smembers(buildRedisKey(SET_KEY));
     return { ok: true, cids };
   }
   const capped = clampLimit(limit);
-  const entries = await redis.lrange(LIST_KEY, 0, capped - 1);
+  const entries = await redis.lrange(buildRedisKey(LIST_KEY), 0, capped - 1);
   const parsed = entries.map((item) => {
     try {
       return JSON.parse(item);

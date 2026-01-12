@@ -1,4 +1,4 @@
-import { getRedis } from "./redis.js";
+import { buildRedisKey, getRedis } from "./redis.js";
 import { recordMetric } from "./metrics.js";
 
 const cache = new Map();
@@ -11,7 +11,7 @@ function nowMs() {
 export async function getCache(key) {
   const redis = getRedis();
   if (redis) {
-    const cached = await redis.get(key);
+    const cached = await redis.get(buildRedisKey(key));
     if (cached) {
       recordMetric("cache.hit", { layer: "redis" });
       return cached;
@@ -39,10 +39,11 @@ export async function getCache(key) {
 export async function setCache(key, value, ttlMs) {
   const redis = getRedis();
   if (redis) {
+    const redisKey = buildRedisKey(key);
     if (ttlMs) {
-      await redis.set(key, value, { px: ttlMs });
+      await redis.set(redisKey, value, { px: ttlMs });
     } else {
-      await redis.set(key, value);
+      await redis.set(redisKey, value);
     }
     return;
   }
@@ -58,7 +59,7 @@ export async function setCache(key, value, ttlMs) {
 export async function clearCache(key) {
   const redis = getRedis();
   if (redis) {
-    await redis.del(key);
+    await redis.del(buildRedisKey(key));
     return;
   }
   cache.delete(key);

@@ -1,4 +1,4 @@
-import { getRedis } from "./redis.js";
+import { buildRedisKey, getRedis } from "./redis.js";
 import { recordMetric } from "./metrics.js";
 
 const buckets = new Map();
@@ -85,7 +85,7 @@ export async function checkRateLimit(
     const now = nowMs();
     const refillPerMs = refillPerSec / 1000;
     const [allowed, remaining, retryAfter] = await redis.eval(LUA, {
-      keys: [`ratelimit:${key}`],
+      keys: [buildRedisKey(`ratelimit:${key}`)],
       args: [capacity, refillPerMs, now, ttlMs],
     });
     if (!allowed) {
