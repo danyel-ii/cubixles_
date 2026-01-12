@@ -233,6 +233,11 @@ export async function POST(request) {
     const status = error?.status || 500;
     recordMetric("mint.pin.failed");
     await recordPinFailure({ reason: error?.message || "unknown" });
+    console.error("[pin/metadata] failed", {
+      requestId,
+      status,
+      message: error?.message,
+    });
     logRequest({ route: "/api/pin/metadata", status, requestId, bodySize });
     return NextResponse.json(
       { error: error?.message || "Pin request failed", requestId },
