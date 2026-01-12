@@ -11,13 +11,17 @@ function nowMs() {
 export async function getCache(key) {
   const redis = getRedis();
   if (redis) {
-    const cached = await redis.get(buildRedisKey(key));
-    if (cached) {
-      recordMetric("cache.hit", { layer: "redis" });
-      return cached;
+    try {
+      const cached = await redis.get(buildRedisKey(key));
+      if (cached) {
+        recordMetric("cache.hit", { layer: "redis" });
+        return cached;
+      }
+      recordMetric("cache.miss", { layer: "redis" });
+      return null;
+    } catch (error) {
+      recordMetric("cache.redis_error");
     }
-    recordMetric("cache.miss", { layer: "redis" });
-    return null;
   }
 
   const entry = cache.get(key);
@@ -39,13 +43,17 @@ export async function getCache(key) {
 export async function setCache(key, value, ttlMs) {
   const redis = getRedis();
   if (redis) {
-    const redisKey = buildRedisKey(key);
-    if (ttlMs) {
-      await redis.set(redisKey, value, { px: ttlMs });
-    } else {
-      await redis.set(redisKey, value);
+    try {
+      const redisKey = buildRedisKey(key);
+      if (ttlMs) {
+        await redis.set(redisKey, value, { px: ttlMs });
+      } else {
+        await redis.set(redisKey, value);
+      }
+      return;
+    } catch (error) {
+      recordMetric("cache.redis_error");
     }
-    return;
   }
 
   const expiresAt = ttlMs ? nowMs() + ttlMs : null;
@@ -59,8 +67,12 @@ export async function setCache(key, value, ttlMs) {
 export async function clearCache(key) {
   const redis = getRedis();
   if (redis) {
-    await redis.del(buildRedisKey(key));
-    return;
+    try {
+      await redis.del(buildRedisKey(key));
+      return;
+    } catch (error) {
+      recordMetric("cache.redis_error");
+    }
   }
   cache.delete(key);
 }

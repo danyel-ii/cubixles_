@@ -28,10 +28,14 @@ export async function recordPinLog(entry) {
     recordedAt: nowIso(),
   };
   const serialized = JSON.stringify(payload);
-  await redis.sadd(buildRedisKey(SET_KEY), entry.cid);
-  await redis.lpush(buildRedisKey(LIST_KEY), serialized);
-  await redis.ltrim(buildRedisKey(LIST_KEY), 0, MAX_ENTRIES - 1);
-  return { ok: true };
+  try {
+    await redis.sadd(buildRedisKey(SET_KEY), entry.cid);
+    await redis.lpush(buildRedisKey(LIST_KEY), serialized);
+    await redis.ltrim(buildRedisKey(LIST_KEY), 0, MAX_ENTRIES - 1);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, reason: "redis_error" };
+  }
 }
 
 export async function getPinLog({ limit = 100, unique = false } = {}) {
@@ -39,18 +43,22 @@ export async function getPinLog({ limit = 100, unique = false } = {}) {
   if (!redis) {
     return { ok: false, error: "Pin log unavailable" };
   }
-  if (unique) {
-    const cids = await redis.smembers(buildRedisKey(SET_KEY));
-    return { ok: true, cids };
-  }
-  const capped = clampLimit(limit);
-  const entries = await redis.lrange(buildRedisKey(LIST_KEY), 0, capped - 1);
-  const parsed = entries.map((item) => {
-    try {
-      return JSON.parse(item);
-    } catch {
-      return { raw: item };
+  try {
+    if (unique) {
+      const cids = await redis.smembers(buildRedisKey(SET_KEY));
+      return { ok: true, cids };
     }
-  });
-  return { ok: true, entries: parsed };
+    const capped = clampLimit(limit);
+    const entries = await redis.lrange(buildRedisKey(LIST_KEY), 0, capped - 1);
+    const parsed = entries.map((item) => {
+      try {
+        return JSON.parse(item);
+      } catch {
+        return { raw: item };
+      }
+    });
+    return { ok: true, entries: parsed };
+  } catch (error) {
+    return { ok: false, error: "Pin log unavailable" };
+  }
 }
