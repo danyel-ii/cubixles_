@@ -268,6 +268,15 @@ export default function AppShell() {
               </span>
             </button>
           </div>
+          <div className="ui-row">
+            <button
+              id="mint-cancel-commit"
+              className="ui-button is-ghost is-hidden"
+              type="button"
+            >
+              Cancel commit
+            </button>
+          </div>
           <div id="mint-price" className="ui-hint">
             Mint price: —
           </div>

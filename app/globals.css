@@ -1537,6 +1537,11 @@ body.is-minted .preview-bar {
   box-shadow: 0 0 0 1px rgba(180, 92, 54, 0.35);
 }
 
+.nft-card.is-warning {
+  border-color: rgba(177, 69, 69, 0.6);
+  box-shadow: 0 0 0 1px rgba(177, 69, 69, 0.25);
+}
+
 .nft-card:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -1581,6 +1586,13 @@ body.is-minted .preview-bar {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.nft-warning {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(145, 50, 50, 0.9);
+  letter-spacing: 0.01em;
 }
 
 .ui-floor-list {

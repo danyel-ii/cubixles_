@@ -12,6 +12,35 @@ import {
 import { buildImageCandidates } from "../../shared/utils/uri";
 
 const MAX_SELECTION = 6;
+const IPFS_PROTOCOL = "ipfs://";
+
+function isIpfsUri(value) {
+  if (!value) {
+    return false;
+  }
+  const trimmed = value.trim();
+  if (trimmed.startsWith(IPFS_PROTOCOL)) {
+    return true;
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const parsed = new URL(trimmed);
+      const host = parsed.hostname.toLowerCase();
+      if (parsed.pathname.includes("/ipfs/")) {
+        return true;
+      }
+      if (host.includes(".ipfs.") || host.startsWith("ipfs.") || host.endsWith(".ipfs")) {
+        return true;
+      }
+      if (host.includes("ipfs")) {
+        return true;
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+  return false;
+}
 
 function buildKey(nft) {
   return `${nft.contractAddress}:${nft.tokenId}`;
@@ -22,6 +51,38 @@ function safeText(value, fallback) {
     return value;
   }
   return fallback;
+}
+
+function getNftIssues(nft) {
+  const issues = [];
+  const imageUri = nft?.image?.original;
+  if (!imageUri) {
+    issues.push("no image");
+  } else if (!isIpfsUri(imageUri)) {
+    issues.push("image not IPFS");
+  }
+  const metadataUri = nft?.tokenUri?.original;
+  if (!metadataUri) {
+    issues.push("no metadata");
+  } else if (!isIpfsUri(metadataUri)) {
+    issues.push("metadata not IPFS");
+  }
+  return issues;
+}
+
+function isBlockedNft(nft) {
+  return getNftIssues(nft).length > 0;
+}
+
+function formatBlockedMessage(count) {
+  const suffix = count === 1 ? "NFT" : "NFTs";
+  return `Blocked ${count} ${suffix} without IPFS metadata/images. Only IPFS-hosted NFTs can be selected.`;
+}
+
+function formatIssueMessage(nft, issues) {
+  const name = safeText(nft?.name, "NFT");
+  const suffix = issues.join(", ");
+  return `Warning: ${name} #${nft?.tokenId ?? "?"} has ${suffix}.`;
 }
 
 export function initNftPickerUi() {
@@ -51,6 +112,7 @@ export function initNftPickerUi() {
   let appliedSelectionKey = null;
   let isWalletConnected = false;
   let activeChainId = CUBIXLES_CONTRACT.chainId;
+  let blockedCount = 0;
 
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
@@ -113,6 +175,8 @@ export function initNftPickerUi() {
       const key = buildKey(nft);
       const isSelected = selectedKeys.has(key);
       const isDisabled = !isSelected && selectedKeys.size >= MAX_SELECTION;
+      const issues = getNftIssues(nft);
+      const isBlocked = issues.length > 0;
 
       const card = document.createElement("button");
       card.type = "button";
@@ -121,7 +185,11 @@ export function initNftPickerUi() {
       if (isSelected) {
         card.classList.add("is-selected");
       }
-      if (isDisabled) {
+      if (issues.length) {
+        card.classList.add("is-warning");
+        card.title = `Warning: ${issues.join(", ")}.`;
+      }
+      if (isDisabled || isBlocked) {
         card.disabled = true;
       }
 
@@ -165,6 +233,13 @@ export function initNftPickerUi() {
       card.appendChild(title);
       card.appendChild(meta);
 
+      if (issues.length) {
+        const warning = document.createElement("div");
+        warning.className = "nft-warning";
+        warning.textContent = issues.join(" • ");
+        card.appendChild(warning);
+      }
+
       card.addEventListener("click", () => {
         if (selectedKeys.has(key)) {
           selectedKeys.delete(key);
@@ -178,11 +253,22 @@ export function initNftPickerUi() {
         }
         updateSelection();
         renderInventory();
+        if (selectedKeys.has(key) && issues.length) {
+          setStatus(
+            `${formatIssueMessage(nft, issues)} Consider choosing IPFS-hosted NFTs.`,
+            "error"
+          );
+          return;
+        }
         if (selectedKeys.size >= 1) {
           setStatus("Selection ready.", "success");
-        } else {
-          setStatus("Select 1 to 6 NFTs to continue.");
+          return;
         }
+        if (blockedCount > 0) {
+          setStatus(formatBlockedMessage(blockedCount), "error");
+          return;
+        }
+        setStatus("Select 1 to 6 NFTs to continue.");
       });
 
       fragment.appendChild(card);
@@ -202,13 +288,19 @@ export function initNftPickerUi() {
       state.nftInventory = nfts;
       state.nftStatus = "ready";
       appliedSelectionKey = null;
-      const validKeys = new Set(nfts.map((nft) => buildKey(nft)));
+      const blocked = nfts.filter((nft) => isBlockedNft(nft));
+      blockedCount = blocked.length;
+      const validKeys = new Set(
+        nfts.filter((nft) => !isBlockedNft(nft)).map((nft) => buildKey(nft))
+      );
       selectedKeys = new Set([...selectedKeys].filter((key) => validKeys.has(key)));
       selectedOrder = selectedOrder.filter((key) => validKeys.has(key));
       if (!nfts.length) {
         setStatus(
           `No ${formatChainName(CUBIXLES_CONTRACT.chainId)} NFTs found for this wallet.`
         );
+      } else if (blockedCount > 0) {
+        setStatus(formatBlockedMessage(blockedCount), "error");
       } else {
         setStatus("Select 1 to 6 NFTs to continue.");
       }
@@ -303,7 +395,11 @@ export function initNftPickerUi() {
     updateSelection();
     renderInventory();
     if (inventory.length) {
-      setStatus("Select 1 to 6 NFTs to continue.");
+      if (blockedCount > 0) {
+        setStatus(formatBlockedMessage(blockedCount), "error");
+      } else {
+        setStatus("Select 1 to 6 NFTs to continue.");
+      }
     }
   });
 
@@ -370,6 +466,7 @@ export function initNftPickerUi() {
     selectedKeys = new Set();
     selectedOrder = [];
     appliedSelectionKey = null;
+    blockedCount = 0;
     state.nftInventory = [];
     state.nftSelection = [];
     state.nftStatus = "idle";

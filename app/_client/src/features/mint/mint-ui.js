@@ -297,6 +297,7 @@ export function initMintUi() {
   const floorSummaryEl = document.getElementById("mint-floor-summary");
   const floorListEl = document.getElementById("mint-floor-list");
   const commitProgressEl = document.getElementById("commit-progress");
+  const cancelCommitButton = document.getElementById("mint-cancel-commit");
 
   if (!statusEl || !mintButton || !amountInput) {
     return;
@@ -315,6 +316,13 @@ export function initMintUi() {
       return;
     }
     commitProgressEl.classList.toggle("is-visible", visible);
+  }
+
+  function setCancelCommitVisible(visible) {
+    if (!cancelCommitButton) {
+      return;
+    }
+    cancelCommitButton.classList.toggle("is-hidden", !visible);
   }
 
   let readProviderPromise = null;
@@ -351,6 +359,42 @@ export function initMintUi() {
       return new BrowserProvider(walletState.provider);
     }
     return null;
+  }
+
+  async function refreshCommitPresence() {
+    if (!cancelCommitButton) {
+      return;
+    }
+    if (!walletState || walletState.status !== "connected") {
+      setCancelCommitVisible(false);
+      return;
+    }
+    if (isZeroAddress(CUBIXLES_CONTRACT.address) || !CUBIXLES_CONTRACT.abi?.length) {
+      setCancelCommitVisible(false);
+      return;
+    }
+    try {
+      const readProvider = await getReadProvider();
+      if (!readProvider) {
+        setCancelCommitVisible(false);
+        return;
+      }
+      const network = await readProvider.getNetwork();
+      if (Number(network.chainId) !== CUBIXLES_CONTRACT.chainId) {
+        setCancelCommitVisible(false);
+        return;
+      }
+      const readContract = new Contract(
+        CUBIXLES_CONTRACT.address,
+        CUBIXLES_CONTRACT.abi,
+        readProvider
+      );
+      const commit = await readContract.mintCommitByMinter(walletState.address);
+      const blockNumber = BigInt(commit?.blockNumber ?? commit?.[1] ?? 0);
+      setCancelCommitVisible(blockNumber > 0n);
+    } catch (error) {
+      setCancelCommitVisible(false);
+    }
   }
 
   function setStatus(message, tone = "neutral") {
@@ -464,6 +508,9 @@ export function initMintUi() {
   function setDisabled(disabled) {
     mintButton.disabled = disabled;
     amountInput.disabled = disabled;
+    if (cancelCommitButton) {
+      cancelCommitButton.disabled = disabled;
+    }
   }
 
 
@@ -797,6 +844,7 @@ export function initMintUi() {
     walletState = next;
     updateEligibility();
     refreshMintPrice();
+    refreshCommitPresence();
   });
   subscribeActiveChain(() => {
     updateEligibility();
@@ -812,6 +860,91 @@ export function initMintUi() {
   document.addEventListener("less-supply-change", () => {
     refreshMintPrice();
   });
+
+  if (cancelCommitButton) {
+    cancelCommitButton.addEventListener("click", async () => {
+      let contract = null;
+      if (!walletState || walletState.status !== "connected") {
+        setStatus("Connect your wallet to cancel the commit.", "error");
+        return;
+      }
+      setDisabled(true);
+      try {
+        const provider = new BrowserProvider(walletState.provider);
+        const walletNetwork = await provider.getNetwork();
+        const walletChainId = Number(walletNetwork.chainId);
+        if (walletChainId !== CUBIXLES_CONTRACT.chainId) {
+          setStatus(
+            `Approve network switch to ${formatChainName(
+              CUBIXLES_CONTRACT.chainId
+            )} in your wallet.`,
+            "error"
+          );
+          const switched = await switchToActiveChain();
+          if (!switched) {
+            throw new Error(
+              `Wallet on ${formatChainName(walletChainId)}. Switch to ${formatChainName(
+                CUBIXLES_CONTRACT.chainId
+              )} to cancel the commit.`
+            );
+          }
+          const refreshedNetwork = await provider.getNetwork();
+          const refreshedChainId = Number(refreshedNetwork.chainId);
+          if (refreshedChainId !== CUBIXLES_CONTRACT.chainId) {
+            throw new Error(
+              `Wallet on ${formatChainName(refreshedChainId)}. Switch to ${formatChainName(
+                CUBIXLES_CONTRACT.chainId
+              )} to cancel the commit.`
+            );
+          }
+        }
+        const signer = await provider.getSigner();
+        contract = new Contract(
+          CUBIXLES_CONTRACT.address,
+          CUBIXLES_CONTRACT.abi,
+          signer
+        );
+        await ensureBalanceForTransaction({
+          provider,
+          contract,
+          method: "cancelCommit",
+          args: [],
+          valueWei: 0n,
+          label: "cancel",
+        });
+        setStatus("Confirm commit cancellation in your wallet.");
+        await contract.cancelCommit.staticCall();
+        const cancelTx = await contract.cancelCommit();
+        showToast({
+          title: "Commit cancellation submitted",
+          message: `Cancellation broadcast to ${formatChainName(CUBIXLES_CONTRACT.chainId)}.`,
+          tone: "neutral",
+          links: [{ label: "View tx", href: buildTxUrl(cancelTx.hash) }],
+        });
+        setStatus("Waiting for cancellation confirmation...");
+        await cancelTx.wait();
+        clearStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address);
+        setCancelCommitVisible(false);
+        setStatus("Commit canceled.", "success");
+      } catch (error) {
+        let message = formatError(error, {
+          iface: contract?.interface || CUBIXLES_INTERFACE,
+        });
+        if (message === "Mint failed.") {
+          message = "Cancel failed.";
+        }
+        setStatus(message, "error");
+        showToast({
+          title: "Cancel failed",
+          message,
+          tone: "error",
+        });
+      } finally {
+        setDisabled(false);
+        refreshCommitPresence();
+      }
+    });
+  }
 
   mintButton.addEventListener("click", async () => {
     let contract = null;
@@ -916,6 +1049,7 @@ export function initMintUi() {
       let commitBlockNumber = null;
       let usingExistingCommit = false;
       if (existingBlock > 0n) {
+        setCancelCommitVisible(true);
         const revealBlock = existingBlock + COMMIT_REVEAL_DELAY_BLOCKS;
         const expiryBlock = revealBlock + COMMIT_REVEAL_WINDOW_BLOCKS;
         if (latestBlock <= expiryBlock) {
@@ -1014,6 +1148,7 @@ export function initMintUi() {
         if (!commitBlockNumber) {
           throw new Error("Commit block unavailable.");
         }
+        setCancelCommitVisible(true);
         saveStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address, {
           commitment,
           salt,
@@ -1213,6 +1348,7 @@ export function initMintUi() {
       );
       const receipt = await tx.wait();
       clearStoredCommit(CUBIXLES_CONTRACT.chainId, walletState.address);
+      setCancelCommitVisible(false);
       const mintedTokenId = extractMintedTokenId(receipt, contract);
       if (mintedTokenId !== null && mintedTokenId !== undefined) {
         state.currentCubeTokenId = BigInt(mintedTokenId);
@@ -1244,6 +1380,7 @@ export function initMintUi() {
     } finally {
       setCommitProgress(false);
       setDisabled(false);
+      refreshCommitPresence();
       updateEligibility();
     }
   });
@@ -1251,6 +1388,7 @@ export function initMintUi() {
   refreshMintPrice();
 
   updateEligibility();
+  refreshCommitPresence();
   refreshFloorSnapshot();
 
   subscribeActiveChain(() => {
@@ -1259,6 +1397,7 @@ export function initMintUi() {
     refreshMintPrice();
     refreshFloorSnapshot();
     updateEligibility();
+    refreshCommitPresence();
   });
 }
 
