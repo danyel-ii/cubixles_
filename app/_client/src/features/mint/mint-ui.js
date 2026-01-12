@@ -10,7 +10,6 @@ import {
   formatChainName,
   getChainConfig,
   isSupportedChainId,
-  setActiveChainId,
   subscribeActiveChain,
 } from "../../config/chains.js";
 import { buildTokenViewUrl, getAnimationUrl } from "../../config/links.js";
@@ -836,9 +835,11 @@ export function initMintUi() {
         throw new Error("Unsupported wallet network. Switch to mainnet or Base.");
       }
       if (walletChainId !== CUBIXLES_CONTRACT.chainId) {
-        setActiveChainId(walletChainId);
-        readProviderPromise = null;
-        await refreshMintPrice();
+        throw new Error(
+          `Wallet on ${formatChainName(walletChainId)}. Switch to ${formatChainName(
+            CUBIXLES_CONTRACT.chainId
+          )} to mint.`
+        );
       }
       const readProvider = await getReadProvider();
       if (!readProvider) {
