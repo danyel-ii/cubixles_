@@ -67,28 +67,32 @@ function safeText(value, fallback) {
 
 function getNftIssues(nft) {
   const issues = [];
+  const imageCandidates = buildImageCandidates(nft?.image);
+  const hasImage = imageCandidates.length > 0;
   const imageUri = nft?.image?.original;
-  if (!imageUri) {
+  if (!hasImage) {
     issues.push("no image");
-  } else if (!isAllowedNftUri(imageUri)) {
+  } else if (imageUri && !isAllowedNftUri(imageUri)) {
     issues.push("image not allowed");
   }
+  const hasMetadata = Boolean(nft?.metadataAvailable);
   const metadataUri = nft?.tokenUri?.original;
-  if (!metadataUri) {
+  if (!hasMetadata) {
     issues.push("no metadata");
-  } else if (!isAllowedNftUri(metadataUri)) {
+  } else if (metadataUri && !isAllowedNftUri(metadataUri)) {
     issues.push("metadata not allowed");
   }
-  return issues;
+  return { issues, hasImage, hasMetadata };
 }
 
 function isBlockedNft(nft) {
-  return getNftIssues(nft).length > 0;
+  const { hasImage, hasMetadata } = getNftIssues(nft);
+  return !hasImage || !hasMetadata;
 }
 
 function formatBlockedMessage(count) {
   const suffix = count === 1 ? "NFT" : "NFTs";
-  return `Blocked ${count} ${suffix} without supported metadata/images. Allowed: IPFS, HTTPS, Arweave, data URLs.`;
+  return `Blocked ${count} ${suffix} without resolvable images or metadata.`;
 }
 
 function formatIssueMessage(nft, issues) {
@@ -187,8 +191,8 @@ export function initNftPickerUi() {
       const key = buildKey(nft);
       const isSelected = selectedKeys.has(key);
       const isDisabled = !isSelected && selectedKeys.size >= MAX_SELECTION;
-      const issues = getNftIssues(nft);
-      const isBlocked = issues.length > 0;
+      const { issues, hasImage, hasMetadata } = getNftIssues(nft);
+      const isBlocked = !hasImage || !hasMetadata;
 
       const card = document.createElement("button");
       card.type = "button";

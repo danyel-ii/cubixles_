@@ -11,6 +11,7 @@ export type NftItem = {
   collectionName: string | null;
   tokenUri: ResolvedUri | null;
   image: ResolvedUri | null;
+  metadataAvailable: boolean;
   source: "alchemy";
   collectionFloorEth?: number;
   collectionFloorRetrievedAt?: string | null;

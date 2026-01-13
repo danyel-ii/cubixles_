@@ -85,12 +85,23 @@ function extractImageUri(nft: AlchemyNft): string | null {
   return null;
 }
 
+function hasMetadata(nft: AlchemyNft): boolean {
+  const tokenUri = extractTokenUri(nft);
+  if (tokenUri) {
+    return true;
+  }
+  const metadata =
+    nft.metadata ?? (nft.raw as { metadata?: Record<string, unknown> })?.metadata;
+  return Boolean(metadata && Object.keys(metadata).length > 0);
+}
+
 export {
   assertConfiguredChain,
   parseTokenId,
   normalizeAddress,
   extractTokenUri,
   extractImageUri,
+  hasMetadata,
 };
 
 export async function getNftsForOwner(
@@ -121,6 +132,7 @@ export async function getNftsForOwner(
         const tokenId = parseTokenId(nft.tokenId);
         const tokenUri = resolveUri(extractTokenUri(nft));
         const image = resolveUri(extractImageUri(nft));
+        const metadataAvailable = hasMetadata(nft);
         items.push({
           chainId,
           contractAddress,
@@ -129,6 +141,7 @@ export async function getNftsForOwner(
           collectionName: nft.collection?.name ?? null,
           tokenUri,
           image,
+          metadataAvailable,
           source: "alchemy",
         } satisfies NftItem);
       } catch (error) {
