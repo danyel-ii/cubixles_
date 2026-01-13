@@ -65,6 +65,9 @@ def parse_lcov(path: str) -> tuple[int, int, dict[str, dict[str, object]]]:
 
 def write_report(path: str, covered: int, total: int, per_file: dict[str, dict[str, object]]) -> None:
     pct = (covered / total) * 100 if total else 0.0
+    report_dir = os.path.dirname(path)
+    if report_dir:
+        os.makedirs(report_dir, exist_ok=True)
     grouped: dict[str, list[tuple[str, dict[str, object]]]] = {}
     for filename, data in per_file.items():
         contract_name = os.path.basename(filename)
