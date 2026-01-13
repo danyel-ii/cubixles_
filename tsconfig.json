@@ -10,6 +10,12 @@
     "strict": false,
     "noEmit": true,
     "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "src/shared/*": [
+        "app/_client/src/shared/*"
+      ]
+    },
     "module": "esnext",
     "esModuleInterop": true,
     "moduleResolution": "node",
