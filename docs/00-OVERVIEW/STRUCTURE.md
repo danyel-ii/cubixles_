@@ -141,7 +141,6 @@ are split into smaller modules.
 
 - `docs/40-OPERATIONS/GOVERNANCE.md`
 - `docs/40-OPERATIONS/MAINTAINERS.md`
-- `docs/40-OPERATIONS/RELEASE.md`
 - `docs/40-OPERATIONS/SECRETS_AND_CREDENTIALS.md`
 - `docs/40-OPERATIONS/DEPENDENCIES.md`
 - `docs/40-OPERATIONS/FOR_PROD.md`
@@ -157,7 +156,6 @@ are split into smaller modules.
 - `CODE_OF_CONDUCT.md`
 - `SECURITY.md`
 - `SUPPORT.md`
-- `CHANGELOG.md`
 
 ## Next.js (App Router)
 

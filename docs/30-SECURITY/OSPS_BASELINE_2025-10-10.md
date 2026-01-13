@@ -19,10 +19,10 @@ Status labels:
 
 ## Build and Release
 - OSPS-BR-01.01/01.02 (sanitize CI inputs/branch names): **Met** — no untrusted inputs used in CI steps.
-- OSPS-BR-02.01 (unique release version): **Planned** — see `docs/40-OPERATIONS/RELEASE.md`.
+- OSPS-BR-02.01 (unique release version): **Planned** — handled via CI tagging and deployment records.
 - OSPS-BR-02.02 (assets tied to version): **Planned** — release process defined, no public releases yet.
 - OSPS-BR-03.01/03.02 (project URIs use HTTPS): **Met** — docs and endpoints are HTTPS.
-- OSPS-BR-04.01 (release notes/log): **Planned** — `CHANGELOG.md` in place.
+- OSPS-BR-04.01 (release notes/log): **Planned** — handled via CI summaries and deployment records.
 - OSPS-BR-05.01 (standard dependency tooling): **Met** — npm + Foundry locks.
 - OSPS-BR-06.01 (signed releases or signed manifest): **Planned** — not yet implemented.
 - OSPS-BR-07.01 (prevent secrets in VCS): **Met** — `.gitignore` + `.env.example` + policy + GitHub secret scanning/push protection.
@@ -31,7 +31,7 @@ Status labels:
 ## Documentation
 - OSPS-DO-01.01 (user guide for basic functionality): **Met** — `docs/00-OVERVIEW/MASTER.md`.
 - OSPS-DO-02.01 (defect reporting guide): **Met** — `SUPPORT.md`.
-- OSPS-DO-03.01/03.02 (verify release integrity + authenticity): **Planned** — `docs/40-OPERATIONS/RELEASE.md`.
+- OSPS-DO-03.01/03.02 (verify release integrity + authenticity): **Planned** — handled via CI release checks and deploy logs.
 - OSPS-DO-06.01 (dependency selection + tracking): **Met** — `docs/40-OPERATIONS/DEPENDENCIES.md`.
 
 ## Governance

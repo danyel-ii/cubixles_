@@ -10,8 +10,7 @@ This document is the single entry point for cubixles_ documentation. It explains
 
 ### Product + Specs
 - `docs/10-PRODUCT/SPEC.md` — Product + technical spec for the miniapp and contract behaviors (source of truth for UX + onchain logic).
-- `docs/10-PRODUCT/TEST_PLAN.md` — Test plan and definition of done for app + contracts.
-- `docs/10-PRODUCT/DECISIONS.md` — Dated decisions that explain why certain choices were made.
+- Test plans and decision history are tracked in PRs when needed.
 
 ### Contracts + Deployment
 - `docs/20-CONTRACTS/CONTRACT_DETAILS.md` — Contract architecture, mint flow, pricing, and royalty behavior.
@@ -37,13 +36,11 @@ This document is the single entry point for cubixles_ documentation. It explains
 ### Governance + Operations
 - `docs/40-OPERATIONS/GOVERNANCE.md` — Roles, decision process, and public discussion channels.
 - `docs/40-OPERATIONS/MAINTAINERS.md` — Maintainers with access to sensitive resources.
-- `docs/40-OPERATIONS/RELEASE.md` — Release process and versioning.
 - `docs/40-OPERATIONS/SECRETS_AND_CREDENTIALS.md` — Secrets handling policy.
 - `docs/40-OPERATIONS/DEPENDENCIES.md` — Dependency tracking policy.
 - `docs/40-OPERATIONS/FOR_PROD.md` — Mainnet deploy + launch checklist (with optional Sepolia rehearsal).
 
 ### Project Status + Tasks
-- `docs/60-STATUS/STATE_OF_REVIEW.md` — Snapshot of repo alignment and current health.
 - `docs/00-OVERVIEW/STRUCTURE.md` — Repository layout and module responsibilities.
 
 ### Repository Policies
@@ -53,25 +50,22 @@ This document is the single entry point for cubixles_ documentation. It explains
 - `CODE_OF_CONDUCT.md` — Community code of conduct.
 - `SECURITY.md` — Vulnerability reporting policy.
 - `SUPPORT.md` — Defect reporting and support channels.
-- `CHANGELOG.md` — Release notes.
 
 ### Generated Reports
-- `docs/50-REPORTS/COVERAGE_REPORT.md` — Solidity line coverage report (grouped by contract).
+- Coverage reports are generated on demand via `npm run coverage:contracts`.
 
 ## Workflow (How to Use These Docs)
 
 1) **Scope the build**
    - Read `docs/10-PRODUCT/SPEC.md`.
-   - Confirm decisions in `docs/10-PRODUCT/DECISIONS.md`.
 2) **Implement + test**
-   - Follow `docs/10-PRODUCT/TEST_PLAN.md`.
    - Use `docs/30-SECURITY/SECURITY_RUNBOOK.md` for test + security gates.
 3) **Review + deployment**
    - Validate `docs/20-CONTRACTS/CONTRACT_DETAILS.md` and `docs/20-CONTRACTS/DEPLOYMENT_SEPOLIA.md`.
 4) **Security posture**
    - Review `docs/30-SECURITY/*` and update `docs/30-SECURITY/SECURITY_AUDIT.md`.
 5) **Status + next steps**
-   - Check `docs/60-STATUS/STATE_OF_REVIEW.md`.
+   - Track status in CI and deployment records.
 
 ## Glossary
 
@@ -103,7 +97,7 @@ forge test -vvv
 # Unit + API tests (Vitest)
 npm test
 
-# Coverage (writes docs/50-REPORTS/COVERAGE_REPORT.md)
+# Coverage
 npm run coverage:contracts
 
 # Frontend smoke (Playwright)
@@ -137,5 +131,4 @@ npm run check:no-repo-secrets
 
 - `docs/30-SECURITY/SECURITY_AUDIT.md` updated with latest tool runs.
 - `docs/30-SECURITY/OSPS_BASELINE_2025-10-10.md` reviewed after policy changes.
-- `docs/50-REPORTS/COVERAGE_REPORT.md` regenerated after test updates.
-- `docs/60-STATUS/STATE_OF_REVIEW.md` reflects current status.
+- Coverage output reviewed after test updates.

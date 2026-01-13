@@ -140,7 +140,7 @@ npm run check:no-client-secrets
 ```
 4) Update docs:
    - `docs/30-SECURITY/SECURITY_AUDIT.md`
-   - `docs/60-STATUS/STATE_OF_REVIEW.md`
+   - Review current deploy configuration and onchain addresses
 5) Verify Vercel env secrets are set (no `.env` on mainnet).
 6) Set `CUBIXLES_CHAIN_ID=1` for server signature verification and `NEXT_PUBLIC_DEFAULT_CHAIN_ID=1`, then confirm `contracts/deployments/mainnet.json` is current.
 7) Confirm commit cancellation policy matches expectations:

@@ -57,7 +57,7 @@ Command:
 npm run coverage:contracts
 ```
 Result: PASS (93.57% line coverage; minimum is 90%).
-- Report: `docs/50-REPORTS/COVERAGE_REPORT.md` (grouped by contract).
+- Report: `forge coverage` output (retain locally when needed).
 - Excluded: `contracts/script/**` from the coverage gate.
 - Action: keep coverage at or above 90% before mainnet release.
 Warnings during coverage:

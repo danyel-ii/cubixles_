@@ -92,7 +92,7 @@ slither . --config-file slither.config.json
 - `npm audit --audit-level=high`
 - `npm run check:no-client-secrets`
 - `npm run check:no-repo-secrets`
-- `npm run coverage:contracts` (minimum 90% line coverage; report at `docs/50-REPORTS/COVERAGE_REPORT.md`)
+- `npm run coverage:contracts` (minimum 90% line coverage; review output locally)
 - `npm run fork-test` (mainnet + Base, only when RPC secrets are configured in CI)
 
 ## Repo security settings
