@@ -4,6 +4,7 @@ export function initOverlay() {
   const leaderboardButton = document.getElementById("overlay-leaderboard");
   const aboutButton = document.getElementById("overlay-about");
   const aboutPanel = document.getElementById("overlay-about-panel");
+  const aboutBackButton = document.getElementById("overlay-about-back");
   const root = document.body;
   if (!overlay || !enterButton) {
     return;
@@ -51,10 +52,26 @@ export function initOverlay() {
       document.dispatchEvent(new CustomEvent("open-leaderboard"));
     });
   }
+  function setAboutPanelOpen(open) {
+    if (!aboutPanel) {
+      return;
+    }
+    aboutPanel.classList.toggle("is-open", open);
+    if (open) {
+      aboutPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
   if (aboutButton && aboutPanel) {
     aboutButton.addEventListener("click", (event) => {
       event.preventDefault();
-      aboutPanel.classList.toggle("is-open");
+      setAboutPanelOpen(!aboutPanel.classList.contains("is-open"));
+    });
+  }
+  if (aboutBackButton && aboutPanel) {
+    aboutBackButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      setAboutPanelOpen(false);
     });
   }
 

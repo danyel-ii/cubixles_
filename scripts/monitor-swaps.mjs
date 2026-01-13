@@ -1,8 +1,25 @@
+import { readFileSync } from "node:fs";
+import { dirname, isAbsolute, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { JsonRpcProvider, Interface } from "ethers";
 
 const RPC_URL = process.env.MAINNET_RPC_URL;
-const SPLITTER =
-  process.env.ROYALTY_SPLITTER_ADDRESS || process.env.CUBIXLES_SPLITTER_ADDRESS;
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = resolve(SCRIPT_DIR, "..");
+const DEFAULT_DEPLOYMENT_PATH = resolve(
+  ROOT_DIR,
+  "contracts/deployments/mainnet.json"
+);
+function resolveDeploymentPath(input) {
+  if (!input) {
+    return DEFAULT_DEPLOYMENT_PATH;
+  }
+  return isAbsolute(input) ? input : resolve(ROOT_DIR, input);
+}
+
+const DEPLOYMENT_PATH = resolveDeploymentPath(
+  process.env.CUBIXLES_DEPLOYMENT_PATH
+);
 const FROM_BLOCK = process.env.SWAP_FAIL_FROM_BLOCK
   ? Number(process.env.SWAP_FAIL_FROM_BLOCK)
   : undefined;
@@ -11,9 +28,22 @@ const TO_BLOCK = process.env.SWAP_FAIL_TO_BLOCK
   : "latest";
 const ALERT_WEBHOOK_URL = process.env.ALERT_WEBHOOK_URL;
 
+function loadDeployment(path) {
+  try {
+    return JSON.parse(readFileSync(path, "utf-8"));
+  } catch (error) {
+    console.error(`Failed to read deployment JSON at ${path}.`);
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+const deployment = loadDeployment(DEPLOYMENT_PATH);
+const SPLITTER = deployment?.royaltySplitter || deployment?.splitter;
+
 if (!RPC_URL || !SPLITTER) {
   console.error(
-    "Missing MAINNET_RPC_URL or splitter address (ROYALTY_SPLITTER_ADDRESS/CUBIXLES_SPLITTER_ADDRESS)."
+    `Missing MAINNET_RPC_URL or splitter address in ${DEPLOYMENT_PATH}.`
   );
   process.exit(1);
 }

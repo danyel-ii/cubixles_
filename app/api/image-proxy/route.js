@@ -1,8 +1,18 @@
-import { fetchWithGateways } from "../../../src/shared/ipfs-fetch.js";
+import { checkRateLimit } from "../../../src/server/ratelimit.js";
+import { getClientIp, makeRequestId } from "../../../src/server/request.js";
+import { logRequest } from "../../../src/server/log.js";
+import { safeFetch, getHostAllowlist } from "../../../src/server/safe-fetch.js";
+import { buildGatewayUrls, IPFS_GATEWAYS } from "../../../src/shared/uri-policy.js";
 
 export const runtime = "nodejs";
 
 const MAX_URL_LENGTH = 2048;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const DEFAULT_ALLOWED_HOSTS = [
+  ...IPFS_GATEWAYS.map((gateway) => new URL(gateway).hostname),
+  "arweave.net",
+  "ar-io.net",
+];
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,OPTIONS",
@@ -10,40 +20,6 @@ const CORS_HEADERS = {
   "Cross-Origin-Resource-Policy": "cross-origin",
   "Cache-Control": "public, max-age=3600, s-maxage=86400",
 };
-
-function isBlockedHost(hostname) {
-  const host = hostname.toLowerCase();
-  if (
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    host === "0.0.0.0" ||
-    host === "::1" ||
-    host.endsWith(".local")
-  ) {
-    return true;
-  }
-  const ipv4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
-  if (!ipv4) {
-    return false;
-  }
-  const [a, b] = ipv4.slice(1, 3).map((part) => Number(part));
-  if (a === 10) {
-    return true;
-  }
-  if (a === 127) {
-    return true;
-  }
-  if (a === 169 && b === 254) {
-    return true;
-  }
-  if (a === 192 && b === 168) {
-    return true;
-  }
-  if (a === 172 && b >= 16 && b <= 31) {
-    return true;
-  }
-  return false;
-}
 
 function buildError(message, status = 400) {
   return new Response(message, { status, headers: CORS_HEADERS });
@@ -68,46 +44,73 @@ export async function OPTIONS() {
 }
 
 export async function GET(request) {
+  const requestId = makeRequestId();
+  const ip = getClientIp(request);
+  const limit = await checkRateLimit(`image-proxy:ip:${ip}`, {
+    capacity: 30,
+    refillPerSec: 1,
+  });
+  if (!limit.ok) {
+    logRequest({ route: "/api/image-proxy", status: 429, requestId, bodySize: 0 });
+    return buildError("Rate limit exceeded.", 429);
+  }
   const { searchParams } = new URL(request.url);
   const raw = searchParams.get("url");
   if (!raw) {
+    logRequest({ route: "/api/image-proxy", status: 400, requestId, bodySize: 0 });
     return buildError("Missing url parameter.");
   }
   if (raw.length > MAX_URL_LENGTH) {
+    logRequest({ route: "/api/image-proxy", status: 400, requestId, bodySize: 0 });
     return buildError("URL too long.");
   }
   const target = raw.trim();
   if (!target) {
+    logRequest({ route: "/api/image-proxy", status: 400, requestId, bodySize: 0 });
     return buildError("Empty url parameter.");
   }
 
+  const allowlist = getHostAllowlist("IMAGE_PROXY_ALLOWED_HOSTS", DEFAULT_ALLOWED_HOSTS);
+
   try {
     if (target.startsWith("ipfs://")) {
-      const { response } = await fetchWithGateways(target, {
-        expectsJson: false,
-        timeoutMs: 12_000,
-      });
-      if (!response.ok) {
-        return buildError(`Upstream error (${response.status}).`, response.status);
+      const gateways = buildGatewayUrls(target);
+      for (const gatewayUrl of gateways) {
+        try {
+          const { response, buffer } = await safeFetch(gatewayUrl, {
+            allowlist,
+            maxBytes: MAX_IMAGE_BYTES,
+          });
+          logRequest({
+            route: "/api/image-proxy",
+            status: response.status,
+            requestId,
+            bodySize: buffer.length,
+          });
+          return buildProxyResponse(new Response(buffer, { status: response.status, headers: response.headers }));
+        } catch (error) {
+          void error;
+        }
       }
-      return buildProxyResponse(response);
+      logRequest({ route: "/api/image-proxy", status: 502, requestId, bodySize: 0 });
+      return buildError("All IPFS gateways failed.", 502);
     }
 
     const targetUrl = new URL(target);
-    if (!["http:", "https:"].includes(targetUrl.protocol)) {
-      return buildError("Unsupported protocol.");
-    }
-    if (isBlockedHost(targetUrl.hostname)) {
-      return buildError("Blocked host.");
-    }
-    const response = await fetch(targetUrl.toString(), {
-      redirect: "follow",
+    const { response, buffer } = await safeFetch(targetUrl.toString(), {
+      allowlist,
+      maxBytes: MAX_IMAGE_BYTES,
     });
-    if (!response.ok) {
-      return buildError(`Upstream error (${response.status}).`, response.status);
-    }
-    return buildProxyResponse(response);
+    logRequest({
+      route: "/api/image-proxy",
+      status: response.status,
+      requestId,
+      bodySize: buffer.length,
+    });
+    return buildProxyResponse(new Response(buffer, { status: response.status, headers: response.headers }));
   } catch (error) {
-    return buildError("Proxy fetch failed.", 502);
+    const status = error?.status || 502;
+    logRequest({ route: "/api/image-proxy", status, requestId, bodySize: 0 });
+    return buildError(error?.message || "Proxy fetch failed.", status);
   }
 }

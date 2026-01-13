@@ -159,7 +159,7 @@ File: `contracts/test/CubixlesMinter.t.sol`
   - Timelock: `contracts/script/DeployTimelock.s.sol` transfers minter + splitter ownership to a TimelockController.
     - `CUBIXLES_TIMELOCK_MIN_DELAY` (seconds)
     - `CUBIXLES_TIMELOCK_ADMIN` / `CUBIXLES_TIMELOCK_PROPOSER` / `CUBIXLES_TIMELOCK_EXECUTOR`
-    - `CUBIXLES_MINTER_ADDRESS` / `CUBIXLES_SPLITTER_ADDRESS`
+    - Reads minter + splitter from `contracts/deployments/<chain>.json` (override with `CUBIXLES_DEPLOYMENT_PATH`)
 
 - ABI export:
   - Run `node contracts/scripts/export-abi.mjs`.

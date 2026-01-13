@@ -1,17 +1,6 @@
-const GATEWAYS = [
-  "https://w3s.link/ipfs/",
-  "https://dweb.link/ipfs/",
-  "https://gateway.pinata.cloud/ipfs/",
-  "https://ipfs.io/ipfs/",
-];
+import { buildGatewayUrls } from "./uri-policy.js";
 
-export function buildGatewayUrls(ipfsUrl) {
-  if (!ipfsUrl.startsWith("ipfs://")) {
-    return [ipfsUrl];
-  }
-  const path = ipfsUrl.replace("ipfs://", "");
-  return GATEWAYS.map((base) => `${base}${path}`);
-}
+export { buildGatewayUrls };
 
 function looksLikeJson(text) {
   const trimmed = text.trimStart();

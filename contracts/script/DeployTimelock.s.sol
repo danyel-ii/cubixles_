@@ -55,7 +55,18 @@ contract DeployTimelock is Script {
         cfg.admin = vm.envOr("CUBIXLES_TIMELOCK_ADMIN", owner);
         cfg.proposer = vm.envOr("CUBIXLES_TIMELOCK_PROPOSER", owner);
         cfg.executor = vm.envOr("CUBIXLES_TIMELOCK_EXECUTOR", owner);
-        cfg.minter = vm.envAddress("CUBIXLES_MINTER_ADDRESS");
-        cfg.splitter = vm.envAddress("CUBIXLES_SPLITTER_ADDRESS");
+        string memory root = vm.projectRoot();
+        string memory defaultPath = cfg.chainId == 1
+            ? string.concat(root, "/deployments/mainnet.json")
+            : cfg.chainId == 8453
+                ? string.concat(root, "/deployments/base.json")
+                : string.concat(root, "/deployments/sepolia.json");
+        string memory deploymentPath = vm.envOr(
+            "CUBIXLES_DEPLOYMENT_PATH",
+            defaultPath
+        );
+        string memory deploymentJson = vm.readFile(deploymentPath);
+        cfg.minter = vm.parseJsonAddress(deploymentJson, ".address");
+        cfg.splitter = vm.parseJsonAddress(deploymentJson, ".royaltySplitter");
     }
 }

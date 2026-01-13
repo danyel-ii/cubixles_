@@ -1,5 +1,8 @@
-const IPFS_GATEWAY = "https://ipfs.io/ipfs/";
-const IMAGE_PROXY_PATH = "/api/image-proxy?url=";
+import {
+  DEFAULT_IPFS_GATEWAY,
+  IMAGE_PROXY_PATH,
+  buildImageProxyUrl,
+} from "src/shared/uri-policy.js";
 
 export function resolveUri(original: string | null | undefined): {
   original: string;
@@ -15,7 +18,7 @@ export function resolveUri(original: string | null | undefined): {
   if (trimmed.startsWith("ipfs://")) {
     return {
       original: trimmed,
-      resolved: `${IPFS_GATEWAY}${trimmed.replace("ipfs://", "")}`,
+      resolved: `${DEFAULT_IPFS_GATEWAY}${trimmed.replace("ipfs://", "")}`,
     };
   }
   return {
@@ -47,7 +50,7 @@ export function buildImageCandidates(
     !original.startsWith("data:") &&
     !isProxyUrl(original)
   ) {
-    candidates.add(`${IMAGE_PROXY_PATH}${encodeURIComponent(original)}`);
+    candidates.add(buildImageProxyUrl(original));
   }
   return Array.from(candidates);
 }

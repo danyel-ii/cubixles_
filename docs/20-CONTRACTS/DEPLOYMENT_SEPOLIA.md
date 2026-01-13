@@ -127,5 +127,4 @@ of the minter and splitter:
 - `CUBIXLES_TIMELOCK_ADMIN`
 - `CUBIXLES_TIMELOCK_PROPOSER`
 - `CUBIXLES_TIMELOCK_EXECUTOR`
-- `CUBIXLES_MINTER_ADDRESS`
-- `CUBIXLES_SPLITTER_ADDRESS`
+- Reads minter + splitter from `contracts/deployments/<chain>.json` (override with `CUBIXLES_DEPLOYMENT_PATH`)

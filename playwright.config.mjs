@@ -1,5 +1,6 @@
 import { defineConfig } from "@playwright/test";
 
+const isCI = Boolean(process.env.CI);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000";
 const baseUrl = new URL(baseURL);
 const webServerHost = baseUrl.hostname;
@@ -12,8 +13,10 @@ const webServer =
     : {
         command: `npm run dev -- --hostname ${webServerHost} --port ${webServerPort}`,
         url: webServerUrl,
-        reuseExistingServer: true,
-        timeout: 180_000,
+        reuseExistingServer: !isCI,
+        timeout: 240_000,
+        stdout: "inherit",
+        stderr: "inherit",
         env: {
           NEXT_TELEMETRY_DISABLED: "1",
         },
@@ -24,9 +27,11 @@ export default defineConfig({
   testMatch: ["smoke.spec.mjs", "e2e/**/*.spec.mjs"],
   timeout: 60_000,
   retries: 0,
+  reporter: isCI ? "line" : "list",
   use: {
     baseURL,
     headless: true,
+    trace: "retain-on-failure",
   },
   webServer,
 });

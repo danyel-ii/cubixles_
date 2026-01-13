@@ -10,12 +10,17 @@ vi.mock("../../src/server/request.js", () => ({
 vi.mock("../../src/server/log.js", () => ({
   logRequest: vi.fn(),
 }));
+vi.mock("../../src/server/safe-fetch.js", () => ({
+  safeFetch: vi.fn(),
+  getHostAllowlist: vi.fn(() => ["w3s.link", "ipfs.io"]),
+}));
 
 import { GET } from "../../app/api/ipfs/route.js";
 
 describe("/api/ipfs", () => {
-  beforeEach(() => {
-    globalThis.fetch = vi.fn(async () => new Response("not found", { status: 404 }));
+  beforeEach(async () => {
+    const { safeFetch } = await import("../../src/server/safe-fetch.js");
+    safeFetch.mockReset();
   });
 
   it("rejects missing url", async () => {
@@ -35,6 +40,8 @@ describe("/api/ipfs", () => {
   });
 
   it("returns 502 when gateways fail", async () => {
+    const { safeFetch } = await import("../../src/server/safe-fetch.js");
+    safeFetch.mockRejectedValue(new Error("Gateway failure"));
     const res = await GET(
       new Request("http://localhost/api/ipfs?url=ipfs://bafybeihash/asset.png")
     );
@@ -42,13 +49,15 @@ describe("/api/ipfs", () => {
   });
 
   it("returns gateway response on success", async () => {
-    globalThis.fetch = vi.fn(
-      async () =>
-        new Response(JSON.stringify({ ok: true }), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        })
-    );
+    const { safeFetch } = await import("../../src/server/safe-fetch.js");
+    const body = JSON.stringify({ ok: true });
+    safeFetch.mockResolvedValue({
+      response: new Response(body, {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+      buffer: Buffer.from(body),
+    });
     const res = await GET(
       new Request("http://localhost/api/ipfs?url=ipfs://bafybeihash/manifest.json")
     );

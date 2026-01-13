@@ -24,20 +24,20 @@ export default function AppShell() {
             <span className="sr-only">cubixles_</span>
           </div>
           <div className="overlay-sub">
-            Mint{" "}
+            A{" "}
             <span className="logo-mark logo-mark-inline" aria-hidden="true">
               {"\uE000"}
             </span>
-            <span className="sr-only">cubixles_</span>: NFTs linked to interactive p5.js artwork
-            whose provenance is tethered to NFTs you already own.
+            <span className="sr-only">cubixles_</span> is an ERC721 linked to interactive p5.js
+            artwork whose provenance is tethered to NFTs you already own.
           </div>
           <div className="overlay-section">
             <div className="overlay-section-title">How it works</div>
             <ol className="overlay-steps">
               <li>Connect your wallet.</li>
-              <li>Select 1–6 NFTs from your wallet.</li>
+              <li>Select 1-6 NFTs from your wallet.</li>
               <li>We snapshot key metadata (and collection floors when available).</li>
-              <li>We publish the interactive artwork + metadata to IPFS (signature required).</li>
+              <li>We publish the interactive artwork + metadata and Feingehalt to IPFS.</li>
               <li>You sign the mint transaction on the selected network.</li>
             </ol>
           </div>
@@ -47,13 +47,6 @@ export default function AppShell() {
               An ERC-721 with hosted metadata and an{" "}
               <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
               interactive cube.
-            </p>
-          </div>
-          <div className="overlay-section">
-            <div className="overlay-section-title">Feingehalt</div>
-            <p className="overlay-text">
-              Feingehalt is the live sum of linked NFT floor prices; the token view shows both the
-              mint-time snapshot and the live value.
             </p>
           </div>
           <div className="overlay-section">
@@ -78,21 +71,56 @@ export default function AppShell() {
             <a id="overlay-inspect" className="overlay-button is-ghost" href="/inspecta_deck">
               Inspect
             </a>
+            <button id="overlay-about" className="overlay-button is-ghost" type="button">
+              Dig it
+            </button>
           </div>
           <div id="overlay-about-panel" className="overlay-about">
-            <div className="overlay-section-title">About</div>
+            <div className="overlay-about-head">
+              <div className="overlay-section-title">Contextualized Rarity as Inversion</div>
+              <button id="overlay-about-back" className="overlay-back" type="button">
+                Back
+              </button>
+            </div>
             <p className="overlay-text">
-              cubixles_ reads your wallet address and NFT metadata to build provenance snapshots. No
-              private keys are accessed; minting is a direct onchain transaction you sign.
+              NFT-native digital art forces a reconsideration of rarity. In a medium where images
+              are infinitely replicable and traits are algorithmically enumerable, scarcity at the
+              level of form is largely synthetic.
             </p>
-            <a
-              className="deepwiki-badge"
-              href="https://deepwiki.com/danyel-ii/cubixles_"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" />
-            </a>
+            <p className="overlay-text">
+              Cubixles starts from a different premise: the only element that is conceptually rare
+              in NFT space is contextualized provenance.
+            </p>
+            <p className="overlay-text">
+              Images can be copied. Styles can be forked. Traits can be regenerated.
+            </p>
+            <p className="overlay-text">
+              But the specific, verifiable context of ownership relations - who owned what, when,
+              and how those works were brought into relation - is irreducible.
+            </p>
+            <p className="overlay-text">
+              Cubixles consolidates this insight into three aligned layers:
+            </p>
+            <ul className="overlay-steps overlay-dig-list">
+              <li>
+                <span className="overlay-em">Principle:</span> Rarity in NFTs does not emerge from
+                visual uniqueness, but from contextualized lineage - the historically specific
+                configuration of ownership and reference.
+              </li>
+              <li>
+                <span className="overlay-em">Primitive:</span> Provenance itself becomes the creator
+                market primitive: a composable, ownership-verified relation between tokens.
+              </li>
+              <li>
+                <span className="overlay-em">Mechanism:</span> The minting process binds the
+                verifiable provenance of NFTs a user already owns into a new token, making
+                contextual rarity executable and material.
+              </li>
+            </ul>
+            <p className="overlay-text">
+              In this framework, rarity is no longer a property of images or traits. It is a
+              property of relations.
+            </p>
           </div>
         </div>
       </div>

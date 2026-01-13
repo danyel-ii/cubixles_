@@ -2,6 +2,11 @@ import { parseIpfsUrl, buildGatewayUrls } from "../../../src/server/ipfs.js";
 import { checkRateLimit } from "../../../src/server/ratelimit.js";
 import { getClientIp, makeRequestId } from "../../../src/server/request.js";
 import { logRequest } from "../../../src/server/log.js";
+import { safeFetch, getHostAllowlist } from "../../../src/server/safe-fetch.js";
+import { IPFS_GATEWAYS } from "../../../src/shared/uri-policy.js";
+
+const MAX_IPFS_BYTES = 2 * 1024 * 1024;
+const DEFAULT_ALLOWED_HOSTS = IPFS_GATEWAYS.map((gateway) => new URL(gateway).hostname);
 
 function looksLikeJson(text) {
   const trimmed = text.trimStart();
@@ -39,25 +44,21 @@ export async function GET(request) {
   const expectsJson =
     parsed.path.endsWith(".json") || parsed.path.includes("manifest.json");
   const gatewayUrls = buildGatewayUrls(parsed);
+  const allowlist = getHostAllowlist("IPFS_GATEWAY_ALLOWLIST", DEFAULT_ALLOWED_HOSTS);
   for (const gatewayUrl of gatewayUrls) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
     try {
-      const response = await fetch(gatewayUrl, {
-        signal: controller.signal,
-        cache: "no-store",
+      const { response, buffer } = await safeFetch(gatewayUrl, {
+        allowlist,
+        maxBytes: MAX_IPFS_BYTES,
         headers: expectsJson ? { Accept: "application/json" } : undefined,
       });
-      if (!response.ok) {
-        continue;
-      }
       const headers = new Headers(response.headers);
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Cache-Control", "public, max-age=300");
       headers.delete("content-encoding");
       headers.delete("content-length");
       headers.delete("transfer-encoding");
-      const body = await response.arrayBuffer();
+      const body = buffer;
       if (expectsJson) {
         const contentType = response.headers.get("content-type") || "";
         if (contentType.includes("text/html")) {
@@ -74,8 +75,6 @@ export async function GET(request) {
         headers,
       });
     } catch {
-    } finally {
-      clearTimeout(timeout);
     }
   }
   logRequest({ route: "/api/ipfs", status: 502, requestId, bodySize: 0 });

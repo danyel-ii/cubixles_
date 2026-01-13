@@ -1,3 +1,5 @@
+import { DEFAULT_IPFS_GATEWAY } from "src/shared/uri-policy.js";
+
 export const config = {
   sourceUrls: [
     "https://arweave.net/whvEaj6v8B1jyR0jXzmtGyHxKm55GdienjjWlx38bpk",
@@ -7,7 +9,7 @@ export const config = {
     "ipfs://bafybeifn4fxn52lupflqnbkknv3koztzmmkm4ycfnaxezfevgh3nkvynl4",
     "ipfs://bafybeifn4fxn52lupflqnbkknv3koztzmmkm4ycfnaxezfevgh3nkvynl4",
   ],
-  ipfsGateway: "https://ipfs.io/ipfs/",
+  ipfsGateway: DEFAULT_IPFS_GATEWAY,
   backgroundUrl: "/assets/bg_1.png",
   cubeSize: 220,
   zoom: {

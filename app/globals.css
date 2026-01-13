@@ -470,11 +470,50 @@ body.is-intro #share-modal {
   animation: overlay-stagger 620ms ease-out both;
 }
 
+.overlay-about-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.overlay-back {
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.overlay-back:hover {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
 .overlay-about {
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
   display: none;
+}
+
+.overlay-dig-list {
+  margin-top: 10px;
+  padding-left: 18px;
+}
+
+.overlay-dig-list li {
+  margin-bottom: 8px;
+}
+
+.overlay-dig-list li:last-child {
+  margin-bottom: 0;
 }
 
 .overlay-section:nth-of-type(1) {

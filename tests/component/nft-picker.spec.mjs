@@ -8,6 +8,7 @@ const mockNfts = Array.from({ length: 7 }, (_, idx) => ({
   collectionName: "Test Collection",
   tokenUri: { original: "ipfs://token", resolved: "https://ipfs.io/ipfs/token" },
   image: { original: "ipfs://img", resolved: "https://ipfs.io/ipfs/img" },
+  metadataAvailable: true,
   source: "alchemy",
 }));
 

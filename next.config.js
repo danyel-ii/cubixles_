@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -10,6 +12,11 @@ const nextConfig = {
       config.externals = config.externals || [];
       config.externals.push("@napi-rs/canvas", "gif-encoder-2");
     }
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      "src/shared": resolve("./app/_client/src/shared"),
+    };
     return config;
   },
   async redirects() {

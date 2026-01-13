@@ -10,49 +10,9 @@ import {
   getMaxTextureSize,
 } from "../../app/app-utils.js";
 import { buildImageCandidates } from "../../shared/utils/uri";
+import { isAllowedNftUri } from "src/shared/uri-policy.js";
 
 const MAX_SELECTION = 6;
-const IPFS_PROTOCOL = "ipfs://";
-const ARWEAVE_PROTOCOL = "ar://";
-const DATA_PROTOCOL = "data:";
-const HTTPS_PROTOCOL = "https://";
-
-function isAllowedNftUri(value) {
-  if (!value) {
-    return false;
-  }
-  const trimmed = value.trim();
-  if (trimmed.startsWith(HTTPS_PROTOCOL)) {
-    return true;
-  }
-  if (trimmed.startsWith(IPFS_PROTOCOL)) {
-    return true;
-  }
-  if (trimmed.startsWith(ARWEAVE_PROTOCOL)) {
-    return true;
-  }
-  if (trimmed.startsWith(DATA_PROTOCOL)) {
-    return true;
-  }
-  if (/^https?:\/\//i.test(trimmed)) {
-    try {
-      const parsed = new URL(trimmed);
-      const host = parsed.hostname.toLowerCase();
-      if (parsed.pathname.includes("/ipfs/")) {
-        return true;
-      }
-      if (host.includes(".ipfs.") || host.startsWith("ipfs.") || host.endsWith(".ipfs")) {
-        return true;
-      }
-      if (host.includes("ipfs")) {
-        return true;
-      }
-    } catch (error) {
-      return false;
-    }
-  }
-  return false;
-}
 
 function buildKey(nft) {
   return `${nft.contractAddress}:${nft.tokenId}`;
