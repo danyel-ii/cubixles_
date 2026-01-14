@@ -287,6 +287,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await page.waitForFunction(
     () => typeof window.__CUBIXLES_WALLET__?.connectWallet === "function"
   );
+  await page.waitForFunction(() => window.__CUBIXLES_UI_READY__ === true);
   await page.waitForSelector("#overlay");
   await page.evaluate(() => {
     document.getElementById("overlay")?.classList.add("is-hidden");
@@ -298,11 +299,17 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(page.locator("#wallet-status")).toContainText(/connected/i, {
     timeout: 10000,
   });
+  await expect(page.locator("#nft-selection")).toContainText(/Selected 0 \/ 6/i, {
+    timeout: 10000,
+  });
   const nftCard = page.locator(".nft-card:not([disabled])").first();
   await expect(nftCard).toBeVisible({ timeout: 10000 });
   await expect(nftCard).toBeEnabled({ timeout: 10000 });
   // Avoid Playwright actionability stalls from canvas overlays in CI.
   await nftCard.evaluate((card) => card.click());
+  await expect(page.locator(".nft-card.is-selected")).toHaveCount(1, {
+    timeout: 10000,
+  });
   await expect(page.locator("#nft-selection")).toContainText(/Selected 1 \/ 6/i, {
     timeout: 10000,
   });
@@ -314,6 +321,8 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(mintButton).toBeEnabled({ timeout: 10000 });
   // Avoid Playwright actionability instability in CI from animated layout shifts.
   await mintButton.evaluate((button) => button.click());
+  await expect(page.locator("#mint-confirm")).toBeVisible({ timeout: 10000 });
+  await page.locator("#mint-confirm-continue").evaluate((button) => button.click());
 
   await expect(page.locator("#mint-status")).toContainText(
     /step 1\/3: confirm commit|step 2\/3: confirm metadata|step 3\/3: confirm mint|pinning metadata|waiting for reveal block|waiting for metadata confirmation|submitting mint transaction|waiting for confirmation|mint confirmed|preparing mint steps|preparing mint/i,

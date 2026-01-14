@@ -21,6 +21,7 @@ import {
   loadPaletteManifest,
 } from "../../data/palette/manifest.js";
 import { subscribeWallet, switchToActiveChain } from "../wallet/wallet.js";
+import { requestWalletConnection } from "../wallet/wallet-ui.js";
 import { state } from "../../app/app-state.js";
 import { buildMintMetadata } from "./mint-metadata.js";
 import { computeRefsHash, sortRefsCanonically } from "./refs.js";
@@ -298,12 +299,16 @@ export function initMintUi() {
   const floorListEl = document.getElementById("mint-floor-list");
   const commitProgressEl = document.getElementById("commit-progress");
   const cancelCommitButton = document.getElementById("mint-cancel-commit");
+  const mintConfirm = document.getElementById("mint-confirm");
+  const mintConfirmClose = document.getElementById("mint-confirm-close");
+  const mintConfirmContinue = document.getElementById("mint-confirm-continue");
 
   if (!statusEl || !mintButton || !amountInput) {
     return;
   }
 
   let walletState = null;
+  let isMinting = false;
   const devChecklist =
     IS_DEV && isDebugEnabled() ? initDevChecklist(statusEl.parentElement) : null;
   const floorCache = new Map();
@@ -323,6 +328,19 @@ export function initMintUi() {
       return;
     }
     cancelCommitButton.classList.toggle("is-hidden", !visible);
+  }
+
+  function setMintConfirmVisible(visible) {
+    if (!mintConfirm) {
+      return;
+    }
+    mintConfirm.classList.toggle("is-hidden", !visible);
+    if (typeof document !== "undefined") {
+      document.body.classList.toggle("mint-confirm-open", visible);
+    }
+    if (visible && mintConfirmContinue) {
+      mintConfirmContinue.focus();
+    }
   }
 
   let readProviderPromise = null;
@@ -408,6 +426,56 @@ export function initMintUi() {
     statusEl.classList.remove("mint-status-pop");
     void statusEl.offsetHeight;
     statusEl.classList.add("mint-status-pop");
+  }
+
+  function waitForWalletConnection(timeoutMs = 45000) {
+    if (walletState?.status === "connected") {
+      return Promise.resolve(true);
+    }
+    return new Promise((resolve) => {
+      let settled = false;
+      const timeoutId = window.setTimeout(() => {
+        cleanup();
+        resolve(false);
+      }, timeoutMs);
+      const unsubscribe = subscribeWallet((next) => {
+        walletState = next;
+        if (next.status === "connected") {
+          cleanup();
+          resolve(true);
+          return;
+        }
+        if (next.status === "error" || next.status === "idle") {
+          cleanup();
+          resolve(false);
+        }
+      });
+      function cleanup() {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timeoutId);
+        unsubscribe();
+      }
+    });
+  }
+
+  async function ensureWalletConnected() {
+    if (walletState?.status === "connected") {
+      return true;
+    }
+    setStatus("Connect your wallet to continue.");
+    try {
+      await requestWalletConnection();
+    } catch (error) {
+      void error;
+    }
+    const connected = await waitForWalletConnection();
+    if (!connected) {
+      setStatus("Connect your wallet to mint.", "error");
+    }
+    return connected;
   }
 
   function getToastRoot() {
@@ -946,15 +1014,21 @@ export function initMintUi() {
     });
   }
 
-  mintButton.addEventListener("click", async () => {
-    let contract = null;
-    mintButton.classList.add("is-hooked");
-    if (!walletState || walletState.status !== "connected") {
-      setStatus("Connect your wallet to mint.", "error");
+  async function startMintFlow() {
+    if (isMinting) {
       return;
     }
+    let contract = null;
+    isMinting = true;
+    mintButton.classList.add("is-hooked");
     if (state.nftSelection.length < 1 || state.nftSelection.length > 6) {
       setStatus("Select 1 to 6 NFTs to mint.", "error");
+      isMinting = false;
+      return;
+    }
+    const connected = await ensureWalletConnected();
+    if (!connected) {
+      isMinting = false;
       return;
     }
     setDisabled(true);
@@ -1382,7 +1456,40 @@ export function initMintUi() {
       setDisabled(false);
       refreshCommitPresence();
       updateEligibility();
+      isMinting = false;
     }
+  }
+
+  function showMintConfirm() {
+    if (!mintConfirm) {
+      return false;
+    }
+    setMintConfirmVisible(true);
+    return true;
+  }
+
+  if (mintConfirmClose) {
+    mintConfirmClose.addEventListener("click", () => setMintConfirmVisible(false));
+  }
+  if (mintConfirm) {
+    mintConfirm.addEventListener("click", (event) => {
+      if (event.target === mintConfirm) {
+        setMintConfirmVisible(false);
+      }
+    });
+  }
+  if (mintConfirmContinue) {
+    mintConfirmContinue.addEventListener("click", async () => {
+      setMintConfirmVisible(false);
+      await startMintFlow();
+    });
+  }
+
+  mintButton.addEventListener("click", async () => {
+    if (showMintConfirm()) {
+      return;
+    }
+    await startMintFlow();
   });
 
   refreshMintPrice();

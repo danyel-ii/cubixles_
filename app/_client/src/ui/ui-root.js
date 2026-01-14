@@ -111,6 +111,7 @@ function initUiTouchGuards() {
     "#overlay",
     "#wallet-picker",
     "#network-picker",
+    "#mint-confirm",
     "#share-cube",
     "#share-modal",
   ];
@@ -180,6 +181,7 @@ function initUiPointerGuard() {
     "#overlay",
     "#wallet-picker",
     "#network-picker",
+    "#mint-confirm",
     "#share-cube",
     "#share-modal",
     ".toast-root",

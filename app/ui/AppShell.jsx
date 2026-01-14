@@ -160,6 +160,43 @@ export default function AppShell() {
           </div>
         </div>
       </div>
+      <div
+        id="mint-confirm"
+        className="mint-confirm is-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mint-confirm-title"
+      >
+        <div className="mint-confirm-card">
+          <div className="mint-confirm-head">
+            <div id="mint-confirm-title" className="mint-confirm-title">
+              Mint flow
+            </div>
+            <button id="mint-confirm-close" className="mint-confirm-close" type="button">
+              Not yet
+            </button>
+          </div>
+          <div className="mint-confirm-sub">
+            You will confirm these wallet prompts in order:
+          </div>
+          <ol className="mint-confirm-steps">
+            <li>Connect your wallet (if needed).</li>
+            <li>Confirm the commit transaction.</li>
+            <li>Sign the metadata pin request.</li>
+            <li>Confirm the metadata commit transaction.</li>
+            <li>Confirm the final mint transaction.</li>
+          </ol>
+          <div className="mint-confirm-actions">
+            <button
+              id="mint-confirm-continue"
+              className="overlay-button is-glow"
+              type="button"
+            >
+              Let's do it
+            </button>
+          </div>
+        </div>
+      </div>
       <div id="eth-hud" className="eth-hud" aria-hidden="true">
         <div className="eth-hud-body">
           <svg className="eth-hud-icon" viewBox="0 0 120 180" aria-hidden="true">
