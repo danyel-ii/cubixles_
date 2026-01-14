@@ -16,6 +16,17 @@ const networkUiState = {
   selectSubtitle: null,
 };
 
+function isTokenViewRoute() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  if (document?.body?.classList?.contains("is-token-view")) {
+    return true;
+  }
+  const path = window.location?.pathname || "";
+  return /^\/m\/\d+\/?$/.test(path);
+}
+
 function showNetworkPicker() {
   const { pickerRoot } = networkUiState;
   if (!pickerRoot) {
@@ -85,7 +96,7 @@ export function initNetworkUi() {
   renderNetworkOptions();
   updateNetworkStatus(getActiveChainId());
 
-  if (!hasStoredChainPreference()) {
+  if (!hasStoredChainPreference() && !isTokenViewRoute()) {
     showNetworkPicker();
   }
 
