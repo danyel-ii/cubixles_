@@ -1,7 +1,9 @@
 import {
   DEFAULT_IPFS_GATEWAY,
   IMAGE_PROXY_PATH,
+  buildGatewayUrls,
   buildImageProxyUrl,
+  isIpfsUri,
 } from "src/shared/uri-policy.js";
 
 export function resolveUri(original: string | null | undefined): {
@@ -43,8 +45,12 @@ export function buildImageCandidates(
     return [];
   }
   const candidates = new Set<string>();
-  candidates.add(uri.resolved);
   const original = typeof input === "string" ? input : uri.original;
+  if (typeof original === "string" && isIpfsUri(original)) {
+    buildGatewayUrls(original).forEach((gatewayUrl) => candidates.add(gatewayUrl));
+  } else {
+    candidates.add(uri.resolved);
+  }
   if (
     typeof original === "string" &&
     !original.startsWith("data:") &&

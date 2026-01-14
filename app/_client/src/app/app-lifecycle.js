@@ -73,10 +73,12 @@ function loadDefaultTextures() {
     if (!loaded.length) {
       return;
     }
-    state.defaultTextures = loaded;
+    const fallback = loaded[0] || state.frostedTexture;
+    const normalized = images.map((img) => img || fallback).filter(Boolean);
+    state.defaultTextures = normalized;
     const hasSelection = Array.isArray(state.nftSelection) && state.nftSelection.length > 0;
     if (!state.currentCubeTokenId && !hasSelection) {
-      state.faceTextures = fillFaceTextures(loaded);
+      state.faceTextures = fillFaceTextures(normalized);
     }
   });
 }
