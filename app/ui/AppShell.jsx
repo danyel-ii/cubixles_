@@ -180,14 +180,25 @@ export default function AppShell() {
             Expect a mix of wallet prompts and short waits:
           </div>
           <ol className="mint-confirm-steps">
-            <li>Connect your wallet (if needed).</li>
-            <li>Confirm the commit transaction.</li>
-            <li>Wait for the reveal block to open.</li>
-            <li>Sign the metadata pin request.</li>
-            <li>Confirm the metadata commit transaction.</li>
-            <li>Wait for metadata confirmation.</li>
-            <li>Confirm the final mint transaction.</li>
-            <li>Wait for mint confirmation.</li>
+            <li>
+              Confirm the commit transaction{" "}
+              <span className="mint-confirm-fee">(only network fee)</span>.
+            </li>
+            <li className="mint-confirm-wait">Wait for the reveal block to open.</li>
+            <li>
+              Sign the metadata pin request{" "}
+              <span className="mint-confirm-fee">(signature only)</span>.
+            </li>
+            <li>
+              Confirm the metadata commit transaction{" "}
+              <span className="mint-confirm-fee">(only network fee)</span>.
+            </li>
+            <li className="mint-confirm-wait">Wait for metadata confirmation.</li>
+            <li>
+              Confirm the final mint transaction{" "}
+              <span className="mint-confirm-fee">(mint fee + network fee)</span>.
+            </li>
+            <li className="mint-confirm-wait">Wait for mint confirmation.</li>
           </ol>
           <div className="mint-confirm-actions">
             <button
