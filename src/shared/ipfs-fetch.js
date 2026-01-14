@@ -1,4 +1,4 @@
-import { buildGatewayUrls } from "./uri-policy.js";
+import { buildGatewayUrls, parseIpfsUrl } from "./uri-policy.js";
 
 export { buildGatewayUrls };
 
@@ -27,11 +27,16 @@ export async function fetchWithGateways(
   ipfsUrl,
   { timeoutMs = 8000, expectsJson: expectsJsonOverride } = {}
 ) {
+  const parsed = typeof ipfsUrl === "string" ? parseIpfsUrl(ipfsUrl) : null;
+  const ipfsPath = parsed?.path || "";
   const expectsJson =
     typeof expectsJsonOverride === "boolean"
       ? expectsJsonOverride
-      : ipfsUrl.endsWith(".json") || ipfsUrl.includes("manifest.json");
-  if (typeof window !== "undefined" && ipfsUrl.startsWith("ipfs://")) {
+      : ipfsPath.endsWith(".json") ||
+        ipfsPath.includes("manifest.json") ||
+        ipfsUrl.endsWith(".json") ||
+        ipfsUrl.includes("manifest.json");
+  if (typeof window !== "undefined" && parsed) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -52,7 +57,7 @@ export async function fetchWithGateways(
       clearTimeout(timeout);
     }
   }
-  const urls = buildGatewayUrls(ipfsUrl);
+  const urls = parsed ? buildGatewayUrls(parsed) : buildGatewayUrls(ipfsUrl);
   for (const url of urls) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
