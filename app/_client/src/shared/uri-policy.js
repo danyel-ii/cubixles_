@@ -1,4 +1,33 @@
-const IPFS_GATEWAYS = [
+import { readEnvValue } from "./utils/env.js";
+
+function normalizeGatewayBase(raw) {
+  if (!raw || typeof raw !== "string") {
+    return null;
+  }
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const withScheme = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    const basePath = url.pathname.replace(/\/+$/, "");
+    const nextPath = basePath.endsWith("/ipfs")
+      ? `${basePath}/`
+      : `${basePath}/ipfs/`;
+    url.pathname = nextPath;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+const CUSTOM_IPFS_GATEWAY = normalizeGatewayBase(
+  readEnvValue("NEXT_PUBLIC_IPFS_GATEWAY")
+);
+const DEFAULT_IPFS_GATEWAYS = [
   "https://w3s.link/ipfs/",
   "https://dweb.link/ipfs/",
   "https://gateway.pinata.cloud/ipfs/",
@@ -6,6 +35,10 @@ const IPFS_GATEWAYS = [
   "https://ipfs.filebase.io/ipfs/",
   "https://ipfs.io/ipfs/",
 ];
+const IPFS_GATEWAYS = [
+  ...(CUSTOM_IPFS_GATEWAY ? [CUSTOM_IPFS_GATEWAY] : []),
+  ...DEFAULT_IPFS_GATEWAYS,
+].filter((gateway, index, list) => list.indexOf(gateway) === index);
 const DEFAULT_IPFS_GATEWAY = IPFS_GATEWAYS[0];
 
 const ALLOWED_NFT_SCHEMES = ["ipfs://", "https://", "http://", "ar://", "data:"];
@@ -105,11 +138,18 @@ export function parseIpfsUrl(rawUrl) {
 }
 
 export function buildGatewayUrls(ipfsUrl) {
-  if (!isIpfsUri(ipfsUrl)) {
-    return [ipfsUrl];
+  if (typeof ipfsUrl === "string") {
+    const parsed = parseIpfsUrl(ipfsUrl);
+    if (!parsed) {
+      return [ipfsUrl];
+    }
+    return IPFS_GATEWAYS.map((base) => `${base}${parsed.path}${parsed.search}`);
   }
-  const path = ipfsUrl.replace("ipfs://", "");
-  return IPFS_GATEWAYS.map((base) => `${base}${path}`);
+  if (ipfsUrl && typeof ipfsUrl.path === "string") {
+    const search = ipfsUrl.search || "";
+    return IPFS_GATEWAYS.map((base) => `${base}${ipfsUrl.path}${search}`);
+  }
+  return [];
 }
 
 export function buildImageProxyUrl(target) {
