@@ -146,7 +146,7 @@ body.is-intro #share-modal {
   position: fixed;
   top: 18px;
   right: 18px;
-  z-index: 12;
+  z-index: 2001;
   padding: 10px 12px;
   border-radius: 12px;
   background: var(--glass);
@@ -154,6 +154,7 @@ body.is-intro #share-modal {
   color: var(--ink-muted);
   font-size: 12px;
   max-width: 260px;
+  pointer-events: auto;
 }
 
 .token-view-status.is-error {
@@ -164,7 +165,7 @@ body.is-intro #share-modal {
   position: fixed;
   left: 18px;
   top: 18px;
-  z-index: 12;
+  z-index: 2001;
   width: 280px;
   max-width: calc(100vw - 36px);
   padding: 12px;
@@ -174,6 +175,7 @@ body.is-intro #share-modal {
   color: var(--ink-muted);
   font-size: 11px;
   backdrop-filter: blur(8px);
+  pointer-events: auto;
 }
 
 .token-floor-toggle {
@@ -189,6 +191,7 @@ body.is-intro #share-modal {
   color: inherit;
   cursor: pointer;
   text-align: left;
+  touch-action: manipulation;
 }
 
 .token-floor-toggle .token-floor-title {

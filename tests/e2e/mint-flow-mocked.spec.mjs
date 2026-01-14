@@ -301,7 +301,8 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   const nftCard = page.locator(".nft-card:not([disabled])").first();
   await expect(nftCard).toBeVisible({ timeout: 10000 });
   await expect(nftCard).toBeEnabled({ timeout: 10000 });
-  await nftCard.click();
+  // Avoid Playwright actionability stalls from canvas overlays in CI.
+  await nftCard.evaluate((card) => card.click());
   await expect(page.locator("#nft-selection")).toContainText(/Selected 1 \/ 6/i, {
     timeout: 10000,
   });

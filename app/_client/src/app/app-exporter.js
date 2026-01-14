@@ -305,17 +305,21 @@ function buildStandaloneHtml(dataUrls, startRotX, startRotY, startZoom, backgrou
       }
 
       function drawInkEdges() {
-        const strokes = [
-          { weight: 7.2, alpha: 70, tint: [210, 210, 215] },
-          { weight: 5.2, alpha: 140, tint: [230, 230, 235] },
-          { weight: 3.4, alpha: 220, tint: [245, 245, 248] },
-          { weight: 2.0, alpha: 170, tint: [255, 255, 255] },
-        ];
         const time = frameCount * 0.04;
-        const driftAmp = 8.5;
-        const driftFreq = 2.6;
+        const driftAmp = 9.2;
+        const driftFreq = 2.2;
+        const shimmerBase = 0.72 + 0.28 * sin(time * 0.6);
+        const strokes = [
+          { weight: 8.2, alpha: 60, tint: [95, 106, 122] },
+          { weight: 5.8, alpha: 120, tint: [160, 172, 188] },
+          { weight: 4.0, alpha: 190, tint: [220, 233, 248] },
+          { weight: 2.4, alpha: 210, tint: [255, 255, 255] },
+        ];
+        strokeCap(ROUND);
         strokes.forEach((strokeInfo, pass) => {
-          stroke(strokeInfo.tint[0], strokeInfo.tint[1], strokeInfo.tint[2], strokeInfo.alpha);
+          const shimmer = shimmerBase + 0.08 * sin(time * 0.9 + pass * 1.7);
+          const alphaValue = Math.min(255, strokeInfo.alpha * shimmer);
+          stroke(strokeInfo.tint[0], strokeInfo.tint[1], strokeInfo.tint[2], alphaValue);
           strokeWeight(strokeInfo.weight);
           noFill();
           edgePasses.forEach((passes) => {
@@ -333,8 +337,8 @@ function buildStandaloneHtml(dataUrls, startRotX, startRotY, startZoom, backgrou
             endShape();
           });
         });
-        stroke(215, 215, 220, 55);
-        strokeWeight(9.2);
+        stroke(150, 165, 185, 48);
+        strokeWeight(8.4);
         noFill();
         edgePasses.forEach((passes) => {
           const points = passes[1];
@@ -345,6 +349,21 @@ function buildStandaloneHtml(dataUrls, startRotX, startRotY, startZoom, backgrou
           });
           endShape();
         });
+        blendMode(ADD);
+        const glint = 0.55 + 0.45 * sin(time * 0.8);
+        stroke(210, 235, 255, 90 * glint);
+        strokeWeight(1.7);
+        noFill();
+        edgePasses.forEach((passes) => {
+          const points = passes[2];
+          beginShape();
+          points.forEach((p, i) => {
+            const wobble = noise(i * 0.7, time * 1.1) - 0.5;
+            vertex(p.x + wobble * 6, p.y, p.z - wobble * 4);
+          });
+          endShape();
+        });
+        blendMode(BLEND);
       }
 
       function mousePressed() {

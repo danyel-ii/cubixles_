@@ -66,13 +66,13 @@ export default function AppShell() {
           </div>
           <div className="overlay-actions">
             <button id="enter-btn" className="overlay-button is-glow" type="button">
-              Enter
+              Dig it
             </button>
             <a id="overlay-inspect" className="overlay-button is-ghost" href="/inspecta_deck">
               Inspect
             </a>
             <button id="overlay-about" className="overlay-button is-ghost" type="button">
-              Dig it
+              Dug it
             </button>
           </div>
           <div id="overlay-about-panel" className="overlay-about">
@@ -105,7 +105,7 @@ export default function AppShell() {
               <li>
                 <span className="overlay-em">Principle:</span> Rarity in NFTs does not emerge from
                 visual uniqueness, but from contextualized lineage - the historically specific
-                configuration of ownership and reference.
+                configuration of provenance mapped onto ownership and reference.
               </li>
               <li>
                 <span className="overlay-em">Primitive:</span> Provenance itself becomes the creator
