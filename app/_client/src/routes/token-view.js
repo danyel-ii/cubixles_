@@ -207,8 +207,19 @@ async function resolveMetadataImageCandidates(nft) {
   if (nft?.image?.resolved) {
     buildImageCandidates(nft.image).forEach((url) => candidates.add(url));
   }
+  const rawMetadata = nft?.sourceMetadata?.raw;
+  if (rawMetadata && typeof rawMetadata === "object") {
+    appendMetadataImages(rawMetadata, candidates);
+  }
   const tokenUri = nft?.tokenUri?.resolved;
   if (!tokenUri) {
+    return Array.from(candidates);
+  }
+  if (tokenUri.startsWith("data:")) {
+    const dataMetadata = parseDataJson(tokenUri);
+    if (dataMetadata) {
+      appendMetadataImages(dataMetadata, candidates);
+    }
     return Array.from(candidates);
   }
   try {
@@ -240,6 +251,40 @@ async function resolveMetadataImageCandidates(nft) {
     return Array.from(candidates);
   }
   return Array.from(candidates);
+}
+
+function appendMetadataImages(metadata, candidates) {
+  const images = [metadata?.image, metadata?.image_url, metadata?.imageUrl];
+  images.forEach((candidate) => {
+    if (typeof candidate !== "string" || !candidate.trim()) {
+      return;
+    }
+    buildImageCandidates(candidate).forEach((url) => candidates.add(url));
+  });
+  if (typeof metadata?.image_data === "string") {
+    const svg = metadata.image_data.trim();
+    if (!svg) {
+      return;
+    }
+    candidates.add(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`);
+  }
+}
+
+function parseDataJson(dataUrl) {
+  const match = dataUrl.match(/^data:application\/json([^,]*),(.*)$/i);
+  if (!match) {
+    return null;
+  }
+  const meta = match[1] || "";
+  const payload = match[2] || "";
+  try {
+    const decoded = meta.includes(";base64")
+      ? atob(payload)
+      : decodeURIComponent(payload);
+    return JSON.parse(decoded);
+  } catch (error) {
+    return null;
+  }
 }
 
 async function waitForFrostedTexture() {

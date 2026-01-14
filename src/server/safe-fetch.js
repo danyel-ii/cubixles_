@@ -34,8 +34,12 @@ export function isHostAllowed(hostname, allowlist) {
 export function getHostAllowlist(envKey, defaults = []) {
   const envValue = process.env[envKey];
   const parsed = parseAllowlist(envValue);
-  const list = parsed.length ? parsed : defaults;
-  return list.map((entry) => entry.toLowerCase());
+  const base = defaults.map((entry) => entry.toLowerCase());
+  if (!parsed.length) {
+    return base;
+  }
+  const combined = [...base, ...parsed.map((entry) => entry.toLowerCase())];
+  return Array.from(new Set(combined));
 }
 
 function isPrivateIpv4(hostname) {
