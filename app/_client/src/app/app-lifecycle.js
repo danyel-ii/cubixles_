@@ -1,10 +1,6 @@
 import { config } from "./app-config.js";
 import { state } from "./app-state.js";
-import {
-  resolveUrl,
-  fillFaceTextures,
-  createFrostedTexture,
-} from "./app-utils.js";
+import { fillFaceTextures, createFrostedTexture } from "./app-utils.js";
 import { applyLights } from "./app-scene.js";
 import {
   preloadBackground,
@@ -33,6 +29,7 @@ import {
 } from "./app-interaction.js";
 import { fetchBackgroundDataUrl } from "./app-exporter.js";
 import { initUiRoot } from "../ui/ui-root.js";
+import { buildImageCandidates } from "../shared/utils/uri";
 
 const TOOLTIP_SWARM_ENABLED = false;
 let defaultTexturesLoading = false;
@@ -46,20 +43,29 @@ function loadDefaultTextures() {
   if (defaultTexturesLoading) {
     return;
   }
-  const urls = config.sourceUrls.map((url) => resolveUrl(url));
-  if (!urls.length) {
+  const urlSets = config.sourceUrls.map((url) => buildImageCandidates(url));
+  if (!urlSets.length) {
     return;
   }
   defaultTexturesLoading = true;
   Promise.all(
-    urls.map(
-      (url) =>
+    urlSets.map(
+      (candidates) =>
         new Promise((resolve) => {
-          loadImage(
-            url,
-            (img) => resolve(img),
-            () => resolve(null)
-          );
+          const list = Array.isArray(candidates) ? candidates.filter(Boolean) : [];
+          const tryLoad = (index) => {
+            if (index >= list.length) {
+              resolve(null);
+              return;
+            }
+            const url = list[index];
+            loadImage(
+              url,
+              (img) => resolve(img),
+              () => tryLoad(index + 1)
+            );
+          };
+          tryLoad(0);
         })
     )
   ).then((images) => {
@@ -68,7 +74,10 @@ function loadDefaultTextures() {
       return;
     }
     state.defaultTextures = loaded;
-    state.faceTextures = fillFaceTextures(loaded);
+    const hasSelection = Array.isArray(state.nftSelection) && state.nftSelection.length > 0;
+    if (!state.currentCubeTokenId && !hasSelection) {
+      state.faceTextures = fillFaceTextures(loaded);
+    }
   });
 }
 

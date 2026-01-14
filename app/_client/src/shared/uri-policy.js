@@ -2,6 +2,8 @@ const IPFS_GATEWAYS = [
   "https://w3s.link/ipfs/",
   "https://dweb.link/ipfs/",
   "https://gateway.pinata.cloud/ipfs/",
+  "https://cloudflare-ipfs.com/ipfs/",
+  "https://ipfs.filebase.io/ipfs/",
   "https://ipfs.io/ipfs/",
 ];
 const DEFAULT_IPFS_GATEWAY = IPFS_GATEWAYS[0];
