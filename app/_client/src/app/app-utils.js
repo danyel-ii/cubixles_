@@ -58,13 +58,28 @@ export function createFrostedTexture(size = 160) {
   const g = createGraphics(size, size);
   g.clear();
   g.noStroke();
-  g.background(210, 220, 235, 28);
-  for (let i = 0; i < size * 6; i += 1) {
-    const alpha = 18 + (i % 25);
-    g.fill(235, 240, 248, alpha);
-    g.circle(Math.random() * size, Math.random() * size, 2 + (i % 4));
+  for (let y = 0; y < size; y += 1) {
+    const t = y / Math.max(1, size - 1);
+    const band =
+      Math.exp(-Math.pow((t - 0.25) / 0.08, 2)) * 70 +
+      Math.exp(-Math.pow((t - 0.62) / 0.12, 2)) * 55;
+    const ripple = Math.sin(t * Math.PI * 6 + 0.35) * 14;
+    const edgeFade = -35 * Math.abs(t - 0.5);
+    const value = Math.max(0, Math.min(255, 155 + band + ripple + edgeFade));
+    g.stroke(value, Math.min(255, value + 8), Math.min(255, value + 16));
+    g.line(0, y, size, y);
   }
-  g.fill(255, 255, 255, 35);
-  g.rect(0, 0, size, size);
+  g.stroke(255, 255, 255, 40);
+  for (let i = -size; i < size * 2; i += 14) {
+    g.line(i, 0, i + size, size);
+  }
+  g.stroke(255, 255, 255, 18);
+  for (let i = -size; i < size * 2; i += 22) {
+    g.line(i, size, i + size, 0);
+  }
+  g.stroke(255, 255, 255, 22);
+  for (let i = 0; i < size * 2; i += 1) {
+    g.point(Math.random() * size, Math.random() * size);
+  }
   return g;
 }
