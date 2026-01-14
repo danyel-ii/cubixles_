@@ -299,14 +299,19 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(page.locator("#wallet-status")).toContainText(/connected/i, {
     timeout: 10000,
   });
+  await expect(page.locator("#nft-status")).toContainText(/Select 1 to 6 NFTs/i, {
+    timeout: 10000,
+  });
   await expect(page.locator("#nft-selection")).toContainText(/Selected 0 \/ 6/i, {
     timeout: 10000,
   });
   const nftCard = page.locator(".nft-card:not([disabled])").first();
   await expect(nftCard).toBeVisible({ timeout: 10000 });
   await expect(nftCard).toBeEnabled({ timeout: 10000 });
-  // Avoid Playwright actionability stalls from canvas overlays in CI.
-  await nftCard.evaluate((card) => card.click());
+  await page.waitForFunction(() => Boolean(document.querySelector(".nft-card:not([disabled])")));
+  await page.evaluate(() => {
+    document.querySelector(".nft-card:not([disabled])")?.click();
+  });
   await expect(page.locator(".nft-card.is-selected")).toHaveCount(1, {
     timeout: 10000,
   });
