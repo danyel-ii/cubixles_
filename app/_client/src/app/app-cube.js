@@ -8,7 +8,7 @@ export function drawTexturedFaces(alpha = 1) {
   }
   const half = config.cubeSize / 2 - 1;
   const faceSize = config.cubeSize * 0.98;
-  const tintAlpha = 210 * clampedAlpha;
+  const tintAlpha = 245 * clampedAlpha;
   const faces = state.faceTextures;
   const transforms = [
     { x: half, y: 0, z: 0, rx: 0, ry: HALF_PI, rz: 0, mirrorX: false },
@@ -47,7 +47,7 @@ export function drawGlassShell(alpha = 1) {
     return;
   }
   push();
-  specularMaterial(210, 225, 245, 50 * clampedAlpha);
+  specularMaterial(210, 225, 245, 200 * clampedAlpha);
   shininess(120);
   box(config.cubeSize * 1.02);
   pop();

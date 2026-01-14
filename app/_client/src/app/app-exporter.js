@@ -208,7 +208,7 @@ function buildStandaloneHtml(dataUrls, startRotX, startRotY, startZoom, backgrou
       function drawTexturedFaces() {
         const half = cubeSize / 2 - 1;
         const face = cubeSize * 0.98;
-        const tintAlpha = 210;
+        const tintAlpha = 245;
         drawFace(faceTextures[0], 0, 0, half, 0, 0, 0, false, face, tintAlpha);
         drawFace(faceTextures[1], 0, 0, -half, 0, PI, 0, true, face, tintAlpha);
         drawFace(faceTextures[2], half, 0, 0, 0, HALF_PI, 0, false, face, tintAlpha);
@@ -237,7 +237,7 @@ function buildStandaloneHtml(dataUrls, startRotX, startRotY, startZoom, backgrou
 
       function drawGlassShell() {
         push();
-        specularMaterial(210, 225, 245, 50);
+        specularMaterial(210, 225, 245, 200);
         shininess(120);
         box(cubeSize * 1.02);
         pop();

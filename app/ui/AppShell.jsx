@@ -177,14 +177,17 @@ export default function AppShell() {
             </button>
           </div>
           <div className="mint-confirm-sub">
-            You will confirm these wallet prompts in order:
+            Expect a mix of wallet prompts and short waits:
           </div>
           <ol className="mint-confirm-steps">
             <li>Connect your wallet (if needed).</li>
             <li>Confirm the commit transaction.</li>
+            <li>Wait for the reveal block to open.</li>
             <li>Sign the metadata pin request.</li>
             <li>Confirm the metadata commit transaction.</li>
+            <li>Wait for metadata confirmation.</li>
             <li>Confirm the final mint transaction.</li>
+            <li>Wait for mint confirmation.</li>
           </ol>
           <div className="mint-confirm-actions">
             <button

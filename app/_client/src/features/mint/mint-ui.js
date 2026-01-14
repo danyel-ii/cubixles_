@@ -1190,11 +1190,6 @@ export function initMintUi() {
       const mintStep = needsCommitTx ? 3 : 2;
 
       if (needsCommitTx) {
-        showToast({
-          title: "Three-step mint",
-          message: "You will confirm three wallet prompts: commit, metadata, then mint.",
-          tone: "neutral",
-        });
         await ensureBalanceForTransaction({
           provider,
           contract,
