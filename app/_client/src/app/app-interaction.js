@@ -169,11 +169,27 @@ function isOverlayActive() {
 }
 
 function isWalletModalActive() {
-  return Boolean(
-    document.querySelector(
-      "wcm-modal, w3m-modal, .wcm-modal, .w3m-modal, .walletconnect-modal, [data-wcm-modal]"
-    )
+  if (typeof document === "undefined") {
+    return false;
+  }
+  const modals = document.querySelectorAll(
+    "wcm-modal, w3m-modal, .wcm-modal, .w3m-modal, .walletconnect-modal, [data-wcm-modal]"
   );
+  return Array.from(modals).some((modal) => isElementVisible(modal));
+}
+
+function isElementVisible(el) {
+  if (!(el instanceof Element)) {
+    return false;
+  }
+  if (el.hasAttribute("hidden") || el.getAttribute("aria-hidden") === "true") {
+    return false;
+  }
+  const style = window.getComputedStyle(el);
+  if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") {
+    return false;
+  }
+  return true;
 }
 
 function isWalletModalOpen() {
@@ -195,6 +211,8 @@ function isUiTarget(event) {
     target.closest("#ui") ||
       target.closest("#leaderboard") ||
       target.closest("#preview-bar") ||
+      target.closest("#token-floor-panel") ||
+      target.closest("#token-view-status") ||
       target.closest("#overlay") ||
       target.closest("#wallet-picker") ||
       target.closest("#network-picker") ||
@@ -215,6 +233,8 @@ function isUiPointed() {
     el.closest("#ui") ||
       el.closest("#leaderboard") ||
       el.closest("#preview-bar") ||
+      el.closest("#token-floor-panel") ||
+      el.closest("#token-view-status") ||
       el.closest("#overlay") ||
       el.closest("#wallet-picker") ||
       el.closest("#network-picker") ||

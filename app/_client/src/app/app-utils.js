@@ -56,30 +56,78 @@ export function downscaleImageToMax(img, maxSize) {
 
 export function createFrostedTexture(size = 160) {
   const g = createGraphics(size, size);
+  g.pixelDensity(1);
   g.clear();
-  g.noStroke();
+
+  const ctx = g.drawingContext;
+  const base = ctx.createLinearGradient(0, 0, size, size);
+  base.addColorStop(0, "#0b1016");
+  base.addColorStop(0.25, "#222933");
+  base.addColorStop(0.5, "#aeb7c5");
+  base.addColorStop(0.7, "#5b6472");
+  base.addColorStop(1, "#121821");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, size, size);
+
+  noiseSeed(7);
+  g.noFill();
+  g.strokeWeight(1);
+  const highlights = [
+    { center: size * 0.22, spread: size * 0.08, strength: 90 },
+    { center: size * 0.52, spread: size * 0.12, strength: 130 },
+    { center: size * 0.78, spread: size * 0.1, strength: 70 },
+  ];
+
   for (let y = 0; y < size; y += 1) {
     const t = y / Math.max(1, size - 1);
-    const band =
-      Math.exp(-Math.pow((t - 0.25) / 0.08, 2)) * 70 +
-      Math.exp(-Math.pow((t - 0.62) / 0.12, 2)) * 55;
-    const ripple = Math.sin(t * Math.PI * 6 + 0.35) * 14;
-    const edgeFade = -35 * Math.abs(t - 0.5);
-    const value = Math.max(0, Math.min(255, 155 + band + ripple + edgeFade));
-    g.stroke(value, Math.min(255, value + 8), Math.min(255, value + 16));
+    const wave = Math.sin(t * Math.PI * 6.4 + 0.35) * 22;
+    const wave2 = Math.sin(t * Math.PI * 2.2 - 0.7) * 12;
+    const grain = (noise(t * 3.4, 0.7) - 0.5) * 35;
+    let highlight = 0;
+    highlights.forEach((spec) => {
+      const dist = (y - spec.center) / spec.spread;
+      highlight += Math.exp(-dist * dist) * spec.strength;
+    });
+    const value = Math.max(0, Math.min(255, 105 + wave + wave2 + grain + highlight));
+    const cool = Math.min(255, value + 18);
+    g.stroke(cool - 12, cool - 4, cool + 12, 220);
     g.line(0, y, size, y);
   }
-  g.stroke(255, 255, 255, 40);
-  for (let i = -size; i < size * 2; i += 14) {
-    g.line(i, 0, i + size, size);
-  }
+
+  ctx.globalCompositeOperation = "screen";
+  const radial = ctx.createRadialGradient(
+    size * 0.18,
+    size * 0.22,
+    size * 0.05,
+    size * 0.18,
+    size * 0.22,
+    size * 0.9
+  );
+  radial.addColorStop(0, "rgba(255,255,255,0.35)");
+  radial.addColorStop(0.35, "rgba(255,255,255,0.12)");
+  radial.addColorStop(0.65, "rgba(255,255,255,0.0)");
+  ctx.fillStyle = radial;
+  ctx.fillRect(0, 0, size, size);
+
   g.stroke(255, 255, 255, 18);
-  for (let i = -size; i < size * 2; i += 22) {
-    g.line(i, size, i + size, 0);
+  g.strokeWeight(1.1);
+  for (let i = -size; i < size * 2; i += 18) {
+    g.beginShape();
+    for (let x = -size * 0.2; x <= size * 1.2; x += size / 10) {
+      const t = x / Math.max(1, size);
+      const wobble =
+        Math.sin(t * Math.PI * 2 + i * 0.06) * (size * 0.05) +
+        (noise(t * 1.8, i * 0.04) - 0.5) * (size * 0.08);
+      g.vertex(x, i + wobble);
+    }
+    g.endShape();
   }
-  g.stroke(255, 255, 255, 22);
-  for (let i = 0; i < size * 2; i += 1) {
+
+  g.stroke(255, 255, 255, 26);
+  for (let i = 0; i < size * 1.6; i += 1) {
     g.point(Math.random() * size, Math.random() * size);
   }
+
+  ctx.globalCompositeOperation = "source-over";
   return g;
 }

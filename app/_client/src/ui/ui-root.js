@@ -106,26 +106,26 @@ function initUiTouchGuards() {
     "#ui",
     "#leaderboard",
     "#preview-bar",
+    "#token-floor-panel",
+    "#token-view-status",
     "#overlay",
     "#wallet-picker",
     "#network-picker",
     "#share-cube",
     "#share-modal",
   ];
-  selectors.forEach((selector) => {
-    const el = document.querySelector(selector);
-    if (!el) {
+  const selectorList = selectors.join(", ");
+  const stopTouchPropagation = (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
       return;
     }
-    ["touchstart", "touchmove", "touchend"].forEach((eventName) => {
-      el.addEventListener(
-        eventName,
-        (event) => {
-          event.stopPropagation();
-        },
-        { passive: true }
-      );
-    });
+    if (target.closest(selectorList)) {
+      event.stopPropagation();
+    }
+  };
+  ["touchstart", "touchmove", "touchend"].forEach((eventName) => {
+    document.addEventListener(eventName, stopTouchPropagation, { passive: true });
   });
 }
 
@@ -175,6 +175,8 @@ function initUiPointerGuard() {
     "#ui",
     "#leaderboard",
     "#preview-bar",
+    "#token-floor-panel",
+    "#token-view-status",
     "#overlay",
     "#wallet-picker",
     "#network-picker",
