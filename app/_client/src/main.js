@@ -2,10 +2,15 @@ import { Buffer } from "buffer";
 import { registerAppLifecycle } from "./app/app-lifecycle.js";
 import { notifyFarcasterReady } from "./features/farcaster/frame-ready.js";
 import { initTokenViewRoute } from "./routes/token-view.js";
+import { initPaletteTheme } from "./ui/palette-theme.js";
 import { initUiRoot } from "./ui/ui-root.js";
 
 if (!globalThis.Buffer) {
   globalThis.Buffer = Buffer;
+}
+
+if (typeof document !== "undefined") {
+  initPaletteTheme();
 }
 
 registerAppLifecycle();
