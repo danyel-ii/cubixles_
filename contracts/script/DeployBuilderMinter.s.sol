@@ -1,0 +1,64 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import { Script } from "forge-std/Script.sol";
+import { CubixlesBuilderMinter } from "../src/builders/CubixlesBuilderMinter.sol";
+
+contract DeployBuilderMinter is Script {
+    uint256 private constant ENV_UINT_SENTINEL = type(uint256).max;
+    address private constant ENV_ADDRESS_SENTINEL = address(type(uint160).max);
+
+    function run() external {
+        DeployConfig memory cfg = _loadConfig();
+
+        vm.startBroadcast();
+        CubixlesBuilderMinter minter = new CubixlesBuilderMinter(
+            cfg.name,
+            cfg.symbol,
+            cfg.baseUri
+        );
+        if (cfg.owner != msg.sender) {
+            minter.transferOwnership(cfg.owner);
+        }
+        vm.stopBroadcast();
+
+        string memory root = vm.projectRoot();
+        string memory defaultPath = cfg.chainId == 1
+            ? string.concat(root, "/deployments/builder-mainnet.json")
+            : cfg.chainId == 8453
+                ? string.concat(root, "/deployments/builder-base.json")
+                : string.concat(root, "/deployments/builder-sepolia.json");
+        string memory path = vm.envOr("CUBIXLES_BUILDER_DEPLOYMENT_PATH", defaultPath);
+        string memory obj = "deployment";
+        vm.serializeUint(obj, "chainId", cfg.chainId);
+        string memory json = vm.serializeAddress(obj, "address", address(minter));
+        vm.writeJson(json, path);
+    }
+
+    struct DeployConfig {
+        uint256 chainId;
+        address owner;
+        string name;
+        string symbol;
+        string baseUri;
+    }
+
+    function _loadConfig() internal view returns (DeployConfig memory cfg) {
+        cfg.chainId = vm.envOr("CUBIXLES_CHAIN_ID", block.chainid);
+        cfg.owner = _envOrAddress("CUBIXLES_BUILDER_OWNER", "CUBIXLES_OWNER", msg.sender);
+        cfg.name = vm.envOr("CUBIXLES_BUILDER_NAME", string("Cubixles Builders"));
+        cfg.symbol = vm.envOr("CUBIXLES_BUILDER_SYMBOL", string("BLDR"));
+        cfg.baseUri = vm.envOr("CUBIXLES_BUILDER_BASE_URI", string(""));
+    }
+
+    function _envOrAddress(
+        string memory primary,
+        string memory fallbackKey,
+        address defaultValue
+    ) private view returns (address value) {
+        value = vm.envOr(primary, ENV_ADDRESS_SENTINEL);
+        if (value == ENV_ADDRESS_SENTINEL) {
+            value = vm.envOr(fallbackKey, defaultValue);
+        }
+    }
+}
