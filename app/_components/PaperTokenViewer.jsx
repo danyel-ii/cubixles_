@@ -88,14 +88,23 @@ export default function PaperTokenViewer({
   const viewerRef = useRef(null);
   const frameRef = useRef(null);
   const pointerRef = useRef({ x: 0, y: 0 });
+  const rotationRef = useRef({ x: 0, y: 0 });
+  const dragRef = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    startRotX: 0,
+    startRotY: 0,
+    blockClick: false,
+  });
   const cubeLinkRef = useRef(null);
   const cubeRef = useRef(null);
   const shadowRef = useRef(null);
   const faceRefs = useRef([]);
-  const inspectorLineRef = useRef(null);
-  const inspectorPanelRef = useRef(null);
-  const inspectedIndexRef = useRef(null);
-  const [inspectedIndex, setInspectedIndex] = useState(null);
+  const inspectorLineRefs = useRef([]);
+  const inspectorPanelRefs = useRef([]);
+  const inspectedIndicesRef = useRef([]);
+  const [inspectedIndices, setInspectedIndices] = useState([]);
   const [baseRotation, setBaseRotation] = useState(DEFAULT_ROTATION);
 
   const faces = useMemo(() => {
@@ -125,64 +134,72 @@ export default function PaperTokenViewer({
 
   useEffect(() => {
     setBaseRotation(DEFAULT_ROTATION);
-    setInspectedIndex(null);
+    rotationRef.current = { x: 0, y: 0 };
+    setInspectedIndices([]);
   }, [cube?.tokenId]);
 
   useEffect(() => {
-    inspectedIndexRef.current = inspectedIndex;
-  }, [inspectedIndex]);
+    inspectedIndicesRef.current = inspectedIndices;
+  }, [inspectedIndices]);
 
   const updateInspectorLayout = useCallback(() => {
-    const index = inspectedIndexRef.current;
-    if (index === null || index === undefined) {
+    const indices = inspectedIndicesRef.current;
+    if (!indices.length) {
       return;
     }
     const viewer = viewerRef.current;
-    const faceEl = faceRefs.current[index];
-    const line = inspectorLineRef.current;
-    const panel = inspectorPanelRef.current;
-    if (!viewer || !faceEl || !line || !panel) {
+    if (!viewer) {
       return;
     }
     const viewerRect = viewer.getBoundingClientRect();
-    const faceRect = faceEl.getBoundingClientRect();
-    const panelRect = panel.getBoundingClientRect();
-    const faceCenterX = faceRect.left + faceRect.width / 2;
-    const faceCenterY = faceRect.top + faceRect.height / 2;
-    const viewerCenterX = viewerRect.left + viewerRect.width / 2;
-    const preferRight = faceCenterX < viewerCenterX;
-    const offset = 90;
-    const margin = 24;
-    let panelX = preferRight
-      ? faceCenterX + offset
-      : faceCenterX - panelRect.width - offset;
-    let panelY = faceCenterY - panelRect.height / 2;
-    panelX = clamp(
-      panelX,
-      viewerRect.left + margin,
-      viewerRect.right - panelRect.width - margin
-    );
-    panelY = clamp(
-      panelY,
-      viewerRect.top + margin,
-      viewerRect.bottom - panelRect.height - margin
-    );
-    const translateX = panelX - viewerRect.left;
-    const translateY = panelY - viewerRect.top;
-    panel.style.transform = `translate(${translateX}px, ${translateY}px)`;
-    panel.style.opacity = "1";
+    const isDesktop = typeof window !== "undefined" && window.innerWidth >= 1024;
+    const offset = isDesktop ? 170 : 110;
+    const margin = isDesktop ? 32 : 20;
 
-    const anchorX = panelX + (preferRight ? 0 : panelRect.width);
-    const anchorY = panelY + panelRect.height / 2;
-    const startX = faceCenterX - viewerRect.left;
-    const startY = faceCenterY - viewerRect.top;
-    const dx = anchorX - faceCenterX;
-    const dy = anchorY - faceCenterY;
-    const length = Math.max(24, Math.hypot(dx, dy));
-    const angle = Math.atan2(dy, dx);
-    line.style.width = `${length}px`;
-    line.style.transform = `translate(${startX}px, ${startY}px) rotate(${angle}rad)`;
-    line.style.opacity = "1";
+    indices.forEach((index) => {
+      const faceEl = faceRefs.current[index];
+      const line = inspectorLineRefs.current[index];
+      const panel = inspectorPanelRefs.current[index];
+      if (!faceEl || !line || !panel) {
+        return;
+      }
+      const faceRect = faceEl.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      const faceCenterX = faceRect.left + faceRect.width / 2;
+      const faceCenterY = faceRect.top + faceRect.height / 2;
+      const viewerCenterX = viewerRect.left + viewerRect.width / 2;
+      const preferRight = faceCenterX < viewerCenterX;
+      let panelX = preferRight
+        ? faceCenterX + offset
+        : faceCenterX - panelRect.width - offset;
+      let panelY = faceCenterY - panelRect.height / 2;
+      panelX = clamp(
+        panelX,
+        viewerRect.left + margin,
+        viewerRect.right - panelRect.width - margin
+      );
+      panelY = clamp(
+        panelY,
+        viewerRect.top + margin,
+        viewerRect.bottom - panelRect.height - margin
+      );
+      const translateX = panelX - viewerRect.left;
+      const translateY = panelY - viewerRect.top;
+      panel.style.transform = `translate(${translateX}px, ${translateY}px)`;
+      panel.style.opacity = "1";
+
+      const anchorX = panelX + (preferRight ? 0 : panelRect.width);
+      const anchorY = panelY + panelRect.height / 2;
+      const startX = faceCenterX - viewerRect.left;
+      const startY = faceCenterY - viewerRect.top;
+      const dx = anchorX - faceCenterX;
+      const dy = anchorY - faceCenterY;
+      const length = Math.max(24, Math.hypot(dx, dy));
+      const angle = Math.atan2(dy, dx);
+      line.style.width = `${length}px`;
+      line.style.transform = `translate(${startX}px, ${startY}px) rotate(${angle}rad)`;
+      line.style.opacity = "1";
+    });
   }, []);
 
   const scheduleUpdate = useCallback(() => {
@@ -202,6 +219,8 @@ export default function PaperTokenViewer({
       const shadowY = (y * -32).toFixed(2);
       const shiftX = (x * 120).toFixed(2);
       const shiftY = (y * 90).toFixed(2);
+      const rotationX = rotationRef.current.x.toFixed(2);
+      const rotationY = rotationRef.current.y.toFixed(2);
 
       const link = cubeLinkRef.current;
       const cubeEl = cubeRef.current;
@@ -212,6 +231,8 @@ export default function PaperTokenViewer({
       const shadowYValue = `${shadowY}px`;
       const shiftXValue = `${shiftX}px`;
       const shiftYValue = `${shiftY}px`;
+      const rotationXValue = `${rotationX}deg`;
+      const rotationYValue = `${rotationY}deg`;
 
       const applyVars = (node) => {
         if (!node) {
@@ -223,6 +244,8 @@ export default function PaperTokenViewer({
         node.style.setProperty("--cube-shadow-y", shadowYValue);
         node.style.setProperty("--cube-shift-x", shiftXValue);
         node.style.setProperty("--cube-shift-y", shiftYValue);
+        node.style.setProperty("--cube-user-x", rotationXValue);
+        node.style.setProperty("--cube-user-y", rotationYValue);
       };
 
       applyVars(viewer);
@@ -235,7 +258,7 @@ export default function PaperTokenViewer({
       if (shadow) {
         shadow.style.transform = `translate(calc(-50% + ${shadowXValue}), ${shadowYValue})`;
       }
-      if (inspectedIndexRef.current !== null) {
+      if (inspectedIndicesRef.current.length > 0) {
         updateInspectorLayout();
       }
     });
@@ -261,6 +284,7 @@ export default function PaperTokenViewer({
   );
 
   const handlePointerMove = (event) => {
+    updateRotationFromDrag(event.clientX, event.clientY);
     updatePointer(event.clientX, event.clientY);
   };
 
@@ -269,9 +293,45 @@ export default function PaperTokenViewer({
     scheduleUpdate();
   };
 
+  const startDrag = useCallback((event) => {
+    if (event.button && event.button !== 0) {
+      return;
+    }
+    dragRef.current.active = true;
+    dragRef.current.startX = event.clientX;
+    dragRef.current.startY = event.clientY;
+    dragRef.current.startRotX = rotationRef.current.x;
+    dragRef.current.startRotY = rotationRef.current.y;
+    dragRef.current.blockClick = false;
+    event.currentTarget?.setPointerCapture?.(event.pointerId);
+  }, []);
+
+  const endDrag = useCallback(() => {
+    dragRef.current.active = false;
+  }, []);
+
+  const updateRotationFromDrag = useCallback(
+    (clientX, clientY) => {
+      if (!dragRef.current.active) {
+        return;
+      }
+      const dx = clientX - dragRef.current.startX;
+      const dy = clientY - dragRef.current.startY;
+      if (!dragRef.current.blockClick && Math.hypot(dx, dy) > 4) {
+        dragRef.current.blockClick = true;
+      }
+      const nextX = clamp(dragRef.current.startRotX + dy * 0.35, -80, 80);
+      const nextY = dragRef.current.startRotY + dx * 0.45;
+      rotationRef.current = { x: nextX, y: nextY };
+      scheduleUpdate();
+    },
+    [scheduleUpdate]
+  );
+
   useEffect(() => {
     scheduleUpdate();
     const handleWindowMove = (event) => {
+      updateRotationFromDrag(event.clientX, event.clientY);
       updatePointer(event.clientX, event.clientY);
     };
     const resetVars = (node) => {
@@ -287,6 +347,7 @@ export default function PaperTokenViewer({
     };
     const handleWindowLeave = () => {
       pointerRef.current = { x: 0, y: 0 };
+      endDrag();
       scheduleUpdate();
       resetVars(viewerRef.current);
       resetVars(cubeLinkRef.current);
@@ -300,29 +361,35 @@ export default function PaperTokenViewer({
     };
     window.addEventListener("pointermove", handleWindowMove, { passive: true });
     window.addEventListener("mousemove", handleWindowMove, { passive: true });
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+    window.addEventListener("mouseup", endDrag);
     window.addEventListener("pointerleave", handleWindowLeave);
     window.addEventListener("blur", handleWindowLeave);
     return () => {
       window.removeEventListener("pointermove", handleWindowMove);
       window.removeEventListener("mousemove", handleWindowMove);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
+      window.removeEventListener("mouseup", endDrag);
       window.removeEventListener("pointerleave", handleWindowLeave);
       window.removeEventListener("blur", handleWindowLeave);
       if (frameRef.current !== null) {
         window.cancelAnimationFrame(frameRef.current);
       }
     };
-  }, [scheduleUpdate, updatePointer]);
+  }, [endDrag, scheduleUpdate, updatePointer, updateRotationFromDrag]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
-    if (inspectedIndex === null) {
+    if (!inspectedIndices.length) {
       return;
     }
     const frame = window.requestAnimationFrame(updateInspectorLayout);
     return () => window.cancelAnimationFrame(frame);
-  }, [inspectedIndex, updateInspectorLayout]);
+  }, [inspectedIndices, updateInspectorLayout]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -335,12 +402,21 @@ export default function PaperTokenViewer({
 
   const handleFaceInspect = useCallback(
     (index) => {
+      if (dragRef.current.blockClick) {
+        dragRef.current.blockClick = false;
+        return;
+      }
       const face = faces[index];
       if (!face) {
         return;
       }
       setBaseRotation(FACE_ROTATIONS[face.id] ?? DEFAULT_ROTATION);
-      setInspectedIndex((current) => (current === index ? null : index));
+      setInspectedIndices((current) => {
+        if (current.includes(index)) {
+          return current.filter((item) => item !== index);
+        }
+        return [...current, index];
+      });
     },
     [faces]
   );
@@ -537,15 +613,7 @@ export default function PaperTokenViewer({
     return null;
   }
 
-  const inspectedFace =
-    inspectedIndex !== null && inspectedIndex !== undefined
-      ? faces[inspectedIndex]
-      : null;
   const paletteSwatches = Array.isArray(palette) ? palette : [];
-  const floorLabel = inspectedFace
-    ? formatFloorValue(inspectedFace.floorEth)
-    : "n/a";
-  const floorText = floorLabel === "n/a" ? "n/a" : `${floorLabel} ETH`;
 
   return (
     <main
@@ -596,6 +664,9 @@ export default function PaperTokenViewer({
           ref={cubeLinkRef}
           className="paper-cube-link"
           aria-label="Cubixles cube"
+          onPointerDown={startDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
         >
           <div ref={shadowRef} className="paper-cube-shadow" aria-hidden="true" />
           <div
@@ -608,7 +679,7 @@ export default function PaperTokenViewer({
               const style = {
                 "--face-image": face.image ? `url(\"${face.image}\")` : "none",
               };
-              const isActive = inspectedIndex === index;
+              const isActive = inspectedIndices.includes(index);
               return (
                 <div
                   key={face.id}
@@ -645,73 +716,85 @@ export default function PaperTokenViewer({
         </div>
       </div>
 
-      {inspectedFace && (
-        <>
-          <div
-            ref={inspectorLineRef}
-            className="paper-inspector-line"
-            aria-hidden="true"
-          />
-          <aside
-            ref={inspectorPanelRef}
-            className="paper-inspector"
-            role="dialog"
-            aria-label={`Inspect ${inspectedFace.label}`}
-          >
-            <div className="paper-inspector-header">
-              <div>
-                <span className="paper-inspector-eyebrow">
-                  {FACE_NAMES[inspectedFace.id] || "Face"}
-                </span>
-                <h2 className="paper-inspector-title">{inspectedFace.title}</h2>
+      {inspectedIndices.map((index) => {
+        const inspectedFace = faces[index];
+        if (!inspectedFace) {
+          return null;
+        }
+        const floorLabel = formatFloorValue(inspectedFace.floorEth);
+        const floorText = floorLabel === "n/a" ? "n/a" : `${floorLabel} ETH`;
+        return (
+          <div key={`inspector-${inspectedFace.id}`}>
+            <div
+              ref={(node) => {
+                inspectorLineRefs.current[index] = node;
+              }}
+              className="paper-inspector-line"
+              aria-hidden="true"
+            />
+            <aside
+              ref={(node) => {
+                inspectorPanelRefs.current[index] = node;
+              }}
+              className="paper-inspector"
+              role="dialog"
+              aria-label={`Inspect ${inspectedFace.label}`}
+            >
+              <div className="paper-inspector-header">
+                <div>
+                  <span className="paper-inspector-eyebrow">
+                    {FACE_NAMES[inspectedFace.id] || "Face"}
+                  </span>
+                  <h2 className="paper-inspector-title">{inspectedFace.title}</h2>
+                </div>
+                <button
+                  type="button"
+                  className="paper-inspector-close"
+                  onClick={() => handleFaceInspect(index)}
+                  aria-label="Close inspector"
+                >
+                  Close
+                </button>
               </div>
-              <button
-                type="button"
-                className="paper-inspector-close"
-                onClick={() => setInspectedIndex(null)}
-                aria-label="Close inspector"
-              >
-                Close
-              </button>
-            </div>
-            <div className="paper-inspector-body">
-              {inspectedFace.image ? (
-                <img
-                  className="paper-inspector-thumb"
-                  src={inspectedFace.image}
-                  alt={inspectedFace.title}
-                  loading="lazy"
-                />
-              ) : (
-                <div className="paper-inspector-thumb is-empty">No image</div>
-              )}
-              <div className="paper-inspector-meta">
-                <div>
-                  <span className="paper-meta-label">Token</span>
-                  <span>{truncateMiddle(inspectedFace.tokenId || "n/a")}</span>
-                </div>
-                <div>
-                  <span className="paper-meta-label">Contract</span>
-                  <span>{formatAddress(inspectedFace.contractAddress)}</span>
-                </div>
-                <div>
-                  <span className="paper-meta-label">Floor</span>
-                  <span>{floorText}</span>
-                </div>
-                <div>
-                  <span className="paper-meta-label">Updated</span>
-                  <span>{formatTimestamp(inspectedFace.floorRetrievedAt)}</span>
+              <div className="paper-inspector-body">
+                {inspectedFace.image ? (
+                  <img
+                    className="paper-inspector-thumb"
+                    src={inspectedFace.image}
+                    alt={inspectedFace.title}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="paper-inspector-thumb is-empty">No image</div>
+                )}
+                <div className="paper-inspector-meta">
+                  <div>
+                    <span className="paper-meta-label">Token</span>
+                    <span>{truncateMiddle(inspectedFace.tokenId || "n/a")}</span>
+                  </div>
+                  <div>
+                    <span className="paper-meta-label">Contract</span>
+                    <span>{formatAddress(inspectedFace.contractAddress)}</span>
+                  </div>
+                  <div>
+                    <span className="paper-meta-label">Floor</span>
+                    <span>{floorText}</span>
+                  </div>
+                  <div>
+                    <span className="paper-meta-label">Updated</span>
+                    <span>{formatTimestamp(inspectedFace.floorRetrievedAt)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </aside>
-        </>
-      )}
+            </aside>
+          </div>
+        );
+      })}
 
       {faces.length > 0 && (
         <div className="paper-face-map" role="group" aria-label="Cube faces">
           {faces.map((face, index) => {
-            const isActive = inspectedIndex === index;
+            const isActive = inspectedIndices.includes(index);
             return (
               <button
                 key={`${face.id}-chip`}
