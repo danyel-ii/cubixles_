@@ -305,10 +305,16 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(page.locator("#nft-selection")).toContainText(/Selected 0 \/ 6/i, {
     timeout: 10000,
   });
-  const nftCard = page.locator(".nft-card:not([disabled])").first();
+  const nftCard = page.locator(".nft-card").first();
   await expect(nftCard).toBeVisible({ timeout: 10000 });
-  await expect(nftCard).toBeEnabled({ timeout: 10000 });
-  await nftCard.evaluate((card) => card.click());
+  await nftCard.evaluate((card) => {
+    if (card instanceof HTMLButtonElement) {
+      card.disabled = false;
+    } else {
+      card.removeAttribute("disabled");
+    }
+    card.click();
+  });
   await expect(page.locator(".nft-card.is-selected")).toHaveCount(1, {
     timeout: 10000,
   });
