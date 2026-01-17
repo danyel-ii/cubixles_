@@ -33,6 +33,17 @@ import { buildImageCandidates } from "../shared/utils/uri";
 
 const TOOLTIP_SWARM_ENABLED = false;
 let defaultTexturesLoading = false;
+let canvasReady = false;
+
+function markCanvasReady() {
+  if (canvasReady) {
+    return;
+  }
+  canvasReady = true;
+  if (typeof document !== "undefined") {
+    document.body.classList.add("is-canvas-ready");
+  }
+}
 
 function preloadApp() {
   preloadBackground();
@@ -132,6 +143,7 @@ function drawApp() {
   if (TOOLTIP_SWARM_ENABLED) {
     drawTileSwarm();
   }
+  markCanvasReady();
 }
 
 function resizeApp() {

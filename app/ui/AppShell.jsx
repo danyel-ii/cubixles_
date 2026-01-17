@@ -19,6 +19,7 @@ export default function AppShell({ mode = "mint" }) {
 
   return (
     <>
+      <div id="intro-shield" className="intro-shield" aria-hidden="true"></div>
       <div id="overlay" className={`overlay${isBuilder ? " is-hidden" : ""}`}>
         <div className="overlay-card">
           <div className="overlay-title is-logotype" aria-label="cubixles_">

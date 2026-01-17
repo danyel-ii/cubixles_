@@ -16,12 +16,10 @@ function createNonce() {
 }
 
 function buildCsp({ nonce, frameAncestors, isProd, reportUri, reportTo, includeUpgrade }) {
-  const scriptSrc = [
-    "'self'",
-    `'nonce-${nonce}'`,
-    "https://cdn.jsdelivr.net",
-    "https://vercel.live",
-  ];
+  const scriptSrc = ["'self'", "https://cdn.jsdelivr.net", "https://vercel.live"];
+  if (isProd && nonce) {
+    scriptSrc.push(`'nonce-${nonce}'`);
+  }
   if (!isProd) {
     scriptSrc.push("'unsafe-eval'", "'unsafe-inline'");
   }

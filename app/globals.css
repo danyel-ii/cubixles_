@@ -141,6 +141,25 @@ body.is-builder {
   background-attachment: fixed;
 }
 
+.intro-shield {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: #0b1015;
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 260ms ease;
+}
+
+body.is-canvas-ready .intro-shield {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body:not(.is-canvas-ready) .builder-corner-tag {
+  opacity: 0;
+}
+
 button,
 input,
 select,

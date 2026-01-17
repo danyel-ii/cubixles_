@@ -1,7 +1,45 @@
 import { config } from "./app-config.js";
 import { state } from "./app-state.js";
 
+function isBuilderBackdrop() {
+  if (typeof document === "undefined") {
+    return false;
+  }
+  return document.body.classList.contains("is-builder");
+}
+
+function drawPaperBackdrop(backdrop) {
+  const width = backdrop.width;
+  const height = backdrop.height;
+  backdrop.push();
+  backdrop.clear();
+  backdrop.background(247, 242, 232);
+  backdrop.stroke(30, 45, 70, 41);
+  backdrop.strokeWeight(1);
+  for (let x = 0; x <= width; x += 24) {
+    backdrop.line(x, 0, x, height);
+  }
+  for (let y = 0; y <= height; y += 24) {
+    backdrop.line(0, y, width, y);
+  }
+  backdrop.stroke(30, 45, 70, 77);
+  for (let x = 0; x <= width; x += 120) {
+    backdrop.line(x, 0, x, height);
+  }
+  for (let y = 0; y <= height; y += 120) {
+    backdrop.line(0, y, width, y);
+  }
+  backdrop.stroke(208, 88, 88, 179);
+  backdrop.strokeWeight(2);
+  backdrop.line(63, 0, 63, height);
+  backdrop.pop();
+}
+
 export function preloadBackground() {
+  if (isBuilderBackdrop()) {
+    state.bgImage = null;
+    return;
+  }
   state.bgImage = loadImage(
     config.backgroundUrl,
     () => {},
@@ -21,6 +59,10 @@ export function updateBackdrop() {
   if (!backdrop) {
     return;
   }
+  if (isBuilderBackdrop()) {
+    drawPaperBackdrop(backdrop);
+    return;
+  }
   backdrop.clear();
   const ctx = backdrop.drawingContext;
   const gradient = ctx.createLinearGradient(0, 0, backdrop.width, backdrop.height);
@@ -33,7 +75,7 @@ export function updateBackdrop() {
 
 export function drawBackdrop() {
   const bgImage = state.bgImage;
-  if (bgImage) {
+  if (bgImage && !isBuilderBackdrop()) {
     const t = frameCount * 0.0016;
     push();
     resetMatrix();
@@ -89,6 +131,9 @@ export function drawBackdrop() {
 }
 
 export function drawForeground() {
+  if (isBuilderBackdrop()) {
+    return;
+  }
   const bgImage = state.bgImage;
   if (!bgImage) {
     return;
