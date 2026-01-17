@@ -67,16 +67,18 @@ export function middleware(request) {
   const frameAncestors = process.env.FRAME_ANCESTORS || DEFAULT_FRAME_ANCESTORS;
   const reportUri = "/api/csp-report";
   const reportUrl = new URL(reportUri, request.nextUrl.origin).toString();
+  const isProd =
+    process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "preview";
   const csp = buildCsp({
     nonce,
     frameAncestors,
-    isProd: process.env.NODE_ENV === "production",
+    isProd,
     includeUpgrade: true,
   });
   const reportOnlyCsp = buildCsp({
     nonce,
     frameAncestors,
-    isProd: process.env.NODE_ENV === "production",
+    isProd,
     reportUri,
     reportTo: CSP_REPORT_GROUP,
     includeUpgrade: false,

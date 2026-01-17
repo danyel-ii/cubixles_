@@ -254,6 +254,9 @@ export function initNftPickerUi() {
   }
 
   async function loadInventory(address) {
+    const fallbackInventory = inventory;
+    const fallbackSelectedKeys = new Set(selectedKeys);
+    const fallbackSelectedOrder = [...selectedOrder];
     setLoading(true);
     setStatus(`Loading ${formatChainName(CUBIXLES_CONTRACT.chainId)} NFTs...`);
     state.nftStatus = "loading";
@@ -283,8 +286,15 @@ export function initNftPickerUi() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to load NFTs.";
-      inventory = [];
-      state.nftInventory = [];
+      if (fallbackInventory.length) {
+        inventory = fallbackInventory;
+        selectedKeys = fallbackSelectedKeys;
+        selectedOrder = fallbackSelectedOrder;
+        state.nftInventory = fallbackInventory;
+      } else {
+        inventory = [];
+        state.nftInventory = [];
+      }
       state.nftStatus = "error";
       state.nftError = message;
       setStatus(message, "error");
@@ -348,19 +358,19 @@ export function initNftPickerUi() {
       return;
     }
     activeChainId = chainId;
-    inventory = [];
     selectedKeys = new Set();
     selectedOrder = [];
     appliedSelectionKey = null;
-    state.nftInventory = [];
     state.nftSelection = [];
-    state.nftStatus = "idle";
-    renderInventory();
     updateSelection();
     if (currentAddress) {
       void loadInventory(currentAddress);
       return;
     }
+    inventory = [];
+    state.nftInventory = [];
+    state.nftStatus = "idle";
+    renderInventory();
     setStatus(`Connect your wallet to load ${formatChainName(chainId)} NFTs.`);
   });
 

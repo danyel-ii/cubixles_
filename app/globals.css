@@ -101,6 +101,46 @@ body {
   color: var(--ink);
 }
 
+body.is-builder {
+  background-color: #f7f2e8;
+  background-image:
+    radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+    repeating-linear-gradient(
+      to right,
+      transparent,
+      transparent 23px,
+      rgba(30, 45, 70, 0.16) 24px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 23px,
+      rgba(30, 45, 70, 0.16) 24px
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent,
+      transparent 119px,
+      rgba(30, 45, 70, 0.3) 120px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 119px,
+      rgba(30, 45, 70, 0.3) 120px
+    ),
+    linear-gradient(
+      to right,
+      transparent 0,
+      transparent 62px,
+      rgba(208, 88, 88, 0.7) 62px,
+      rgba(208, 88, 88, 0.7) 64px,
+      transparent 64px
+    );
+  background-size: 4px 4px, auto, auto, auto, auto, auto;
+  background-attachment: fixed;
+}
+
 button,
 input,
 select,
