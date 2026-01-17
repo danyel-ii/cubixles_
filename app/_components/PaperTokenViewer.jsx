@@ -138,7 +138,7 @@ export default function PaperTokenViewer({
     setInspectedIndices([]);
   }, [cube?.tokenId]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     inspectedIndicesRef.current = inspectedIndices;
   }, [inspectedIndices]);
 
@@ -359,7 +359,8 @@ export default function PaperTokenViewer({
     if (!inspectedIndices.length) {
       return;
     }
-    updateInspectorLayout();
+    const frame = window.requestAnimationFrame(updateInspectorLayout);
+    return () => window.cancelAnimationFrame(frame);
   }, [inspectedIndices, updateInspectorLayout]);
 
   useEffect(() => {
