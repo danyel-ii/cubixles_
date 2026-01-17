@@ -19,7 +19,7 @@ export default function AppShell({ mode = "mint" }) {
 
   return (
     <>
-      <div id="overlay" className="overlay">
+      <div id="overlay" className={`overlay${isBuilder ? " is-hidden" : ""}`}>
         <div className="overlay-card">
           <div className="overlay-title is-logotype" aria-label="cubixles_">
             <span className="logo-mark" aria-hidden="true">
@@ -133,6 +133,11 @@ export default function AppShell({ mode = "mint" }) {
           </div>
         </div>
       </div>
+      {isBuilder ? (
+        <div className="builder-corner-tag" aria-hidden="true">
+          build it
+        </div>
+      ) : null}
       <div id="toast-root" className="toast-root" aria-live="polite" aria-atomic="true"></div>
       <div id="confetti-root" className="confetti-root" aria-hidden="true"></div>
       <div id="wallet-picker" className="wallet-picker is-hidden" role="dialog" aria-modal="true">

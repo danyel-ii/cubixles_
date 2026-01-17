@@ -193,6 +193,24 @@ body.is-intro #share-modal {
   overflow: auto;
 }
 
+.builder-corner-tag {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1100;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: lowercase;
+  font-family: var(--font-mono);
+  box-shadow: var(--shadow-tight);
+  pointer-events: none;
+}
+
 .token-view-status {
   position: fixed;
   top: 18px;
