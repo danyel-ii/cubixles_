@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import CubixlesLogo from "./CubixlesLogo.jsx";
 import CubixlesText from "./CubixlesText.jsx";
@@ -87,7 +87,6 @@ export default function PaperTokenViewer({
 }) {
   const viewerRef = useRef(null);
   const frameRef = useRef(null);
-  const pointerRef = useRef({ x: 0, y: 0 });
   const rotationRef = useRef({ x: 0, y: 0 });
   const dragRef = useRef({
     active: false,
@@ -95,7 +94,8 @@ export default function PaperTokenViewer({
     startY: 0,
     startRotX: 0,
     startRotY: 0,
-    blockClick: false,
+    moved: false,
+    lastDragAt: 0,
   });
   const cubeLinkRef = useRef(null);
   const cubeRef = useRef(null);
@@ -212,13 +212,12 @@ export default function PaperTokenViewer({
       if (!viewer) {
         return;
       }
-      const { x, y } = pointerRef.current;
-      const tiltX = (-y * 20).toFixed(2);
-      const tiltY = (x * 28).toFixed(2);
-      const shadowX = (x * 40).toFixed(2);
-      const shadowY = (y * -32).toFixed(2);
-      const shiftX = (x * 120).toFixed(2);
-      const shiftY = (y * 90).toFixed(2);
+      const tiltX = 0;
+      const tiltY = 0;
+      const shadowX = 0;
+      const shadowY = 0;
+      const shiftX = 0;
+      const shiftY = 0;
       const rotationX = rotationRef.current.x.toFixed(2);
       const rotationY = rotationRef.current.y.toFixed(2);
 
@@ -264,35 +263,6 @@ export default function PaperTokenViewer({
     });
   }, [updateInspectorLayout]);
 
-  const updatePointer = useCallback(
-    (clientX, clientY) => {
-      const viewer = viewerRef.current;
-      if (!viewer) {
-        return;
-      }
-      const rect = viewer.getBoundingClientRect();
-      const x = ((clientX - rect.left) / rect.width - 0.5) * 2;
-      const y = ((clientY - rect.top) / rect.height - 0.5) * 2;
-
-      pointerRef.current = {
-        x: clamp(x, -1, 1),
-        y: clamp(y, -1, 1),
-      };
-      scheduleUpdate();
-    },
-    [scheduleUpdate]
-  );
-
-  const handlePointerMove = (event) => {
-    updateRotationFromDrag(event.clientX, event.clientY);
-    updatePointer(event.clientX, event.clientY);
-  };
-
-  const handlePointerLeave = () => {
-    pointerRef.current = { x: 0, y: 0 };
-    scheduleUpdate();
-  };
-
   const startDrag = useCallback((event) => {
     if (event.button && event.button !== 0) {
       return;
@@ -302,12 +272,16 @@ export default function PaperTokenViewer({
     dragRef.current.startY = event.clientY;
     dragRef.current.startRotX = rotationRef.current.x;
     dragRef.current.startRotY = rotationRef.current.y;
-    dragRef.current.blockClick = false;
+    dragRef.current.moved = false;
     event.currentTarget?.setPointerCapture?.(event.pointerId);
   }, []);
 
   const endDrag = useCallback(() => {
+    if (dragRef.current.moved) {
+      dragRef.current.lastDragAt = Date.now();
+    }
     dragRef.current.active = false;
+    dragRef.current.moved = false;
   }, []);
 
   const updateRotationFromDrag = useCallback(
@@ -317,8 +291,8 @@ export default function PaperTokenViewer({
       }
       const dx = clientX - dragRef.current.startX;
       const dy = clientY - dragRef.current.startY;
-      if (!dragRef.current.blockClick && Math.hypot(dx, dy) > 4) {
-        dragRef.current.blockClick = true;
+      if (!dragRef.current.moved && Math.hypot(dx, dy) > 6) {
+        dragRef.current.moved = true;
       }
       const nextX = clamp(dragRef.current.startRotX + dy * 0.35, -80, 80);
       const nextY = dragRef.current.startRotY + dx * 0.45;
@@ -332,7 +306,6 @@ export default function PaperTokenViewer({
     scheduleUpdate();
     const handleWindowMove = (event) => {
       updateRotationFromDrag(event.clientX, event.clientY);
-      updatePointer(event.clientX, event.clientY);
     };
     const resetVars = (node) => {
       if (!node) {
@@ -346,7 +319,6 @@ export default function PaperTokenViewer({
       node.style.setProperty("--cube-shift-y", "0px");
     };
     const handleWindowLeave = () => {
-      pointerRef.current = { x: 0, y: 0 };
       endDrag();
       scheduleUpdate();
       resetVars(viewerRef.current);
@@ -378,17 +350,16 @@ export default function PaperTokenViewer({
         window.cancelAnimationFrame(frameRef.current);
       }
     };
-  }, [endDrag, scheduleUpdate, updatePointer, updateRotationFromDrag]);
+  }, [endDrag, scheduleUpdate, updateRotationFromDrag]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
     if (!inspectedIndices.length) {
       return;
     }
-    const frame = window.requestAnimationFrame(updateInspectorLayout);
-    return () => window.cancelAnimationFrame(frame);
+    updateInspectorLayout();
   }, [inspectedIndices, updateInspectorLayout]);
 
   useEffect(() => {
@@ -402,8 +373,7 @@ export default function PaperTokenViewer({
 
   const handleFaceInspect = useCallback(
     (index) => {
-      if (dragRef.current.blockClick) {
-        dragRef.current.blockClick = false;
+      if (dragRef.current.lastDragAt && Date.now() - dragRef.current.lastDragAt < 200) {
         return;
       }
       const face = faces[index];
@@ -623,8 +593,6 @@ export default function PaperTokenViewer({
         "--cube-base-x": baseRotation.x,
         "--cube-base-y": baseRotation.y,
       }}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
     >
       <header className="paper-header">
         <p className="paper-eyebrow">Token viewer 02</p>
