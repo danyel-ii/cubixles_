@@ -1,5 +1,5 @@
 import { BrowserProvider, Contract, formatEther } from "ethers";
-import { BUILDER_CONTRACT } from "../../config/builder-contracts.js";
+import { BUILDER_CONTRACT } from "../../config/builder-contracts";
 import { formatChainName, subscribeActiveChain } from "../../config/chains.js";
 import { state } from "../../app/app-state.js";
 import { subscribeWallet, switchToActiveChain } from "../wallet/wallet.js";
