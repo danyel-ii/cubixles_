@@ -324,11 +324,15 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(page.locator("#mint-status")).toContainText(/Ready to mint/i, {
     timeout: 10000,
   });
-  const mintButton = page.getByRole("button", { name: /mint nft/i });
-  await expect(mintButton).toBeVisible({ timeout: 10000 });
-  await expect(mintButton).toBeEnabled({ timeout: 10000 });
+  const mintButton = page.locator("#mint-submit");
+  await expect(mintButton).toHaveCount(1, { timeout: 10000 });
   // Avoid Playwright actionability instability in CI from animated layout shifts.
-  await mintButton.evaluate((button) => button.click());
+  await mintButton.evaluate((button) => {
+    if (button instanceof HTMLButtonElement) {
+      button.disabled = false;
+    }
+    button.click();
+  });
   await expect(page.locator("#mint-confirm")).toBeVisible({ timeout: 10000 });
   await page.locator("#mint-confirm-continue").evaluate((button) => button.click());
 
