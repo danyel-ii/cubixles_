@@ -8,22 +8,46 @@ import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /// @title CubixlesBuilderMinter
 /// @notice Builder minting contract that routes mint fees to ERC-2981 creators.
 /// @dev Requires references to support ERC-721 + ERC-2981 and be owned by the minter.
 /// @author cubixles_
-contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard {
+contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     /// @notice Reference to an ERC-721 token used for a cube face.
     struct NftRef {
         address contractAddress;
         uint256 tokenId;
     }
 
+    /// @notice Signed quote for builder mint pricing.
+    struct BuilderQuote {
+        uint256 totalFloorWei;
+        uint256 chainId;
+        uint256 expiresAt;
+        uint256 nonce;
+    }
+
     /// @notice Reference count is invalid.
     error InvalidReferenceCount(uint256 count);
     /// @notice Mint price mismatch.
     error InvalidMintPrice(uint256 expected, uint256 received);
+    /// @notice Quote signer is required.
+    error QuoteSignerRequired();
+    /// @notice Quote signer does not match.
+    error InvalidQuoteSigner(address signer);
+    /// @notice Quote chainId mismatch.
+    error QuoteChainIdMismatch(uint256 expected, uint256 actual);
+    /// @notice Quote has expired.
+    error QuoteExpired(uint256 expiresAt, uint256 currentTime);
+    /// @notice Quote nonce already used.
+    error QuoteNonceUsed(uint256 nonce);
+    /// @notice Floor entries length mismatch.
+    error InvalidFloorCount(uint256 expected, uint256 actual);
+    /// @notice Total floor sum mismatch.
+    error QuoteTotalFloorMismatch(uint256 expected, uint256 actual);
     /// @notice Reference does not support ERC-721.
     error ReferenceNotERC721(address nft);
     /// @notice Reference does not support ERC-2981.
@@ -37,21 +61,35 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard {
     /// @notice Royalty receiver is required.
     error RoyaltyReceiverRequired(address nft, uint256 tokenId);
 
-    /// @notice Mint price for builder mints (0.0036 ETH).
-    uint256 public constant MINT_PRICE_WEI = 3_600_000_000_000_000;
-    /// @notice Royalty share per face in basis points (10%).
-    uint16 public constant BUILDER_BPS = 1_000;
+    /// @notice Minimum floor price per face (0.001 ETH).
+    uint256 public constant MIN_FLOOR_WEI = 1_000_000_000_000_000;
+    /// @notice Mint price factor in basis points (10%).
+    uint16 public constant PRICE_BPS = 1_000;
+    /// @notice Royalty share per face in basis points (12%).
+    uint16 public constant BUILDER_BPS = 1_200;
     /// @notice Basis points denominator.
     uint16 public constant BPS = 10_000;
     /// @notice Maximum number of references allowed.
     uint256 public constant MAX_REFERENCES = 6;
+    /// @notice Typehash for NftRef.
+    bytes32 public constant REF_TYPEHASH =
+        keccak256("NftRef(address contractAddress,uint256 tokenId)");
+    /// @notice Typehash for BuilderQuote.
+    bytes32 public constant QUOTE_TYPEHASH =
+        keccak256(
+            "BuilderQuote(bytes32 refsHash,bytes32 floorsHash,uint256 totalFloorWei,uint256 chainId,uint256 expiresAt,uint256 nonce)"
+        );
 
     /// @notice Total minted token count.
     uint256 public totalMinted;
+    /// @notice Authorized signer for floor quotes.
+    address public quoteSigner;
     /// @notice Base token URI.
     string private _baseTokenURI;
     /// @notice References used per token id.
     mapping(uint256 => NftRef[]) private _refsByTokenId;
+    /// @notice Used quote nonces.
+    mapping(uint256 => bool) public usedNonces;
 
     /// @notice Emitted when a builder mint succeeds.
     /// @param tokenId Minted token id.
@@ -69,24 +107,63 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard {
     /// @param amount ETH amount routed.
     /// @param fallbackToOwner Whether payout fell back to the owner.
     event BuilderPayout(address indexed receiver, uint256 amount, bool fallbackToOwner);
+    /// @notice Emitted when the quote signer is updated.
+    event QuoteSignerUpdated(address indexed signer);
 
     constructor(
         string memory name_,
         string memory symbol_,
         string memory baseUri_
-    ) ERC721(name_, symbol_) Ownable(msg.sender) {
+    ) ERC721(name_, symbol_) Ownable(msg.sender) EIP712("CubixlesBuilderMinter", "1") {
         _baseTokenURI = baseUri_;
     }
 
-    /// @notice Mint with ERC-2981 references and route 10% per face to creators.
+    /// @notice Mint with ERC-2981 references and route 12% per face to creators.
     /// @param refs References used for the cube faces (1-6).
-    function mintBuilders(NftRef[] calldata refs) external payable nonReentrant returns (uint256 tokenId) {
+    /// @param floorsWei Floor prices (wei) aligned to refs order.
+    /// @param quote Signed quote containing total floor sum and expiry.
+    /// @param signature Signature from the quote signer.
+    function mintBuilders(
+        NftRef[] calldata refs,
+        uint256[] calldata floorsWei,
+        BuilderQuote calldata quote,
+        bytes calldata signature
+    ) external payable nonReentrant returns (uint256 tokenId) {
         uint256 refCount = refs.length;
         if (refCount == 0 || refCount > MAX_REFERENCES) {
             revert InvalidReferenceCount(refCount);
         }
-        if (msg.value != MINT_PRICE_WEI) {
-            revert InvalidMintPrice(MINT_PRICE_WEI, msg.value);
+        if (floorsWei.length != refCount) {
+            revert InvalidFloorCount(refCount, floorsWei.length);
+        }
+        if (quoteSigner == address(0)) {
+            revert QuoteSignerRequired();
+        }
+        if (quote.chainId != block.chainid) {
+            revert QuoteChainIdMismatch(block.chainid, quote.chainId);
+        }
+        if (quote.expiresAt < block.timestamp) {
+            revert QuoteExpired(quote.expiresAt, block.timestamp);
+        }
+        if (usedNonces[quote.nonce]) {
+            revert QuoteNonceUsed(quote.nonce);
+        }
+
+        uint256 expectedTotalFloorWei = _computeTotalFloorWei(floorsWei, refCount);
+        if (expectedTotalFloorWei != quote.totalFloorWei) {
+            revert QuoteTotalFloorMismatch(expectedTotalFloorWei, quote.totalFloorWei);
+        }
+
+        bytes32 digest = _hashQuote(refs, floorsWei, quote);
+        address recovered = ECDSA.recover(digest, signature);
+        if (recovered != quoteSigner) {
+            revert InvalidQuoteSigner(recovered);
+        }
+        usedNonces[quote.nonce] = true;
+
+        uint256 mintPrice = (quote.totalFloorWei * PRICE_BPS) / BPS;
+        if (msg.value != mintPrice) {
+            revert InvalidMintPrice(mintPrice, msg.value);
         }
 
         address minter = msg.sender;
@@ -97,7 +174,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard {
             NftRef calldata ref = refs[i];
             _requireInterfaces(ref.contractAddress);
             _requireOwner(ref.contractAddress, ref.tokenId, minter);
-            receivers[i] = _getRoyaltyReceiver(ref.contractAddress, ref.tokenId);
+            receivers[i] = _getRoyaltyReceiver(ref.contractAddress, ref.tokenId, mintPrice);
         }
 
         totalMinted += 1;
@@ -105,9 +182,12 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard {
         _safeMint(minter, tokenId);
         _storeRefs(tokenId, refs);
 
-        uint256 share = (MINT_PRICE_WEI * BUILDER_BPS) / BPS;
-        uint256 remaining = MINT_PRICE_WEI;
+        uint256 share = (mintPrice * BUILDER_BPS) / BPS;
+        uint256 remaining = mintPrice;
         for (uint256 i = 0; i < refCount; i += 1) {
+            if (floorsWei[i] == 0) {
+                continue;
+            }
             remaining -= share;
             address receiver = receivers[i];
             bool paid = _sendValue(receiver, share);
@@ -122,7 +202,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard {
             Address.sendValue(payable(ownerAddr), remaining);
         }
 
-        emit BuilderMinted(tokenId, minter, refCount, MINT_PRICE_WEI);
+        emit BuilderMinted(tokenId, minter, refCount, mintPrice);
     }
 
     /// @notice Return the references stored for a token id.
@@ -133,6 +213,12 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard {
     /// @notice Update base token URI.
     function setBaseURI(string calldata baseUri) external onlyOwner {
         _baseTokenURI = baseUri;
+    }
+
+    /// @notice Update the authorized quote signer.
+    function setQuoteSigner(address signer) external onlyOwner {
+        quoteSigner = signer;
+        emit QuoteSignerUpdated(signer);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -173,8 +259,12 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard {
         }
     }
 
-    function _getRoyaltyReceiver(address nft, uint256 tokenId) internal view returns (address) {
-        try IERC2981(nft).royaltyInfo(tokenId, MINT_PRICE_WEI) returns (
+    function _getRoyaltyReceiver(
+        address nft,
+        uint256 tokenId,
+        uint256 salePrice
+    ) internal view returns (address) {
+        try IERC2981(nft).royaltyInfo(tokenId, salePrice) returns (
             address receiver,
             uint256
         ) {
@@ -193,5 +283,52 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard {
         }
         (bool success, ) = payable(recipient).call{ value: amount }("");
         return success;
+    }
+
+    function _computeTotalFloorWei(
+        uint256[] calldata floorsWei,
+        uint256 refCount
+    ) internal pure returns (uint256 total) {
+        total = (MAX_REFERENCES - refCount) * MIN_FLOOR_WEI;
+        for (uint256 i = 0; i < floorsWei.length; i += 1) {
+            uint256 floor = floorsWei[i] == 0 ? MIN_FLOOR_WEI : floorsWei[i];
+            total += floor;
+        }
+    }
+
+    function _hashQuote(
+        NftRef[] calldata refs,
+        uint256[] calldata floorsWei,
+        BuilderQuote calldata quote
+    ) internal view returns (bytes32) {
+        bytes32 refsHash = _hashRefs(refs);
+        bytes32 floorsHash = _hashFloors(floorsWei);
+        bytes32 structHash = keccak256(
+            abi.encode(
+                QUOTE_TYPEHASH,
+                refsHash,
+                floorsHash,
+                quote.totalFloorWei,
+                quote.chainId,
+                quote.expiresAt,
+                quote.nonce
+            )
+        );
+        return _hashTypedDataV4(structHash);
+    }
+
+    function _hashRefs(NftRef[] calldata refs) internal pure returns (bytes32) {
+        bytes32[] memory hashes = new bytes32[](refs.length);
+        for (uint256 i = 0; i < refs.length; i += 1) {
+            NftRef calldata ref = refs[i];
+            hashes[i] = keccak256(
+                abi.encode(REF_TYPEHASH, ref.contractAddress, ref.tokenId)
+            );
+        }
+        return keccak256(abi.encodePacked(hashes));
+    }
+
+    function _hashFloors(uint256[] calldata floorsWei) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(floorsWei));
     }
 }

@@ -17,6 +17,9 @@ contract DeployBuilderMinter is Script {
             cfg.symbol,
             cfg.baseUri
         );
+        if (cfg.quoteSigner != address(0)) {
+            minter.setQuoteSigner(cfg.quoteSigner);
+        }
         if (cfg.owner != msg.sender) {
             minter.transferOwnership(cfg.owner);
         }
@@ -38,6 +41,7 @@ contract DeployBuilderMinter is Script {
     struct DeployConfig {
         uint256 chainId;
         address owner;
+        address quoteSigner;
         string name;
         string symbol;
         string baseUri;
@@ -46,6 +50,11 @@ contract DeployBuilderMinter is Script {
     function _loadConfig() internal view returns (DeployConfig memory cfg) {
         cfg.chainId = vm.envOr("CUBIXLES_CHAIN_ID", block.chainid);
         cfg.owner = _envOrAddress("CUBIXLES_BUILDER_OWNER", "CUBIXLES_OWNER", msg.sender);
+        cfg.quoteSigner = _envOrAddress(
+            "CUBIXLES_BUILDER_QUOTE_SIGNER",
+            "CUBIXLES_BUILDER_SIGNER",
+            address(0)
+        );
         cfg.name = vm.envOr("CUBIXLES_BUILDER_NAME", string("Cubixles Builders"));
         cfg.symbol = vm.envOr("CUBIXLES_BUILDER_SYMBOL", string("BLDR"));
         cfg.baseUri = vm.envOr("CUBIXLES_BUILDER_BASE_URI", string(""));
