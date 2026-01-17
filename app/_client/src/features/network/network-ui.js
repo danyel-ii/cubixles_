@@ -27,6 +27,13 @@ function isTokenViewRoute() {
   return /^\/m\/\d+\/?$/.test(path);
 }
 
+function isBuilderMode() {
+  if (typeof document === "undefined") {
+    return false;
+  }
+  return document.body.classList.contains("is-builder");
+}
+
 function showNetworkPicker() {
   const { pickerRoot } = networkUiState;
   if (!pickerRoot) {
@@ -52,7 +59,10 @@ function renderNetworkOptions() {
   }
   pickerList.innerHTML = "";
   const fragment = document.createDocumentFragment();
-  getChainOptions().forEach((chain) => {
+  const options = isBuilderMode()
+    ? getChainOptions().filter((chain) => chain.id === 1)
+    : getChainOptions();
+  options.forEach((chain) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "network-picker-option";

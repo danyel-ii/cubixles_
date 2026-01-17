@@ -8,6 +8,7 @@ import { initLessSupplyHud } from "./hud/less-hud.js";
 import { initLessDeltaTracking } from "./hud/less-delta.js";
 import { initBaseMintHud } from "./hud/base-mint-hud.js";
 import { initWalletUi, requestWalletConnection } from "../features/wallet/wallet-ui.js";
+import { setActiveChainId } from "../config/chains.js";
 import { initNetworkUi } from "../features/network/network-ui.js";
 import { initNftPickerUi } from "../features/nft/picker-ui.js";
 import { initMintUi } from "../features/mint/mint-ui.js";
@@ -80,14 +81,17 @@ export function initUiRoot() {
   if (typeof window !== "undefined") {
     window.__CUBIXLES_UI_READY__ = true;
   }
+  const isBuilderMode =
+    typeof window !== "undefined" && window.__CUBIXLES_UI_MODE__ === "builder";
+  if (isBuilderMode) {
+    setActiveChainId(1);
+  }
   initOverlay();
   initLocalTextureUi();
   initExportUi();
   initNetworkUi();
   initWalletUi();
   initNftPickerUi();
-  const isBuilderMode =
-    typeof window !== "undefined" && window.__CUBIXLES_UI_MODE__ === "builder";
   if (isBuilderMode) {
     initBuilderMintUi();
   } else {

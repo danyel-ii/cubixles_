@@ -3,6 +3,7 @@ const FALLBACK_PALETTE = ["#FFEAD3", "#EA7B7B", "#D25353", "#9E3B3B"];
 const REQUIRED_COLORS = 4;
 const INK_DARK = "#000000";
 const INK_LIGHT = "#FFFFFF";
+const PALETTE_STORAGE_KEY = "cubixles:palette-v1";
 
 let manifestPromise = null;
 
@@ -84,6 +85,53 @@ function applyPalette(palette) {
     root.style.setProperty(`--palette-${slot}-rgb`, toRgbString(rgb));
     root.style.setProperty(`--palette-${slot}-ink`, pickInkColor(rgb));
   });
+  window.__CUBIXLES_PALETTE__ = palette;
+}
+
+function readStoredPalette() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const raw = window.localStorage.getItem(PALETTE_STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+    const normalized = parsed.map(normalizeHex).filter(Boolean);
+    return normalized.length >= REQUIRED_COLORS
+      ? normalized.slice(0, REQUIRED_COLORS)
+      : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function storePalette(palette) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    window.localStorage.setItem(PALETTE_STORAGE_KEY, JSON.stringify(palette));
+  } catch (error) {
+    void error;
+  }
+}
+
+export function getStoredPalette() {
+  return readStoredPalette();
+}
+
+export function applyStoredPalette() {
+  const stored = readStoredPalette();
+  if (stored) {
+    applyPalette(stored);
+    return stored;
+  }
+  return null;
 }
 
 export async function initPaletteTheme() {
@@ -97,9 +145,11 @@ export async function initPaletteTheme() {
   const manifest = await loadManifest();
   if (!manifest.length) {
     applyPalette(FALLBACK_PALETTE);
+    storePalette(FALLBACK_PALETTE);
     return;
   }
   const entry = manifest[Math.floor(Math.random() * manifest.length)];
   const palette = buildPaletteFromEntry(entry);
   applyPalette(palette);
+  storePalette(palette);
 }
