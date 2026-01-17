@@ -1,0 +1,32 @@
+[
+  {
+    "type": "function",
+    "name": "mintBuilders",
+    "stateMutability": "payable",
+    "inputs": [
+      {
+        "name": "refs",
+        "type": "tuple[]",
+        "components": [
+          { "name": "contractAddress", "type": "address" },
+          { "name": "tokenId", "type": "uint256" }
+        ]
+      },
+      { "name": "floorsWei", "type": "uint256[]" },
+      {
+        "name": "quote",
+        "type": "tuple",
+        "components": [
+          { "name": "totalFloorWei", "type": "uint256" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "expiresAt", "type": "uint256" },
+          { "name": "nonce", "type": "uint256" }
+        ]
+      },
+      { "name": "signature", "type": "bytes" }
+    ],
+    "outputs": [
+      { "name": "tokenId", "type": "uint256" }
+    ]
+  }
+]

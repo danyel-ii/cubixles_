@@ -11,6 +11,7 @@ import { initWalletUi, requestWalletConnection } from "../features/wallet/wallet
 import { initNetworkUi } from "../features/network/network-ui.js";
 import { initNftPickerUi } from "../features/nft/picker-ui.js";
 import { initMintUi } from "../features/mint/mint-ui.js";
+import { initBuilderMintUi } from "../features/mint/builder-mint-ui.js";
 import { state } from "../app/app-state.js";
 import { buildTokenViewUrl } from "../config/links.js";
 
@@ -85,7 +86,13 @@ export function initUiRoot() {
   initNetworkUi();
   initWalletUi();
   initNftPickerUi();
-  initMintUi();
+  const isBuilderMode =
+    typeof window !== "undefined" && window.__CUBIXLES_UI_MODE__ === "builder";
+  if (isBuilderMode) {
+    initBuilderMintUi();
+  } else {
+    initMintUi();
+  }
   initLeaderboardUi();
   initEthHud();
   initLessSupplyHud();

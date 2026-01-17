@@ -33,6 +33,19 @@ export const identityRequestSchema = z.object({
   address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
 });
 
+export const builderQuoteRequestSchema = z.object({
+  chainId: CHAIN_ID_SCHEMA,
+  refs: z
+    .array(
+      z.object({
+        contractAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+        tokenId: z.union([z.string(), z.number()]),
+      })
+    )
+    .min(1)
+    .max(6),
+});
+
 export async function readJsonWithLimit(request, maxBytes) {
   const text = await request.text();
   const size = Buffer.byteLength(text, "utf8");

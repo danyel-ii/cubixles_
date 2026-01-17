@@ -2,16 +2,20 @@
 
 import { useEffect } from "react";
 
-export default function AppShell() {
+export default function AppShell({ mode = "mint" }) {
+  const isBuilder = mode === "builder";
+
   useEffect(() => {
     if (typeof window !== "undefined") {
+      window.__CUBIXLES_UI_MODE__ = mode;
+      document.body.classList.toggle("is-builder", isBuilder);
       if (window.__CUBIXLES_MAIN_IMPORTED__) {
         return;
       }
       window.__CUBIXLES_MAIN_IMPORTED__ = true;
     }
     import("../_client/src/main.js");
-  }, []);
+  }, [mode, isBuilder]);
 
   return (
     <>
@@ -71,6 +75,11 @@ export default function AppShell() {
             <a id="overlay-inspect" className="overlay-button is-ghost" href="/inspecta_deck">
               Inspect
             </a>
+            {!isBuilder ? (
+              <a id="overlay-build" className="overlay-button is-ghost" href="/build">
+                Build it
+              </a>
+            ) : null}
             <button id="overlay-about" className="overlay-button is-ghost" type="button">
               Dug it
             </button>
@@ -253,8 +262,9 @@ export default function AppShell() {
           <span className="sr-only">cubixles_</span>
         </div>
         <div className="ui-sub">
-          Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to
-          NFTs you already own.
+          {isBuilder
+            ? "Builder mint: price is 10% of snapshot floor totals (0.001 ETH min per face)."
+            : "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own."}
         </div>
         <div className="ui-row">
           <button id="wallet-connect" className="ui-button ui-button--hook" type="button">
@@ -318,7 +328,7 @@ export default function AppShell() {
           <div id="nft-grid" className="ui-grid"></div>
         </div>
         <div className="ui-section">
-          <div className="ui-section-title">Mint</div>
+          <div className="ui-section-title">{isBuilder ? "Builder mint" : "Mint"}</div>
           <div id="mint-status" className="ui-hint">
             Connect your wallet to mint.
           </div>
@@ -360,18 +370,35 @@ export default function AppShell() {
             Mint price: —
           </div>
           <div id="mint-price-note" className="ui-hint is-accent">
-            Mint price rises as{" "}
-            <a
-              className="ui-link"
-              href="https://less.ripe.wtf/about"
-              target="_blank"
-              rel="noreferrer"
-            >
-              $LESS
-            </a>{" "}
-            supply drops.
+            {isBuilder ? (
+              "Builder price is based on current collection floors (signed quote required)."
+            ) : (
+              <>
+                Mint price rises as{" "}
+                <a
+                  className="ui-link"
+                  href="https://less.ripe.wtf/about"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  $LESS
+                </a>{" "}
+                supply drops.
+              </>
+            )}
           </div>
         </div>
+        {isBuilder ? (
+          <div className="ui-section">
+            <div className="ui-section-title">Builder diagnostics</div>
+            <div id="builder-error" className="ui-hint is-error is-hidden">
+              —
+            </div>
+            <div id="builder-debug" className="builder-debug is-hidden">
+              —
+            </div>
+          </div>
+        ) : null}
         <div className="ui-row">
           <button id="ui-landing" className="ui-button is-ghost" type="button">
             Landing

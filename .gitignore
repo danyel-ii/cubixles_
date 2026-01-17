@@ -3,6 +3,7 @@
 !.env.example
 !.env.mainnet.example
 !.env.base.example
+!.env.sepolia.example
 .DS_Store
 
 node_modules/
@@ -16,6 +17,8 @@ contracts/broadcast/
 contracts/.github/
 contracts/.gitmodules
 contracts/deployments/*.json
+!contracts/deployments/builder-*.json
+contracts/deployments/*.dryrun.json
 assets/
 !public/assets/
 !public/assets/**
