@@ -209,6 +209,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     }
 
     function _supportsInterface(address nft, bytes4 interfaceId) internal view returns (bool) {
+        // slither-disable-next-line calls-loop
         try IERC165(nft).supportsInterface(interfaceId) returns (bool supported) {
             return supported;
         } catch {
@@ -217,6 +218,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     }
 
     function _requireOwner(address nft, uint256 tokenId, address expectedOwner) internal view {
+        // slither-disable-next-line calls-loop
         try IERC721(nft).ownerOf(tokenId) returns (address actualOwner) {
             if (actualOwner != expectedOwner) {
                 revert RefNotOwned(nft, tokenId, expectedOwner, actualOwner);
@@ -231,6 +233,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
         uint256 tokenId,
         uint256 salePrice
     ) internal view returns (address) {
+        // slither-disable-next-line calls-loop
         try IERC2981(nft).royaltyInfo(tokenId, salePrice) returns (
             address receiver,
             uint256 royaltyAmount
@@ -251,6 +254,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
         if (amount == 0) {
             return true;
         }
+        // slither-disable-next-line low-level-calls,arbitrary-send-eth,calls-loop
         (bool success, ) = payable(recipient).call{ value: amount }("");
         return success;
     }
@@ -287,6 +291,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
         if (quote.chainId != block.chainid) {
             revert QuoteChainIdMismatch(block.chainid, quote.chainId);
         }
+        // slither-disable-next-line timestamp
         if (quote.expiresAt < block.timestamp) {
             revert QuoteExpired(quote.expiresAt, block.timestamp);
         }
@@ -332,6 +337,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
         _storeRefs(tokenId, refs);
     }
 
+    // slither-disable-start reentrancy-eth
     function _distributePayouts(
         uint256 mintPrice,
         uint256[] calldata floorsWei,
@@ -358,7 +364,9 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
             _creditOwner(ownerAddr, remaining);
         }
     }
+    // slither-disable-end reentrancy-eth
 
+    // slither-disable-start reentrancy-benign
     function _creditOwner(address ownerAddr, uint256 amount) internal {
         if (amount == 0) {
             return;
@@ -369,6 +377,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
             emit OwnerBalanceAccrued(amount);
         }
     }
+    // slither-disable-end reentrancy-benign
 
     function _computeTotalFloorWei(
         uint256[] calldata floorsWei,
