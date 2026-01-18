@@ -5,7 +5,7 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import CubixlesLogo from "../_components/CubixlesLogo.jsx";
 import CubixlesText from "../_components/CubixlesText.jsx";
 import { CUBIXLES_LOGO_GLYPH } from "../_lib/logo.js";
-import { buildTokenViewUrl } from "../_client/src/config/links.js";
+import { buildBuilderTokenViewUrl } from "../_client/src/config/links.js";
 import { buildGatewayUrls } from "../_client/src/shared/uri-policy.js";
 
 const DEFAULT_CHAIN_ID = 1;
@@ -356,7 +356,7 @@ function formatMintDate(value) {
 }
 
 function buildViewerUrl(tokenId) {
-  return buildTokenViewUrl(tokenId) || `/m/${tokenId}`;
+  return buildBuilderTokenViewUrl(tokenId) || `/m2/${tokenId}`;
 }
 
 function ImageCandidate({
@@ -842,6 +842,7 @@ function TokenIndex() {
         const params = new URLSearchParams();
         params.set("limit", String(pageSize));
         params.set("chainId", String(chainId));
+        params.set("mode", "builder");
         if (isAllMode) {
           params.set("all", "true");
           params.set("maxPages", String(maxPages));
@@ -1182,7 +1183,7 @@ export default function ShaolinDeckPage() {
                   <CubixlesLogo />
                 </a>
                 <span className="deck-logo-scribble" aria-hidden="true">
-                  bootleggers deck
+                  banger bootlegs
                 </span>
               </span>
             </h1>

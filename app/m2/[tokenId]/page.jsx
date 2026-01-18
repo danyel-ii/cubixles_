@@ -252,6 +252,7 @@ export default function BuilderTokenViewerPage() {
           cube={cube}
           requestedTokenId={tokenId}
           palette={palette}
+          showDiffusion={false}
         />
       );
     }

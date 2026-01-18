@@ -105,5 +105,5 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|inspecta_deck|landing_page).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|landing_page).*)"],
 };

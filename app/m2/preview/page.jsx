@@ -160,6 +160,7 @@ export default function PreviewTokenViewerPage() {
           requestedTokenId={cube.tokenId}
           palette={palette}
           allowExport={false}
+          showDiffusion={false}
         />
       );
     }

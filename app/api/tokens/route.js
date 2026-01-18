@@ -6,6 +6,7 @@ import { checkRateLimit } from "../../../src/server/ratelimit.js";
 import { getClientIp, makeRequestId } from "../../../src/server/request.js";
 import { logRequest } from "../../../src/server/log.js";
 import { getCache, setCache } from "../../../src/server/cache.js";
+import { getBuilderContractAddress } from "../../../src/server/builder-config.js";
 import { getMinterContractAddress } from "../../../src/server/minter-config.js";
 import { fetchWithGateways } from "../../../src/shared/ipfs-fetch.js";
 
@@ -18,6 +19,12 @@ const DEFAULT_MAX_PAGES = 25;
 const MINTER_ABI = [
   "function totalMinted() view returns (uint256)",
   "function tokenIdByIndex(uint256 index) view returns (uint256)",
+  "function tokenURI(uint256 tokenId) view returns (string)",
+  "function mintPriceByTokenId(uint256 tokenId) view returns (uint256)",
+];
+
+const BUILDER_ABI = [
+  "function totalMinted() view returns (uint256)",
   "function tokenURI(uint256 tokenId) view returns (string)",
   "function mintPriceByTokenId(uint256 tokenId) view returns (uint256)",
 ];
@@ -76,6 +83,8 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url);
   const chainId = Number(searchParams.get("chainId") || 1);
+  const mode = searchParams.get("mode");
+  const isBuilder = mode === "builder";
   const limitRaw = parsePositiveInt(searchParams.get("limit")) ?? DEFAULT_LIMIT;
   const limit = Math.max(1, Math.min(MAX_LIMIT, limitRaw));
   const all = searchParams.get("all") === "true";
@@ -83,9 +92,9 @@ export async function GET(request) {
   const maxPages = Math.max(1, Math.min(MAX_PAGES, maxPagesRaw));
   const pageKeyRaw = parsePositiveInt(searchParams.get("pageKey"));
   const pageKey = pageKeyRaw && !all ? pageKeyRaw : null;
-  const cacheKey = `minter:tokens:${chainId}:${limit}:${all ? "all" : "page"}:${
-    all ? maxPages : pageKey ?? "start"
-  }`;
+  const cacheKey = `${isBuilder ? "builder" : "minter"}:tokens:${chainId}:${limit}:${
+    all ? "all" : "page"
+  }:${all ? maxPages : pageKey ?? "start"}`;
   const cached = await getCache(cacheKey);
   if (cached) {
     const cachedResponse = NextResponse.json(cached);
@@ -95,16 +104,18 @@ export async function GET(request) {
   }
 
   try {
-    const address = getMinterContractAddress(chainId);
+    const address = isBuilder
+      ? getBuilderContractAddress(chainId)
+      : getMinterContractAddress(chainId);
     if (!address || address === "0x0000000000000000000000000000000000000000") {
       return NextResponse.json(
-        { error: "Minter contract not configured", requestId },
+        { error: `${isBuilder ? "Builder" : "Minter"} contract not configured`, requestId },
         { status: 400 }
       );
     }
     const apiKey = requireEnv("ALCHEMY_API_KEY");
     const provider = new JsonRpcProvider(getRpcUrl(chainId, apiKey));
-    const contract = new Contract(address, MINTER_ABI, provider);
+    const contract = new Contract(address, isBuilder ? BUILDER_ABI : MINTER_ABI, provider);
     const totalMintedRaw = await contract.totalMinted();
     const totalMinted = Number(totalMintedRaw);
     if (!Number.isFinite(totalMinted) || totalMinted <= 0) {
@@ -136,15 +147,17 @@ export async function GET(request) {
       indices.push(index);
     }
 
-    const tokenIds = await Promise.all(
-      indices.map(async (index) => {
-        try {
-          return await contract.tokenIdByIndex(index);
-        } catch (error) {
-          return null;
-        }
-      })
-    );
+    const tokenIds = isBuilder
+      ? indices.map((index) => BigInt(index))
+      : await Promise.all(
+          indices.map(async (index) => {
+            try {
+              return await contract.tokenIdByIndex(index);
+            } catch (error) {
+              return null;
+            }
+          })
+        );
     const tokens = await Promise.all(
       tokenIds
         .filter((tokenId) => tokenId !== null)

@@ -190,6 +190,7 @@ export default function PaperTokenViewer({
   requestedTokenId,
   palette = null,
   allowExport = true,
+  showDiffusion = true,
 }) {
   const viewerRef = useRef(null);
   const frameRef = useRef(null);
@@ -327,6 +328,11 @@ export default function PaperTokenViewer({
   }, [cube?.tokenId]);
 
   useEffect(() => {
+    if (!showDiffusion) {
+      setDiffusionAverage(null);
+      setDiffusionStatus("idle");
+      return;
+    }
     if (typeof window === "undefined") {
       return;
     }
@@ -377,7 +383,7 @@ export default function PaperTokenViewer({
     return () => {
       cancelled = true;
     };
-  }, [faces]);
+  }, [faces, showDiffusion]);
 
   useLayoutEffect(() => {
     inspectedIndicesRef.current = inspectedIndices;
@@ -1318,7 +1324,7 @@ export default function PaperTokenViewer({
         </span>
       </aside>
 
-      {diffusionStatus !== "idle" && (
+      {showDiffusion && diffusionStatus !== "idle" && (
         <aside
           className={`paper-hud${hudOpen ? "" : " is-collapsed"}`}
           aria-label="Diffusion HUD"
