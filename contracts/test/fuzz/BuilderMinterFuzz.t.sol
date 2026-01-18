@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { Test } from "forge-std/Test.sol";
 import { CubixlesBuilderMinter } from "../../src/builders/CubixlesBuilderMinter.sol";
 import { MockERC721Royalty } from "../mocks/MockERC721Royalty.sol";
+import { BuilderRoyaltyForwarder } from "../../src/royalties/BuilderRoyaltyForwarder.sol";
 
 contract BuilderMinterFuzzTest is Test {
     bytes32 private constant EIP712_DOMAIN_TYPEHASH =
@@ -30,6 +31,9 @@ contract BuilderMinterFuzzTest is Test {
     function setUp() public {
         vm.prank(owner);
         minter = new CubixlesBuilderMinter("Cubixles Builders", "BLDR", "ipfs://base/");
+        BuilderRoyaltyForwarder forwarder = new BuilderRoyaltyForwarder();
+        vm.prank(owner);
+        minter.setRoyaltyForwarderImpl(address(forwarder));
         quoteSignerKey = 0xB0B;
         quoteSigner = vm.addr(quoteSignerKey);
         vm.prank(owner);

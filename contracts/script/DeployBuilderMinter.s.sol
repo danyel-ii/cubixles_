@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import { Script } from "forge-std/Script.sol";
 import { CubixlesBuilderMinter } from "../src/builders/CubixlesBuilderMinter.sol";
+import { BuilderRoyaltyForwarder } from "../src/royalties/BuilderRoyaltyForwarder.sol";
 
 contract DeployBuilderMinter is Script {
     uint256 private constant ENV_UINT_SENTINEL = type(uint256).max;
@@ -12,11 +13,16 @@ contract DeployBuilderMinter is Script {
         DeployConfig memory cfg = _loadConfig();
 
         vm.startBroadcast();
+        address forwarderImpl = cfg.royaltyForwarderImpl;
+        if (forwarderImpl == address(0)) {
+            forwarderImpl = address(new BuilderRoyaltyForwarder());
+        }
         CubixlesBuilderMinter minter = new CubixlesBuilderMinter(
             cfg.name,
             cfg.symbol,
             cfg.baseUri
         );
+        minter.setRoyaltyForwarderImpl(forwarderImpl);
         if (cfg.quoteSigner != address(0)) {
             minter.setQuoteSigner(cfg.quoteSigner);
         }
@@ -34,7 +40,8 @@ contract DeployBuilderMinter is Script {
         string memory path = vm.envOr("CUBIXLES_BUILDER_DEPLOYMENT_PATH", defaultPath);
         string memory obj = "deployment";
         vm.serializeUint(obj, "chainId", cfg.chainId);
-        string memory json = vm.serializeAddress(obj, "address", address(minter));
+        vm.serializeAddress(obj, "address", address(minter));
+        string memory json = vm.serializeAddress(obj, "royaltyForwarderImpl", forwarderImpl);
         vm.writeJson(json, path);
     }
 
@@ -42,6 +49,7 @@ contract DeployBuilderMinter is Script {
         uint256 chainId;
         address owner;
         address quoteSigner;
+        address royaltyForwarderImpl;
         string name;
         string symbol;
         string baseUri;
@@ -53,6 +61,11 @@ contract DeployBuilderMinter is Script {
         cfg.quoteSigner = _envOrAddress(
             "CUBIXLES_BUILDER_QUOTE_SIGNER",
             "CUBIXLES_BUILDER_SIGNER",
+            address(0)
+        );
+        cfg.royaltyForwarderImpl = _envOrAddress(
+            "CUBIXLES_BUILDER_ROYALTY_FORWARDER_IMPL",
+            "CUBIXLES_BUILDER_FORWARDER_IMPL",
             address(0)
         );
         cfg.name = vm.envOr("CUBIXLES_BUILDER_NAME", string("Cubixles Builders"));

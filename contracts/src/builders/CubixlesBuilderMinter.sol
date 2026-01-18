@@ -5,18 +5,24 @@ import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC2981 } from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
+import { ERC2981 } from "@openzeppelin/contracts/token/common/ERC2981.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
+
+interface IBuilderRoyaltyForwarder {
+    function initialize(address owner_) external;
+}
 
 /// @title CubixlesBuilderMinter
 /// @notice Builder minting contract that routes mint fees to ERC-2981 creators.
 /// @dev Requires references to support ERC-721 + ERC-2981 and be owned by the minter.
 /// @author cubixles_
-contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
+contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP712 {
     /// @notice Reference to an ERC-721 token used for a cube face.
     struct NftRef {
         address contractAddress;
@@ -63,6 +69,8 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     error RoyaltyInfoFailed(address nft, uint256 tokenId);
     /// @notice Royalty receiver is required.
     error RoyaltyReceiverRequired(address nft, uint256 tokenId);
+    /// @notice Royalty forwarder implementation is required.
+    error RoyaltyForwarderRequired();
     /// @notice Token URI is required.
     error TokenUriRequired();
     /// @notice Metadata hash is required.
@@ -76,6 +84,8 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     uint16 public constant PRICE_BPS = 1_000;
     /// @notice Royalty share per face in basis points (12%).
     uint16 public constant BUILDER_BPS = 1_200;
+    /// @notice Resale royalty in basis points (10%).
+    uint96 public constant RESALE_ROYALTY_BPS = 1_000;
     /// @notice Basis points denominator.
     uint16 public constant BPS = 10_000;
     /// @notice Maximum number of references allowed.
@@ -97,6 +107,8 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     mapping(uint256 => bytes32) public metadataHashByTokenId;
     /// @notice Authorized signer for floor quotes.
     address public quoteSigner;
+    /// @notice Royalty forwarder implementation for per-mint clones.
+    address public royaltyForwarderImpl;
     /// @notice Pending owner balance when direct payouts fail.
     uint256 public pendingOwnerBalance;
     /// @notice Base token URI.
@@ -107,6 +119,8 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     mapping(uint256 => NftRef[]) private _refsByTokenId;
     /// @notice Floors used per token id.
     mapping(uint256 => uint256[]) private _floorsByTokenId;
+    /// @notice Royalty forwarder deployed per token id.
+    mapping(uint256 => address) public royaltyForwarderByTokenId;
     /// @notice Used quote nonces.
     mapping(uint256 => bool) public usedNonces;
 
@@ -126,8 +140,16 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     /// @param amount ETH amount routed.
     /// @param fallbackToOwner Whether payout fell back to the owner.
     event BuilderPayout(address indexed receiver, uint256 amount, bool fallbackToOwner);
+    /// @notice Emitted when a royalty forwarder is deployed.
+    event BuilderRoyaltyForwarderDeployed(
+        uint256 indexed tokenId,
+        address indexed minter,
+        address indexed forwarder
+    );
     /// @notice Emitted when the quote signer is updated.
     event QuoteSignerUpdated(address indexed signer);
+    /// @notice Emitted when the royalty forwarder implementation is updated.
+    event RoyaltyForwarderUpdated(address indexed implementation);
     /// @notice Emitted when owner balance is accrued.
     event OwnerBalanceAccrued(uint256 amount);
     /// @notice Emitted when owner balance is withdrawn.
@@ -249,6 +271,15 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
         emit QuoteSignerUpdated(signer);
     }
 
+    /// @notice Update the royalty forwarder implementation.
+    function setRoyaltyForwarderImpl(address implementation) external onlyOwner {
+        if (implementation == address(0)) {
+            revert RoyaltyForwarderRequired();
+        }
+        royaltyForwarderImpl = implementation;
+        emit RoyaltyForwarderUpdated(implementation);
+    }
+
     /// @notice Withdraw pending owner balance to a recipient.
     function withdrawOwnerBalance(address payable to) external onlyOwner nonReentrant {
         if (to == address(0)) {
@@ -276,6 +307,13 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
         return super.tokenURI(tokenId);
     }
 
+    /// @notice ERC-165 support for ERC721 + ERC2981.
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721, ERC2981) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
     function _storeRefs(uint256 tokenId, NftRef[] calldata refs) internal {
         uint256 refCount = refs.length;
         for (uint256 i = 0; i < refCount; i += 1) {
@@ -288,6 +326,18 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
         for (uint256 i = 0; i < floorCount; i += 1) {
             _floorsByTokenId[tokenId].push(floorsWei[i]);
         }
+    }
+
+    function _configureRoyalty(uint256 tokenId, address minter) internal {
+        address implementation = royaltyForwarderImpl;
+        if (implementation == address(0)) {
+            revert RoyaltyForwarderRequired();
+        }
+        address forwarder = Clones.clone(implementation);
+        IBuilderRoyaltyForwarder(forwarder).initialize(minter);
+        royaltyForwarderByTokenId[tokenId] = forwarder;
+        _setTokenRoyalty(tokenId, forwarder, RESALE_ROYALTY_BPS);
+        emit BuilderRoyaltyForwarderDeployed(tokenId, minter, forwarder);
     }
 
     function _requireInterfaces(address nft) internal view {
@@ -424,6 +474,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     ) internal returns (uint256 tokenId) {
         totalMinted += 1;
         tokenId = totalMinted;
+        _configureRoyalty(tokenId, minter);
         _safeMint(minter, tokenId);
         _storeRefs(tokenId, refs);
     }

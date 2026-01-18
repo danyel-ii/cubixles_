@@ -12,6 +12,7 @@ import {
 import { MockERC2981Only } from "./mocks/MockERC2981Only.sol";
 import { MockERC721Standard } from "./mocks/MockERC721s.sol";
 import { ReceiverRevertsOnReceive } from "./mocks/Receivers.sol";
+import { BuilderRoyaltyForwarder } from "../src/royalties/BuilderRoyaltyForwarder.sol";
 
 contract BuilderMinterTest is Test {
     bytes32 private constant EIP712_DOMAIN_TYPEHASH =
@@ -45,6 +46,9 @@ contract BuilderMinterTest is Test {
     function setUp() public {
         vm.prank(owner);
         minter = new CubixlesBuilderMinter("Cubixles Builders", "BLDR", "ipfs://base/");
+        BuilderRoyaltyForwarder forwarder = new BuilderRoyaltyForwarder();
+        vm.prank(owner);
+        minter.setRoyaltyForwarderImpl(address(forwarder));
         quoteSignerKey = 0xB0B;
         quoteSigner = vm.addr(quoteSignerKey);
         vm.prank(owner);
@@ -731,6 +735,9 @@ contract BuilderMinterTest is Test {
         vm.prank(owner);
         CubixlesBuilderMinter noSigner =
             new CubixlesBuilderMinter("Cubixles Builders", "BLDR", "ipfs://base/");
+        BuilderRoyaltyForwarder forwarder = new BuilderRoyaltyForwarder();
+        vm.prank(owner);
+        noSigner.setRoyaltyForwarderImpl(address(forwarder));
         CubixlesBuilderMinter.NftRef[] memory refs = _mintRefs();
         uint256[] memory floorsWei = new uint256[](2);
         floorsWei[0] = 1 ether;
