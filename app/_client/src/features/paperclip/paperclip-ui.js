@@ -1,6 +1,6 @@
 import { getWalletState, subscribeWallet } from "../wallet/wallet.js";
 import { renderCubesPaperClip } from "./cubes-paperclip.js";
-import { resolvePaperclipPalette } from "./paperclip-utils.js";
+import { loadPaperclipOverlay, resolvePaperclipPalette } from "./paperclip-utils.js";
 
 function truncateMiddle(value, start = 6, end = 4) {
   if (!value || value.length <= start + end + 3) {
@@ -26,7 +26,10 @@ export function initPaperClipUi() {
     statusEl.textContent = text;
   }
 
-  function renderIfReady() {
+  let renderToken = 0;
+
+  async function renderIfReady() {
+    const token = (renderToken += 1);
     const address = walletState?.address || "";
     if (!address) {
       setStatus("Connect your wallet to render the sculpture.");
@@ -37,17 +40,22 @@ export function initPaperClipUi() {
       ? `${palette.length} sheets`
       : "Palette unavailable";
     setStatus(`Seeded by ${truncateMiddle(address)} · ${paletteLabel}`);
+    const overlay = await loadPaperclipOverlay();
+    if (token !== renderToken) {
+      return;
+    }
     renderCubesPaperClip({
       canvas,
       seed: address.toLowerCase(),
       palette,
+      overlay,
     });
   }
 
   function openPanel() {
     panel.classList.remove("is-hidden");
     isOpen = true;
-    renderIfReady();
+    void renderIfReady();
   }
 
   function closePanel() {
@@ -77,14 +85,14 @@ export function initPaperClipUi() {
 
   window.addEventListener("resize", () => {
     if (isOpen) {
-      renderIfReady();
+      void renderIfReady();
     }
   });
 
   subscribeWallet((next) => {
     walletState = next;
     if (isOpen) {
-      renderIfReady();
+      void renderIfReady();
     }
   });
 }

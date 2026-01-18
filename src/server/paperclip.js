@@ -1,8 +1,12 @@
-import { createCanvas } from "@napi-rs/canvas";
+import fs from "fs/promises";
+import path from "path";
+import { createCanvas, loadImage } from "@napi-rs/canvas";
 
 const FALLBACK_PALETTE = ["#D40000", "#FFCC00", "#111111"];
 const BACKDROP = "#0b1220";
 export const DEFAULT_PAPERCLIP_SIZE = 1024;
+const DEFAULT_OVERLAY_PATH = path.join(process.cwd(), "public", "assets", "cube.png");
+let overlayPromise = null;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -110,7 +114,27 @@ function buildLayerMask(size, params, prng) {
   return canvas;
 }
 
-export function renderPaperclipBuffer({ seed, palette, size = DEFAULT_PAPERCLIP_SIZE } = {}) {
+async function loadOverlayImage() {
+  if (overlayPromise) {
+    return overlayPromise;
+  }
+  overlayPromise = (async () => {
+    try {
+      const buffer = await fs.readFile(DEFAULT_OVERLAY_PATH);
+      return await loadImage(buffer);
+    } catch (error) {
+      void error;
+      return null;
+    }
+  })();
+  return overlayPromise;
+}
+
+export async function renderPaperclipBuffer({
+  seed,
+  palette,
+  size = DEFAULT_PAPERCLIP_SIZE,
+} = {}) {
   const canvasSize = Math.max(1, Number(size) || DEFAULT_PAPERCLIP_SIZE);
   const canvas = createCanvas(canvasSize, canvasSize);
   const ctx = canvas.getContext("2d");
@@ -159,6 +183,19 @@ export function renderPaperclipBuffer({ seed, palette, size = DEFAULT_PAPERCLIP_
     ctx.shadowBlur = params.shadow;
     ctx.shadowOffsetY = 6 + depth * 6;
     ctx.drawImage(layerCanvas, -sizePx / 2, -sizePx / 2, sizePx, sizePx);
+    ctx.restore();
+  }
+
+  const overlayImage = await loadOverlayImage();
+  if (overlayImage) {
+    const overlaySize = sizePx * 0.65;
+    const overlayX = centerX - overlaySize / 2;
+    const overlayY = centerY - overlaySize / 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 4;
+    ctx.drawImage(overlayImage, overlayX, overlayY, overlaySize, overlaySize);
     ctx.restore();
   }
 

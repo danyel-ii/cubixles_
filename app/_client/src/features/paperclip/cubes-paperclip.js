@@ -109,7 +109,7 @@ function resolveSize(canvas) {
   return { width, height };
 }
 
-export function renderCubesPaperClip({ canvas, seed, palette }) {
+export function renderCubesPaperClip({ canvas, seed, palette, overlay }) {
   if (!canvas) {
     return;
   }
@@ -165,6 +165,18 @@ export function renderCubesPaperClip({ canvas, seed, palette }) {
     ctx.shadowBlur = params.shadow;
     ctx.shadowOffsetY = 6 + depth * 6;
     ctx.drawImage(layerCanvas, -size / 2, -size / 2, size, size);
+    ctx.restore();
+  }
+
+  if (overlay) {
+    const overlaySize = size * 0.65;
+    const overlayX = centerX - overlaySize / 2;
+    const overlayY = centerY - overlaySize / 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 4;
+    ctx.drawImage(overlay, overlayX, overlayY, overlaySize, overlaySize);
     ctx.restore();
   }
 }

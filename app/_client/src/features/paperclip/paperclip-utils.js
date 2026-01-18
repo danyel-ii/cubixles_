@@ -1,6 +1,8 @@
 import { getStoredPalette } from "../../ui/palette-theme.js";
 
 const MAX_PALETTE = 7;
+const PAPERCLIP_OVERLAY_URL = "/assets/cube.png";
+let overlayPromise = null;
 
 function normalizeHex(value) {
   if (typeof value !== "string") {
@@ -39,4 +41,20 @@ export function resolvePaperclipPalette() {
     return window.__CUBIXLES_PALETTE__.map(normalizeHex).filter(Boolean);
   }
   return readPaletteFromCss();
+}
+
+export function loadPaperclipOverlay() {
+  if (typeof window === "undefined") {
+    return Promise.resolve(null);
+  }
+  if (overlayPromise) {
+    return overlayPromise;
+  }
+  overlayPromise = new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = PAPERCLIP_OVERLAY_URL;
+  });
+  return overlayPromise;
 }

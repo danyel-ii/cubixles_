@@ -142,7 +142,7 @@ export async function POST(request) {
       const clipHash = hashPayload(`builder-paperclip:${seed}:${paletteKey}:${size}`);
       paperclipCid = await getCachedCid(clipHash);
       if (!paperclipCid) {
-        const clipBuffer = renderPaperclipBuffer({ seed, palette, size });
+        const clipBuffer = await renderPaperclipBuffer({ seed, palette, size });
         paperclipCid = await pinFile(clipBuffer, {
           name: `cubixles_${tokenId}_paperclip.png`,
           mimeType: "image/png",
