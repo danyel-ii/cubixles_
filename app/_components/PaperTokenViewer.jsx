@@ -189,6 +189,7 @@ export default function PaperTokenViewer({
   cube,
   requestedTokenId,
   palette = null,
+  allowExport = true,
 }) {
   const viewerRef = useRef(null);
   const frameRef = useRef(null);
@@ -209,6 +210,18 @@ export default function PaperTokenViewer({
   const faceRefs = useRef([]);
   const inspectorLineRefs = useRef([]);
   const inspectorPanelRefs = useRef([]);
+  const inspectorPositionsRef = useRef(new Map());
+  const inspectorDragRef = useRef({
+    active: false,
+    index: null,
+    startX: 0,
+    startY: 0,
+    startTranslateX: 0,
+    startTranslateY: 0,
+    width: 0,
+    height: 0,
+    moved: false,
+  });
   const inspectedIndicesRef = useRef([]);
   const [inspectedIndices, setInspectedIndices] = useState([]);
   const [baseRotation, setBaseRotation] = useState(DEFAULT_ROTATION);
@@ -370,6 +383,15 @@ export default function PaperTokenViewer({
     inspectedIndicesRef.current = inspectedIndices;
   }, [inspectedIndices]);
 
+  useEffect(() => {
+    const active = new Set(inspectedIndices);
+    for (const key of inspectorPositionsRef.current.keys()) {
+      if (!active.has(key)) {
+        inspectorPositionsRef.current.delete(key);
+      }
+    }
+  }, [inspectedIndices]);
+
   const updateInspectorLayout = useCallback(() => {
     const indices = inspectedIndicesRef.current;
     if (!indices.length) {
@@ -395,12 +417,20 @@ export default function PaperTokenViewer({
       const panelRect = panel.getBoundingClientRect();
       const faceCenterX = faceRect.left + faceRect.width / 2;
       const faceCenterY = faceRect.top + faceRect.height / 2;
-      const viewerCenterX = viewerRect.left + viewerRect.width / 2;
-      const preferRight = faceCenterX < viewerCenterX;
-      let panelX = preferRight
-        ? faceCenterX + offset
-        : faceCenterX - panelRect.width - offset;
-      let panelY = faceCenterY - panelRect.height / 2;
+      const manualPosition = inspectorPositionsRef.current.get(index);
+      let panelX = manualPosition
+        ? viewerRect.left + manualPosition.x
+        : faceCenterX + offset;
+      let panelY = manualPosition
+        ? viewerRect.top + manualPosition.y
+        : faceCenterY - panelRect.height / 2;
+      if (!manualPosition) {
+        const viewerCenterX = viewerRect.left + viewerRect.width / 2;
+        const preferRight = faceCenterX < viewerCenterX;
+        panelX = preferRight
+          ? faceCenterX + offset
+          : faceCenterX - panelRect.width - offset;
+      }
       panelX = clamp(
         panelX,
         viewerRect.left + margin,
@@ -416,7 +446,13 @@ export default function PaperTokenViewer({
       panel.style.transform = `translate(${translateX}px, ${translateY}px)`;
       panel.style.opacity = "1";
 
-      const anchorX = panelX + (preferRight ? 0 : panelRect.width);
+      if (manualPosition) {
+        inspectorPositionsRef.current.set(index, { x: translateX, y: translateY });
+      }
+
+      const panelCenterX = panelX + panelRect.width / 2;
+      const anchorLeftEdge = faceCenterX < panelCenterX;
+      const anchorX = panelX + (anchorLeftEdge ? 0 : panelRect.width);
       const anchorY = panelY + panelRect.height / 2;
       const startX = faceCenterX - viewerRect.left;
       const startY = faceCenterY - viewerRect.top;
@@ -429,6 +465,48 @@ export default function PaperTokenViewer({
       line.style.opacity = "1";
     });
   }, []);
+
+  const startInspectorDrag = useCallback(
+    (index, event) => {
+      if (typeof event.button === "number" && event.button !== 0) {
+        return;
+      }
+      if (event.target instanceof Element && event.target.closest("button")) {
+        return;
+      }
+      if (inspectorDragRef.current.active) {
+        return;
+      }
+      const viewer = viewerRef.current;
+      const panel = inspectorPanelRefs.current[index];
+      if (!viewer || !panel) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      const viewerRect = viewer.getBoundingClientRect();
+      const panelRect = panel.getBoundingClientRect();
+      const startTranslateX = panelRect.left - viewerRect.left;
+      const startTranslateY = panelRect.top - viewerRect.top;
+      inspectorPositionsRef.current.set(index, { x: startTranslateX, y: startTranslateY });
+      inspectorDragRef.current = {
+        active: true,
+        index,
+        startX: event.clientX,
+        startY: event.clientY,
+        startTranslateX,
+        startTranslateY,
+        width: panelRect.width,
+        height: panelRect.height,
+        moved: false,
+      };
+      panel.classList.add("is-dragging");
+      if (event.currentTarget?.setPointerCapture) {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
+    },
+    []
+  );
 
   const scheduleUpdate = useCallback(() => {
     if (frameRef.current !== null || typeof window === "undefined") {
@@ -582,6 +660,72 @@ export default function PaperTokenViewer({
     };
   }, [endDrag, scheduleUpdate, updateRotationFromDrag]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const handleInspectorMove = (event) => {
+      if (!inspectorDragRef.current.active) {
+        return;
+      }
+      const viewer = viewerRef.current;
+      const index = inspectorDragRef.current.index;
+      if (!viewer || index === null || index === undefined) {
+        return;
+      }
+      const panel = inspectorPanelRefs.current[index];
+      if (!panel) {
+        return;
+      }
+      const viewerRect = viewer.getBoundingClientRect();
+      const margin = 16;
+      const dx = event.clientX - inspectorDragRef.current.startX;
+      const dy = event.clientY - inspectorDragRef.current.startY;
+      if (!inspectorDragRef.current.moved && Math.hypot(dx, dy) < 6) {
+        return;
+      }
+      inspectorDragRef.current.moved = true;
+      const nextX = clamp(
+        inspectorDragRef.current.startTranslateX + dx,
+        margin,
+        viewerRect.width - inspectorDragRef.current.width - margin
+      );
+      const nextY = clamp(
+        inspectorDragRef.current.startTranslateY + dy,
+        margin,
+        viewerRect.height - inspectorDragRef.current.height - margin
+      );
+      inspectorPositionsRef.current.set(index, { x: nextX, y: nextY });
+      updateInspectorLayout();
+    };
+
+    const handleInspectorEnd = () => {
+      if (!inspectorDragRef.current.active) {
+        return;
+      }
+      const index = inspectorDragRef.current.index;
+      if (index !== null && index !== undefined) {
+        if (!inspectorDragRef.current.moved) {
+          inspectorPositionsRef.current.delete(index);
+        }
+        inspectorPanelRefs.current[index]?.classList.remove("is-dragging");
+      }
+      inspectorDragRef.current.active = false;
+      inspectorDragRef.current.index = null;
+    };
+
+    window.addEventListener("pointermove", handleInspectorMove);
+    window.addEventListener("pointerup", handleInspectorEnd);
+    window.addEventListener("pointercancel", handleInspectorEnd);
+    window.addEventListener("blur", handleInspectorEnd);
+    return () => {
+      window.removeEventListener("pointermove", handleInspectorMove);
+      window.removeEventListener("pointerup", handleInspectorEnd);
+      window.removeEventListener("pointercancel", handleInspectorEnd);
+      window.removeEventListener("blur", handleInspectorEnd);
+    };
+  }, [updateInspectorLayout]);
+
   useLayoutEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -616,6 +760,12 @@ export default function PaperTokenViewer({
       setBaseRotation(FACE_ROTATIONS[face.id] ?? DEFAULT_ROTATION);
       setInspectedIndices((current) => {
         if (current.includes(index)) {
+          inspectorPositionsRef.current.delete(index);
+          if (inspectorDragRef.current.index === index) {
+            inspectorDragRef.current.active = false;
+            inspectorDragRef.current.index = null;
+            inspectorPanelRefs.current[index]?.classList.remove("is-dragging");
+          }
           return current.filter((item) => item !== index);
         }
         return [...current, index];
@@ -838,6 +988,10 @@ export default function PaperTokenViewer({
       .paper-face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube-size) / 2)); }
     `;
 
+    const exportSubhead = displayDescription
+      ? `<p class=\"paper-subhead\">${escapeHtml(displayDescription)}</p>`
+      : "";
+
     const html = `<!doctype html>
       <html lang=\"en\">
       <head>
@@ -851,7 +1005,7 @@ export default function PaperTokenViewer({
           <header class=\"paper-header\">
             <p class=\"paper-eyebrow\">Token viewer 02</p>
             <h1 class=\"paper-title\">cubixles_ Token ${escapeHtml(truncatedTokenId)}</h1>
-            <p class=\"paper-subhead\">${escapeHtml(displayDescription)}</p>
+            ${exportSubhead}
           </header>
           <div class=\"paper-stage\">
             <div class=\"paper-cube-link\" aria-label=\"Cubixles cube\">
@@ -948,22 +1102,26 @@ export default function PaperTokenViewer({
           <CubixlesLogo className="cubixles-logo-inline" />
           Token {truncatedTokenId}
         </h1>
-        <p className="paper-subhead">
-          <CubixlesText text={displayDescription} />
-        </p>
+        {displayDescription ? (
+          <p className="paper-subhead">
+            <CubixlesText text={displayDescription} />
+          </p>
+        ) : null}
         {isMismatch && (
           <p className="paper-note" title={cube.tokenId}>
             Showing minted cube for {truncatedTokenId}.
           </p>
         )}
         <div className="paper-actions">
-          <button
-            type="button"
-            className="paper-export-button"
-            onClick={handleExportHtml}
-          >
-            Export to HTML
-          </button>
+          {allowExport ? (
+            <button
+              type="button"
+              className="paper-export-button"
+              onClick={handleExportHtml}
+            >
+              Export to HTML
+            </button>
+          ) : null}
           <a
             className="paper-export-button paper-link-button"
             href="https://opensea.io/collection/cubixles"
@@ -1059,7 +1217,10 @@ export default function PaperTokenViewer({
               role="dialog"
               aria-label={`Inspect ${inspectedFace.label}`}
             >
-              <div className="paper-inspector-header">
+              <div
+                className="paper-inspector-header"
+                onPointerDown={(event) => startInspectorDrag(index, event)}
+              >
                 <div>
                   <span className="paper-inspector-eyebrow">
                     {FACE_NAMES[inspectedFace.id] || "Face"}
@@ -1180,6 +1341,7 @@ export default function PaperTokenViewer({
                 aria-hidden="true"
               />
             </div>
+            <span className="paper-hud-note">Sampled from face images.</span>
           </div>
         </aside>
       )}

@@ -43,13 +43,6 @@ export function resolvePaperclipPalette() {
   return readPaletteFromCss();
 }
 
-export function resolvePaperclipQrText() {
-  if (typeof window === "undefined") {
-    return "";
-  }
-  return window.location.origin || "";
-}
-
 export function loadPaperclipOverlay() {
   if (typeof window === "undefined") {
     return Promise.resolve(null);

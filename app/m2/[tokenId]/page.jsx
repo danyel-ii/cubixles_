@@ -13,8 +13,7 @@ import { getCollectionFloorSnapshot } from "../../_client/src/data/nft/floor.js"
 import { applyStoredPalette } from "../../_client/src/ui/palette-theme.js";
 
 const FACE_ORDER = ["+Z", "-Z", "+X", "-X", "+Y", "-Y"];
-const DEFAULT_DESCRIPTION =
-  "cubixles_ token viewer 02, rendered on collegiate paper stock.";
+const DEFAULT_DESCRIPTION = "";
 const BUILDER_ABI = [
   "function getTokenRefs(uint256 tokenId) view returns (tuple(address contractAddress,uint256 tokenId)[])",
   "function ownerOf(uint256 tokenId) view returns (address)",

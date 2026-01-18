@@ -184,11 +184,26 @@ async function loadOverlayImage() {
   return overlayPromise;
 }
 
+async function drawPaperclipOverlay(ctx, layout) {
+  const overlayImage = await loadOverlayImage();
+  if (!overlayImage) {
+    return;
+  }
+  const overlaySize = layout.sizePx * 0.65;
+  const overlayX = layout.centerX + layout.sizePx / 2 - overlaySize;
+  const overlayY = layout.centerY + layout.sizePx / 2 - overlaySize;
+  ctx.save();
+  ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 4;
+  ctx.drawImage(overlayImage, overlayX, overlayY, overlaySize, overlaySize);
+  ctx.restore();
+}
+
 export async function renderPaperclipBuffer({
   seed,
   palette,
   size = DEFAULT_PAPERCLIP_SIZE,
-  qrText,
 } = {}) {
   const canvasSize = Math.max(1, Number(size) || DEFAULT_PAPERCLIP_SIZE);
   const canvas = createCanvas(canvasSize, canvasSize);
@@ -199,38 +214,53 @@ export async function renderPaperclipBuffer({
 
   const layout = getPaperclipLayout(canvasSize, canvasSize);
   const { layers } = buildPaperclipLayers({ seed, palette });
+
+  ctx.clearRect(0, 0, canvasSize, canvasSize);
+  ctx.fillStyle = BACKDROP;
+  ctx.fillRect(0, 0, canvasSize, canvasSize);
+  drawPaperclipLayers(ctx, layout, layers);
+  await drawPaperclipOverlay(ctx, layout);
+
+  return canvas.toBuffer("image/png");
+}
+
+export async function renderPaperclipQrBuffer({
+  seed,
+  palette,
+  size = DEFAULT_PAPERCLIP_SIZE,
+  qrText,
+} = {}) {
+  const canvasSize = Math.max(1, Number(size) || DEFAULT_PAPERCLIP_SIZE);
+  const canvas = createCanvas(canvasSize, canvasSize);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Paperclip QR canvas unavailable.");
+  }
+
+  const layout = getPaperclipLayout(canvasSize, canvasSize);
+  const { layers } = buildPaperclipLayers({ seed, palette });
   const qrModules = buildQrModules(qrText);
 
   ctx.clearRect(0, 0, canvasSize, canvasSize);
-  if (qrModules) {
-    ctx.fillStyle = QR_BACKDROP;
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
-    ctx.save();
-    const clipped = applyQrClip(ctx, qrModules, canvasSize, canvasSize);
-    if (clipped) {
-      ctx.fillStyle = BACKDROP;
-      ctx.fillRect(0, 0, canvasSize, canvasSize);
-      drawPaperclipLayers(ctx, layout, layers);
-    }
-    ctx.restore();
-  } else {
+  if (!qrModules) {
     ctx.fillStyle = BACKDROP;
     ctx.fillRect(0, 0, canvasSize, canvasSize);
     drawPaperclipLayers(ctx, layout, layers);
+    await drawPaperclipOverlay(ctx, layout);
+    return canvas.toBuffer("image/png");
   }
 
-  const overlayImage = await loadOverlayImage();
-  if (overlayImage) {
-    const overlaySize = layout.sizePx * 0.65;
-    const overlayX = layout.centerX + layout.sizePx / 2 - overlaySize;
-    const overlayY = layout.centerY + layout.sizePx / 2 - overlaySize;
-    ctx.save();
-    ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 4;
-    ctx.drawImage(overlayImage, overlayX, overlayY, overlaySize, overlaySize);
-    ctx.restore();
+  ctx.fillStyle = QR_BACKDROP;
+  ctx.fillRect(0, 0, canvasSize, canvasSize);
+  ctx.save();
+  const clipped = applyQrClip(ctx, qrModules, canvasSize, canvasSize);
+  if (clipped) {
+    ctx.fillStyle = BACKDROP;
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+    drawPaperclipLayers(ctx, layout, layers);
+    await drawPaperclipOverlay(ctx, layout);
   }
+  ctx.restore();
 
   return canvas.toBuffer("image/png");
 }

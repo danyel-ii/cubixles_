@@ -10,8 +10,7 @@ import { applyStoredPalette } from "../../_client/src/ui/palette-theme.js";
 
 const PREVIEW_STORAGE_KEY = "cubixles:m2-preview";
 const FACE_ORDER = ["+Z", "-Z", "+X", "-X", "+Y", "-Y"];
-const DEFAULT_DESCRIPTION =
-  "cubixles_ token viewer 02 preview, rendered on collegiate paper stock.";
+const DEFAULT_DESCRIPTION = "";
 const MIN_FLOOR_ETH = 0.001;
 
 function formatMintedAt(value) {
@@ -160,6 +159,7 @@ export default function PreviewTokenViewerPage() {
           cube={cube}
           requestedTokenId={cube.tokenId}
           palette={palette}
+          allowExport={false}
         />
       );
     }

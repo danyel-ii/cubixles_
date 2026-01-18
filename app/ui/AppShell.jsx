@@ -43,46 +43,64 @@ export default function AppShell({ mode = "mint" }) {
               <li>Select 1-6 NFTs from your wallet.</li>
               <li>We snapshot key metadata (and collection floors when available).</li>
               <li>We publish the interactive artwork + metadata and Feingehalt to IPFS.</li>
-              <li>You sign the mint transaction on the selected network.</li>
+              <li>
+                {isBuilder
+                  ? "You sign the mint transaction on Ethereum Mainnet."
+                  : "You sign the mint transaction on the selected network."}
+              </li>
             </ol>
           </div>
           <div className="overlay-section">
             <div className="overlay-section-title">What gets minted</div>
-            <p className="overlay-text">
-              An ERC-721 with hosted metadata and an{" "}
-              <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
-              interactive cube.
-            </p>
+            {isBuilder ? (
+              <p className="overlay-text">
+                An ERC-721 with metadata pinned to IPFS, a paper clip sculpture image, a QR render
+                derived from it, and an <span className="overlay-em">external_url</span> pointing
+                to the interactive cube.
+              </p>
+            ) : (
+              <p className="overlay-text">
+                An ERC-721 with hosted metadata and an{" "}
+                <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
+                interactive cube.
+              </p>
+            )}
           </div>
           <div className="overlay-section">
             <div className="overlay-section-title">Mint price</div>
-            <p className="overlay-text">
-              Mint cost depends on network: mainnet tracks{" "}
-              <a
-                className="ui-link"
-                href="https://less.ripe.wtf/about"
-                target="_blank"
-                rel="noreferrer"
-              >
-                $LESS
-              </a>{" "}
-              supply, Base uses an immutable linear step (0.0012 ETH base + 0.000036 ETH per mint).
-            </p>
+            {isBuilder ? (
+              <p className="overlay-text">
+                Feingehalt is set to 10% of snapshot floor totals (0.001 ETH min per face). Each
+                mint deploys a royalty forwarder controlled by the minter for future split updates.
+              </p>
+            ) : (
+              <p className="overlay-text">
+                Mint cost depends on network: mainnet tracks{" "}
+                <a
+                  className="ui-link"
+                  href="https://less.ripe.wtf/about"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  $LESS
+                </a>{" "}
+                supply, Base uses an immutable linear step (0.0012 ETH base + 0.000036 ETH per
+                mint).
+              </p>
+            )}
           </div>
           <div className="overlay-actions">
-            {!isBuilder ? (
-              <a id="overlay-build" className="overlay-button is-ghost" href="/build">
-                Dig it
-              </a>
-            ) : null}
+            <a id="overlay-build" className="overlay-button is-ghost is-glow" href="/build">
+              Dig it
+            </a>
             <a id="overlay-inspect" className="overlay-button is-ghost" href="/shaolin_deck">
               Inspect
             </a>
             <button id="overlay-about" className="overlay-button is-ghost" type="button">
               Dug it
             </button>
-            <button id="enter-btn" className="overlay-button is-glow" type="button">
-              Beta
+            <button id="enter-btn" className="overlay-button is-ghost" type="button">
+              Bootleg it
             </button>
           </div>
           <div id="overlay-about-panel" className="overlay-about">
@@ -128,7 +146,7 @@ export default function AppShell({ mode = "mint" }) {
               </li>
             </ul>
             <p className="overlay-text">
-              Builder mints now snapshot live floor data to set the Feingehalt, deploy a per-mint
+              Builder mints snapshot live floor data to set the Feingehalt, deploy a per-mint
               royalty forwarder so the minter controls future splits, and generate a wallet-seeded
               paper clip sculpture (with QR) pinned to IPFS as the display image.
             </p>
@@ -231,30 +249,34 @@ export default function AppShell({ mode = "mint" }) {
           </div>
         </div>
       </div>
-      <div id="eth-hud" className="eth-hud" aria-hidden="true">
-        <div className="eth-hud-body">
-          <svg className="eth-hud-icon" viewBox="0 0 120 180" aria-hidden="true">
-            <polygon points="60,0 115,90 60,125 5,90" />
-            <polygon points="60,130 115,90 60,180 5,90" />
-          </svg>
-          <div className="eth-hud-label">ΔLESS</div>
-          <div id="eth-hud-value" className="eth-hud-value">
-            ΔLESS —
+      {!isBuilder ? (
+        <>
+          <div id="eth-hud" className="eth-hud" aria-hidden="true">
+            <div className="eth-hud-body">
+              <svg className="eth-hud-icon" viewBox="0 0 120 180" aria-hidden="true">
+                <polygon points="60,0 115,90 60,125 5,90" />
+                <polygon points="60,130 115,90 60,180 5,90" />
+              </svg>
+              <div className="eth-hud-label">ΔLESS</div>
+              <div id="eth-hud-value" className="eth-hud-value">
+                ΔLESS —
+              </div>
+              <div id="eth-hud-time" className="eth-hud-time">
+                token: —
+              </div>
+            </div>
           </div>
-          <div id="eth-hud-time" className="eth-hud-time">
-            token: —
+          <div id="less-hud" className="less-hud" aria-hidden="true">
+            <div className="less-hud-label">$LESS remaining</div>
+            <div id="less-supply-value" className="less-hud-value">
+              —
+            </div>
+            <div id="less-supply-time" className="less-hud-time">
+              updated —
+            </div>
           </div>
-        </div>
-      </div>
-      <div id="less-hud" className="less-hud" aria-hidden="true">
-        <div className="less-hud-label">$LESS remaining</div>
-        <div id="less-supply-value" className="less-hud-value">
-          —
-        </div>
-        <div id="less-supply-time" className="less-hud-time">
-          updated —
-        </div>
-      </div>
+        </>
+      ) : null}
       <div id="base-mint-hud" className="base-mint-hud is-hidden" aria-hidden="true">
         <div className="base-mint-hud-label">Base mint (original)</div>
         <div id="base-mint-hud-value" className="base-mint-hud-value">
@@ -447,23 +469,44 @@ export default function AppShell({ mode = "mint" }) {
       </div>
       <div id="leaderboard" className="ui-panel is-hidden">
         <div className="ui-title">Leaderboard</div>
-        <div className="ui-sub">Mint history powered by $LESS supply snapshots.</div>
+        <div className="ui-sub">
+          {isBuilder
+            ? "Builder leaderboard ranked by Feingehalt (snapshot mint price)."
+            : "Mint history powered by $LESS supply snapshots."}
+        </div>
         <div className="ui-section">
-          <div className="ui-section-title">$LESS + Minting</div>
-          <p className="ui-text">
-            Mint fees and resale royalties route through the RoyaltySplitter. When swaps are
-            enabled, 25% of the ETH is sent to the owner, 25% is swapped to $LESS (sent to the
-            owner), and 50% is swapped to $PNKSTR (sent to the owner). If swaps are disabled or
-            fail, all ETH is forwarded to the owner.
-          </p>
+          <div className="ui-section-title">
+            {isBuilder ? "Feingehalt + Royalties" : "$LESS + Minting"}
+          </div>
+          {isBuilder ? (
+            <p className="ui-text">
+              Builder mints set Feingehalt at 10% of snapshot floor totals (0.001 ETH min per
+              face). Each mint deploys a royalty forwarder owned by the minter so they can set
+              splits and update future royalty recipients.
+            </p>
+          ) : (
+            <p className="ui-text">
+              Mint fees and resale royalties route through the RoyaltySplitter. When swaps are
+              enabled, 25% of the ETH is sent to the owner, 25% is swapped to $LESS (sent to the
+              owner), and 50% is swapped to $PNKSTR (sent to the owner). If swaps are disabled or
+              fail, all ETH is forwarded to the owner.
+            </p>
+          )}
         </div>
         <div className="ui-section">
           <div className="ui-section-title">How the leaderboard works</div>
-          <p className="ui-text">
-            Each mint snapshots total $LESS supply. The leaderboard ranks tokens by ΔLESS — the
-            drop in total supply since the token’s last transfer. Earlier mint and longer holds
-            contribute to bigger ΔLESS.
-          </p>
+          {isBuilder ? (
+            <p className="ui-text">
+              Each builder token stores its Feingehalt at mint time. The leaderboard ranks tokens
+              by highest Feingehalt (snapshot floor totals), so higher-value cubes surface first.
+            </p>
+          ) : (
+            <p className="ui-text">
+              Each mint snapshots total $LESS supply. The leaderboard ranks tokens by ΔLESS — the
+              drop in total supply since the token’s last transfer. Earlier mint and longer holds
+              contribute to bigger ΔLESS.
+            </p>
+          )}
         </div>
         <div className="ui-section">
           <div className="ui-section-title">Contract</div>
@@ -473,7 +516,7 @@ export default function AppShell({ mode = "mint" }) {
           <div id="leaderboard-updated" className="ui-hint"></div>
         </div>
         <div className="ui-section">
-          <div className="ui-section-title">Top ΔLESS</div>
+          <div className="ui-section-title">{isBuilder ? "Top Feingehalt" : "Top ΔLESS"}</div>
           <div id="leaderboard-status" className="ui-hint">
             Connect your wallet to load the leaderboard.
           </div>

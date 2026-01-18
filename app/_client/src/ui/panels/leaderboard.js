@@ -1,11 +1,13 @@
 import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
-import { CUBIXLES_CONTRACT } from "../../config/contracts";
+import { getBuilderContract } from "../../config/builder-contracts";
+import { getCubixlesContract } from "../../config/contracts";
 import { subscribeWallet } from "../../features/wallet/wallet.js";
 import {
   formatChainName,
   getChainConfig,
   subscribeActiveChain,
 } from "../../config/chains.js";
+import { buildBuilderTokenViewUrl } from "../../config/links.js";
 
 const MAX_ENTRIES = 50;
 const WAD = 1_000_000_000_000_000_000n;
@@ -40,6 +42,7 @@ async function fetchIdentity(address) {
 }
 
 export function initLeaderboardUi() {
+  const isBuilder = document.body?.classList.contains("is-builder");
   const openButton = document.getElementById("leaderboard-open");
   const backButton = document.getElementById("leaderboard-back");
   const landingButton = document.getElementById("leaderboard-landing");
@@ -70,20 +73,27 @@ export function initLeaderboardUi() {
 
   let walletState = null;
   let readProviderPromise = null;
-  function isMainnetConnected() {
-    return walletState?.status === "connected" && walletState?.chainId === 1;
+
+  function getContractConfig() {
+    return isBuilder ? getBuilderContract() : getCubixlesContract();
+  }
+
+  function isTargetChainConnected() {
+    const contract = getContractConfig();
+    return walletState?.status === "connected" && walletState?.chainId === contract.chainId;
   }
 
   function updateOpenButtonVisibility() {
-    const show = isMainnetConnected();
+    const show = isTargetChainConnected();
     openButton.classList.toggle("is-hidden", !show);
     openButton.disabled = !show;
     openButton.setAttribute("aria-hidden", String(!show));
   }
 
   function updateLeaderboardDetails() {
-    contractEl.textContent = `Contract: ${CUBIXLES_CONTRACT.address}`;
-    chainEl.textContent = `Chain: ${formatChainName(CUBIXLES_CONTRACT.chainId)}`;
+    const contract = getContractConfig();
+    contractEl.textContent = `Contract: ${contract.address}`;
+    chainEl.textContent = `Chain: ${formatChainName(contract.chainId)}`;
     updatedEl.textContent = `Last updated: ${new Date().toISOString()}`;
   }
 
@@ -93,12 +103,17 @@ export function initLeaderboardUi() {
   }
 
   function isLeaderboardSupported() {
-    const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+    const contract = getContractConfig();
+    const chain = getChainConfig(contract.chainId);
+    if (isBuilder) {
+      return Boolean(chain);
+    }
     return Boolean(chain?.supportsLess && chain?.id === 1);
   }
 
   async function getReadProvider(provider) {
-    const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+    const contract = getContractConfig();
+    const chain = getChainConfig(contract.chainId);
     if (chain?.rpcUrls?.length) {
       if (readProviderPromise) {
         return readProviderPromise;
@@ -127,11 +142,12 @@ export function initLeaderboardUi() {
   }
 
   async function fetchMintedTokenIds(provider) {
+    const contractInfo = getContractConfig();
     const readProvider = await getReadProvider(provider);
     if (!readProvider) {
       return [];
     }
-    const contract = new Contract(CUBIXLES_CONTRACT.address, CUBIXLES_CONTRACT.abi, readProvider);
+    const contract = new Contract(contractInfo.address, contractInfo.abi, readProvider);
     const totalMinted = await contract.totalMinted();
     const count = Number(totalMinted);
     if (!count) {
@@ -144,11 +160,49 @@ export function initLeaderboardUi() {
   }
 
   async function fetchLeaderboard() {
+    const contractInfo = getContractConfig();
     const readProvider = await getReadProvider(null);
     if (!readProvider) {
       return { entries: [], supplyNow: null };
     }
-    const contract = new Contract(CUBIXLES_CONTRACT.address, CUBIXLES_CONTRACT.abi, readProvider);
+    const contract = new Contract(contractInfo.address, contractInfo.abi, readProvider);
+    if (isBuilder) {
+      const totalMinted = await contract.totalMinted();
+      const count = Number(totalMinted);
+      if (!count) {
+        return { entries: [], totalMinted: BigInt(totalMinted) };
+      }
+      const entries = await Promise.all(
+        Array.from({ length: count }, (_, index) => {
+          const tokenId = BigInt(index + 1);
+          return Promise.all([
+            contract.mintPriceByTokenId(tokenId).catch(() => 0n),
+            contract.ownerOf(tokenId).catch(() => null),
+          ]).then(([mintPrice, owner]) => ({
+            tokenId,
+            mintPrice: BigInt(mintPrice || 0),
+            owner,
+          }));
+        })
+      );
+      entries.sort((a, b) => {
+        if (a.mintPrice === b.mintPrice) {
+          return a.tokenId > b.tokenId ? 1 : -1;
+        }
+        return a.mintPrice > b.mintPrice ? -1 : 1;
+      });
+      const sliced = entries.slice(0, MAX_ENTRIES);
+      const identityEntries = await Promise.all(
+        sliced.map(async (entry) => {
+          const identity = entry.owner ? await fetchIdentity(entry.owner) : null;
+          return { ...entry, identity };
+        })
+      );
+      return {
+        entries: identityEntries,
+        totalMinted: BigInt(totalMinted),
+      };
+    }
     const tokenIds = await fetchMintedTokenIds(null);
     if (!tokenIds.length) {
       return { entries: [], supplyNow: null };
@@ -178,22 +232,30 @@ export function initLeaderboardUi() {
   }
 
   function renderEntries(entries) {
+    const contractInfo = getContractConfig();
+    const chain = getChainConfig(contractInfo.chainId);
     listEl.innerHTML = "";
     if (!entries.length) {
       statusEl.textContent = "No mints found yet.";
       return;
     }
-    statusEl.textContent = `Showing top ${Math.min(entries.length, MAX_ENTRIES)} tokens.`;
+    statusEl.textContent = isBuilder
+      ? `Showing top ${Math.min(entries.length, MAX_ENTRIES)} Feingehalt mints.`
+      : `Showing top ${Math.min(entries.length, MAX_ENTRIES)} tokens.`;
     entries.forEach((entry, index) => {
       const row = document.createElement("div");
       row.className = "ui-list-row";
 
       const label = document.createElement("a");
-      label.href = `/m/${entry.tokenId.toString()}`;
-      label.textContent = `#${index + 1} · Token ${entry.tokenId.toString()}`;
+      const tokenId = entry.tokenId.toString();
+      label.href = isBuilder
+        ? buildBuilderTokenViewUrl(tokenId) || `/m2/${tokenId}`
+        : `/m/${tokenId}`;
+      label.textContent = `#${index + 1} · Token ${tokenId}`;
       label.className = "ui-link";
 
       const identity = entry.identity;
+      const entryAddress = isBuilder ? entry.owner : entry.minter;
       const identitySpan = document.createElement("span");
       if (identity?.farcaster?.username) {
         const link = document.createElement("a");
@@ -207,13 +269,12 @@ export function initLeaderboardUi() {
         link.textContent = identity.ens;
         link.className = "ui-link";
         identitySpan.appendChild(link);
-      } else if (entry.minter) {
-        const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
+      } else if (entryAddress) {
         const link = document.createElement("a");
         link.href = chain?.explorer
-          ? `${chain.explorer}/address/${entry.minter}`
-          : `https://etherscan.io/address/${entry.minter}`;
-        link.textContent = shortenAddress(entry.minter);
+          ? `${chain.explorer}/address/${entryAddress}`
+          : `https://etherscan.io/address/${entryAddress}`;
+        link.textContent = shortenAddress(entryAddress);
         link.className = "ui-link";
         identitySpan.appendChild(link);
       } else {
@@ -221,7 +282,9 @@ export function initLeaderboardUi() {
       }
 
       const value = document.createElement("span");
-      value.textContent = `ΔLESS ${formatDelta(entry.delta)}`;
+      value.textContent = isBuilder
+        ? `Feingehalt ${formatDelta(entry.mintPrice)} ETH`
+        : `ΔLESS ${formatDelta(entry.delta)}`;
 
       row.appendChild(label);
       row.appendChild(identitySpan);
@@ -233,21 +296,34 @@ export function initLeaderboardUi() {
   async function refreshLeaderboard() {
     updateLeaderboardDetails();
     if (!isLeaderboardSupported()) {
-      resetList("Leaderboard is available on Ethereum Mainnet only.");
-      supplyEl.textContent = "Supply now: —";
+      resetList(
+        isBuilder
+          ? "Builder leaderboard is available on Ethereum Mainnet only."
+          : "Leaderboard is available on Ethereum Mainnet only."
+      );
+      supplyEl.textContent = isBuilder ? "Total minted: —" : "Supply now: —";
       return;
     }
-    if (isZeroAddress(CUBIXLES_CONTRACT.address) || !CUBIXLES_CONTRACT.abi?.length) {
+    const contractInfo = getContractConfig();
+    if (isZeroAddress(contractInfo.address) || !contractInfo.abi?.length) {
       resetList("Contract not configured.");
-      supplyEl.textContent = "Supply now: —";
+      supplyEl.textContent = isBuilder ? "Total minted: —" : "Supply now: —";
       return;
     }
     statusEl.textContent = "Loading leaderboard...";
     try {
-      const { entries, supplyNow } = await fetchLeaderboard();
-      supplyEl.textContent = supplyNow
-        ? `Supply now: ${formatDelta(supplyNow)}`
-        : "Supply now: —";
+      const { entries, supplyNow, totalMinted } = await fetchLeaderboard();
+      if (isBuilder) {
+        supplyEl.textContent =
+          totalMinted === null || totalMinted === undefined
+            ? "Total minted: —"
+            : `Total minted: ${totalMinted.toString()}`;
+      } else {
+        supplyEl.textContent =
+          supplyNow === null || supplyNow === undefined
+            ? "Supply now: —"
+            : `Supply now: ${formatDelta(supplyNow)}`;
+      }
       renderEntries(entries);
     } catch (error) {
       const message =
@@ -256,7 +332,7 @@ export function initLeaderboardUi() {
           ? "Leaderboard call failed. Ensure your wallet is on Ethereum Mainnet."
           : error?.message || "Unable to load leaderboard.";
       resetList(message);
-      supplyEl.textContent = "Supply now: —";
+      supplyEl.textContent = isBuilder ? "Total minted: —" : "Supply now: —";
     }
   }
 

@@ -100,9 +100,11 @@ export function initUiRoot() {
     initMintUi();
   }
   initLeaderboardUi();
-  initEthHud();
-  initLessSupplyHud();
-  initLessDeltaTracking();
+  if (!isBuilderMode) {
+    initEthHud();
+    initLessSupplyHud();
+    initLessDeltaTracking();
+  }
   initBaseMintHud();
   initPreviewUi();
   initMintedBanner();

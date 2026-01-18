@@ -17,8 +17,7 @@ function buildPreviewPayload() {
   const wallet = getWalletState();
   return {
     tokenId: "preview",
-    description:
-      "cubixles_ token viewer 02 preview, rendered on collegiate paper stock.",
+    description: "",
     mintedAt: new Date().toISOString(),
     mintedBy: wallet?.address || "",
     network: formatChainName(getActiveChainId()),

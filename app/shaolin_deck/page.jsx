@@ -1177,9 +1177,14 @@ export default function ShaolinDeckPage() {
         <section className="landing-header">
           <div className="landing-intro">
             <h1 className="landing-title">
-              <a href="https://www.cubixles.xyz" className="cubixles-logo-link">
-                <CubixlesLogo />
-              </a>
+              <span className="deck-logo-wrap">
+                <a href="https://www.cubixles.xyz" className="cubixles-logo-link">
+                  <CubixlesLogo />
+                </a>
+                <span className="deck-logo-scribble" aria-hidden="true">
+                  bootleggers deck
+                </span>
+              </span>
             </h1>
             <p className="landing-subhead">
               Provenance as building blocks, NFTs as materials, and citations as structure.

@@ -1,4 +1,3 @@
-import QRCode from "qrcode";
 import {
   buildPaperclipLayers,
   createPaperclipRng,
@@ -6,8 +5,6 @@ import {
 } from "../../shared/paperclip-model.js";
 
 const BACKDROP = "#0b1220";
-const QR_BACKDROP = "#f7f2e8";
-const QR_QUIET = 4;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -126,49 +123,7 @@ function drawPaperclipLayers(ctx, layout, layers) {
   }
 }
 
-function buildQrModules(text) {
-  const trimmed = typeof text === "string" ? text.trim() : "";
-  if (!trimmed) {
-    return null;
-  }
-  try {
-    const qr = QRCode.create(trimmed, { errorCorrectionLevel: "H" });
-    return qr?.modules || null;
-  } catch (error) {
-    return null;
-  }
-}
-
-function applyQrClip(ctx, modules, width, height) {
-  const count = modules?.size;
-  if (!count) {
-    return false;
-  }
-  const grid = count + QR_QUIET * 2;
-  const moduleSize = Math.floor(Math.min(width, height) / grid);
-  if (moduleSize < 1) {
-    return false;
-  }
-  const qrSize = moduleSize * grid;
-  const offsetX = Math.round((width - qrSize) / 2);
-  const offsetY = Math.round((height - qrSize) / 2);
-
-  ctx.beginPath();
-  for (let y = 0; y < count; y += 1) {
-    for (let x = 0; x < count; x += 1) {
-      if (!modules.get(x, y)) {
-        continue;
-      }
-      const rectX = offsetX + (x + QR_QUIET) * moduleSize;
-      const rectY = offsetY + (y + QR_QUIET) * moduleSize;
-      ctx.rect(rectX, rectY, moduleSize, moduleSize);
-    }
-  }
-  ctx.clip();
-  return true;
-}
-
-export function renderCubesPaperClip({ canvas, seed, palette, overlay, qrText }) {
+export function renderCubesPaperClip({ canvas, seed, palette, overlay }) {
   if (!canvas) {
     return;
   }
@@ -185,25 +140,11 @@ export function renderCubesPaperClip({ canvas, seed, palette, overlay, qrText })
 
   const layout = getPaperclipLayout(width, height);
   const { layers } = buildPaperclipLayers({ seed, palette });
-  const qrModules = buildQrModules(qrText);
 
   ctx.clearRect(0, 0, width, height);
-  if (qrModules) {
-    ctx.fillStyle = QR_BACKDROP;
-    ctx.fillRect(0, 0, width, height);
-    ctx.save();
-    const clipped = applyQrClip(ctx, qrModules, width, height);
-    if (clipped) {
-      ctx.fillStyle = BACKDROP;
-      ctx.fillRect(0, 0, width, height);
-      drawPaperclipLayers(ctx, layout, layers);
-    }
-    ctx.restore();
-  } else {
-    ctx.fillStyle = BACKDROP;
-    ctx.fillRect(0, 0, width, height);
-    drawPaperclipLayers(ctx, layout, layers);
-  }
+  ctx.fillStyle = BACKDROP;
+  ctx.fillRect(0, 0, width, height);
+  drawPaperclipLayers(ctx, layout, layers);
 
   if (overlay) {
     const overlaySize = layout.size * 0.65;

@@ -14,12 +14,14 @@ import {
   DEFAULT_PAPERCLIP_SIZE,
   normalizePaperclipPalette,
   renderPaperclipBuffer,
+  renderPaperclipQrBuffer,
 } from "../../../../src/server/paperclip.js";
 import { hashPayload, getCachedCid, setCachedCid, pinFile } from "../../../../src/server/pinata.js";
 import { recordMetric } from "../../../../src/server/metrics.js";
 import { readEnvBool } from "../../../../src/server/env.js";
 
 const MAX_BYTES = 12 * 1024;
+const PAPERCLIP_QR_SIZE = 512;
 
 export const runtime = "nodejs";
 
@@ -62,6 +64,19 @@ export async function POST(request) {
     const { address, nonce, signature, payload, chainId } = parsed.data;
     const viewerUrl = payload.viewerUrl;
     const tokenId = String(payload.tokenId);
+    const paperclipPayload = payload.paperclip ?? null;
+    const rawSeed = paperclipPayload?.seed ?? "";
+    const paperclipSeed = String(rawSeed).trim();
+    if (paperclipPayload && !paperclipSeed) {
+      throw new Error("Paperclip seed missing.");
+    }
+    const paperclipPalette = normalizePaperclipPalette(paperclipPayload?.palette);
+    const paperclipSize = Number(paperclipPayload?.size) || DEFAULT_PAPERCLIP_SIZE;
+    const paletteKey = paperclipPalette.length ? paperclipPalette.join(",") : "fallback";
+    const qrText = typeof paperclipPayload?.qrText === "string"
+      ? paperclipPayload.qrText
+      : viewerUrl;
+    const usePaperclipQr = Boolean(paperclipSeed);
 
     const nonceStatus = await verifyNonce(nonce);
     if (!nonceStatus.ok) {
@@ -83,11 +98,22 @@ export async function POST(request) {
 
     const resolvedChainId = Number.isFinite(chainId) ? Number(chainId) : undefined;
 
-    const qrHash = hashPayload(`builder-qr:${viewerUrl}`);
+    const qrHash = hashPayload(
+      usePaperclipQr
+        ? `builder-qr:${viewerUrl}:${paperclipSeed}:${paletteKey}:${PAPERCLIP_QR_SIZE}:${qrText}`
+        : `builder-qr:${viewerUrl}`
+    );
     let qrCid = await getCachedCid(qrHash);
     let qrBuffer = null;
     if (!qrCid) {
-      qrBuffer = await generateQrBuffer(viewerUrl);
+      qrBuffer = usePaperclipQr
+        ? await renderPaperclipQrBuffer({
+            seed: paperclipSeed,
+            palette: paperclipPalette,
+            size: PAPERCLIP_QR_SIZE,
+            qrText,
+          })
+        : await generateQrBuffer(viewerUrl);
       qrCid = await pinFile(qrBuffer, {
         name: `cubixles_${tokenId}_qr.png`,
         mimeType: "image/png",
@@ -96,6 +122,9 @@ export async function POST(request) {
           chainId: resolvedChainId,
           tokenId,
           viewerUrl,
+          seed: paperclipSeed || undefined,
+          palette: usePaperclipQr ? paletteKey : undefined,
+          qrText: qrText || undefined,
         },
       });
       if (!qrCid) {
@@ -105,7 +134,14 @@ export async function POST(request) {
     }
 
     if (!qrBuffer) {
-      qrBuffer = await generateQrBuffer(viewerUrl);
+      qrBuffer = usePaperclipQr
+        ? await renderPaperclipQrBuffer({
+            seed: paperclipSeed,
+            palette: paperclipPalette,
+            size: PAPERCLIP_QR_SIZE,
+            qrText,
+          })
+        : await generateQrBuffer(viewerUrl);
     }
 
     const cardHash = hashPayload(`builder-card:${viewerUrl}:${qrCid}`);
@@ -131,25 +167,16 @@ export async function POST(request) {
 
     let paperclipCid = null;
     let paperclipUrl = null;
-    if (payload.paperclip?.seed) {
-      const seed = String(payload.paperclip.seed || "").trim();
-      if (!seed) {
-        throw new Error("Paperclip seed missing.");
-      }
-      const palette = normalizePaperclipPalette(payload.paperclip.palette);
-      const size = Number(payload.paperclip.size) || DEFAULT_PAPERCLIP_SIZE;
-      const qrText = payload.paperclip.qrText;
-      const paletteKey = palette.length ? palette.join(",") : "fallback";
+    if (paperclipSeed) {
       const clipHash = hashPayload(
-        `builder-paperclip:${seed}:${paletteKey}:${size}:${qrText || ""}`
+        `builder-paperclip:${paperclipSeed}:${paletteKey}:${paperclipSize}`
       );
       paperclipCid = await getCachedCid(clipHash);
       if (!paperclipCid) {
         const clipBuffer = await renderPaperclipBuffer({
-          seed,
-          palette,
-          size,
-          qrText,
+          seed: paperclipSeed,
+          palette: paperclipPalette,
+          size: paperclipSize,
         });
         paperclipCid = await pinFile(clipBuffer, {
           name: `cubixles_${tokenId}_paperclip.png`,
@@ -158,9 +185,8 @@ export async function POST(request) {
             kind: "builder_paperclip",
             chainId: resolvedChainId,
             tokenId,
-            seed,
+            seed: paperclipSeed,
             palette: paletteKey,
-            qrText,
           },
         });
         if (!paperclipCid) {
