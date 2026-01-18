@@ -95,6 +95,7 @@ export function initNetworkUi() {
   const statusEl = document.getElementById("network-status");
   const selectButton = document.getElementById("network-select");
   const selectSubtitle = document.getElementById("network-select-subtitle");
+  const builderMode = isBuilderMode();
 
   networkUiState.pickerRoot = pickerRoot;
   networkUiState.pickerList = pickerList;
@@ -103,10 +104,14 @@ export function initNetworkUi() {
   networkUiState.selectButton = selectButton;
   networkUiState.selectSubtitle = selectSubtitle;
 
+  if (builderMode) {
+    setActiveChainId(1);
+  }
+
   renderNetworkOptions();
   updateNetworkStatus(getActiveChainId());
 
-  if (!hasStoredChainPreference() && !isTokenViewRoute()) {
+  if (!hasStoredChainPreference() && !isTokenViewRoute() && !builderMode) {
     showNetworkPicker();
   }
 

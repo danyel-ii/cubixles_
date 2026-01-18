@@ -771,7 +771,7 @@ function PaletteSync() {
 
     const loadPalette = async () => {
       try {
-        const response = await fetch("/palette_outputs/manifest.json", { cache: "no-store" });
+        const response = await fetch("/assets/generative_plot/manifest.json", { cache: "no-store" });
         if (!response.ok) {
           applyPalette(DEFAULT_PALETTE);
           return;

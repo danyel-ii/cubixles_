@@ -70,19 +70,19 @@ export default function AppShell({ mode = "mint" }) {
             </p>
           </div>
           <div className="overlay-actions">
-            <button id="enter-btn" className="overlay-button is-glow" type="button">
-              Dig it
-            </button>
-            <a id="overlay-inspect" className="overlay-button is-ghost" href="/inspecta_deck">
-              Inspect
-            </a>
             {!isBuilder ? (
               <a id="overlay-build" className="overlay-button is-ghost" href="/build">
-                Build it
+                Dig it
               </a>
             ) : null}
+            <a id="overlay-inspect" className="overlay-button is-ghost" href="/shaolin_deck">
+              Inspect
+            </a>
             <button id="overlay-about" className="overlay-button is-ghost" type="button">
               Dug it
+            </button>
+            <button id="enter-btn" className="overlay-button is-glow" type="button">
+              Beta
             </button>
           </div>
           <div id="overlay-about-panel" className="overlay-about">
@@ -128,6 +128,11 @@ export default function AppShell({ mode = "mint" }) {
               </li>
             </ul>
             <p className="overlay-text">
+              Builder mints now snapshot live floor data to set the Feingehalt, deploy a per-mint
+              royalty forwarder so the minter controls future splits, and generate a wallet-seeded
+              paper clip sculpture (with QR) pinned to IPFS as the display image.
+            </p>
+            <p className="overlay-text">
               In this framework, rarity is no longer a property of images or traits. It is a
               property of relations.
             </p>
@@ -136,7 +141,7 @@ export default function AppShell({ mode = "mint" }) {
       </div>
       {isBuilder ? (
         <div className="builder-corner-tag" aria-hidden="true">
-          build it
+          dig it
         </div>
       ) : null}
       <div id="toast-root" className="toast-root" aria-live="polite" aria-atomic="true"></div>
@@ -393,17 +398,9 @@ export default function AppShell({ mode = "mint" }) {
               </>
             )}
           </div>
-          {isBuilder ? (
-            <div className="ui-row">
-              <button id="paperclip-open" className="ui-button is-ghost" type="button">
-                View paper clip
-              </button>
-            </div>
-          ) : null}
         </div>
         {isBuilder ? (
           <div className="ui-section">
-            <div className="ui-section-title">Builder diagnostics</div>
             <div id="builder-error" className="ui-hint is-error is-hidden">
               —
             </div>
@@ -416,6 +413,11 @@ export default function AppShell({ mode = "mint" }) {
           <button id="ui-landing" className="ui-button is-ghost" type="button">
             Landing
           </button>
+          {isBuilder ? (
+            <button id="paperclip-open" className="ui-button is-ghost" type="button">
+              View paper clip
+            </button>
+          ) : null}
         </div>
         <div className="ui-row minted-links">
           <div id="minted-banner" className="minted-banner is-hidden">
