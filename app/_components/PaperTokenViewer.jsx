@@ -876,8 +876,8 @@ export default function PaperTokenViewer({
             let rotY = 0;
             const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
             const updateVars = () => {
-              viewer.style.setProperty("--cube-user-x", `${rotX}deg`);
-              viewer.style.setProperty("--cube-user-y", `${rotY}deg`);
+              viewer.style.setProperty("--cube-user-x", rotX + "deg");
+              viewer.style.setProperty("--cube-user-y", rotY + "deg");
             };
             const onMove = (event) => {
               if (!active) {
