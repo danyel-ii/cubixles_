@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Interface } from "ethers";
+import { Interface, formatEther } from "ethers";
 
 import PaperTokenViewer from "../../_components/PaperTokenViewer.jsx";
 import builderDeployment from "../../../contracts/deployments/builder-mainnet.json";
@@ -18,27 +18,8 @@ const DEFAULT_DESCRIPTION =
 const BUILDER_ABI = [
   "function getTokenRefs(uint256 tokenId) view returns (tuple(address contractAddress,uint256 tokenId)[])",
   "function ownerOf(uint256 tokenId) view returns (address)",
+  "function mintPriceByTokenId(uint256 tokenId) view returns (uint256)",
 ];
-
-function truncateMiddle(value, start = 6, end = 4) {
-  if (!value) {
-    return "";
-  }
-  if (value.length <= start + end + 3) {
-    return value;
-  }
-  return `${value.slice(0, start)}...${value.slice(-end)}`;
-}
-
-function formatAddress(value) {
-  if (!value) {
-    return "n/a";
-  }
-  if (value.startsWith("0x") && value.length > 12) {
-    return truncateMiddle(value);
-  }
-  return value;
-}
 
 function formatMintedAt(value) {
   if (!value) {
@@ -141,6 +122,10 @@ async function fetchBuilderRefsAndOwner(tokenId, chainId, contractAddress) {
       to: contractAddress,
       data: iface.encodeFunctionData("ownerOf", [tokenId]),
     },
+    {
+      to: contractAddress,
+      data: iface.encodeFunctionData("mintPriceByTokenId", [tokenId]),
+    },
   ];
   const results = await fetchRpcResults(chainId, calls);
   if (!Array.isArray(results)) {
@@ -158,7 +143,20 @@ async function fetchBuilderRefsAndOwner(tokenId, chainId, contractAddress) {
     const ownerDecoded = iface.decodeFunctionResult("ownerOf", ownerResult.result);
     owner = ownerDecoded?.[0] || null;
   }
-  return { refs, owner };
+  const priceResult = results[2];
+  let mintPriceWei = null;
+  if (priceResult?.result) {
+    try {
+      const priceDecoded = iface.decodeFunctionResult(
+        "mintPriceByTokenId",
+        priceResult.result
+      );
+      mintPriceWei = priceDecoded?.[0] ?? null;
+    } catch (error) {
+      mintPriceWei = null;
+    }
+  }
+  return { refs, owner, mintPriceWei };
 }
 
 export default function BuilderTokenViewerPage() {
@@ -192,7 +190,7 @@ export default function BuilderTokenViewerPage() {
         }
         setActiveChainId(chainId);
         setStatus("Loading builder refs...");
-        const { refs, owner } = await fetchBuilderRefsAndOwner(
+        const { refs, owner, mintPriceWei } = await fetchBuilderRefsAndOwner(
           tokenId,
           chainId,
           contractAddress
@@ -202,6 +200,12 @@ export default function BuilderTokenViewerPage() {
         }
         setStatus("Loading collection floors...");
         const floorMap = await loadFloorMap(refs, chainId);
+        const currentFloorSumEth = refs.reduce((sum, ref) => {
+          const key = ref?.contractAddress ? ref.contractAddress.toLowerCase() : null;
+          const snapshot = key ? floorMap.get(key) : null;
+          const value = typeof snapshot?.floorEth === "number" ? snapshot.floorEth : 0;
+          return sum + value;
+        }, 0);
         setStatus("Loading referenced NFTs...");
         const nfts = await Promise.all(
           refs.map((ref) =>
@@ -212,6 +216,7 @@ export default function BuilderTokenViewerPage() {
         if (!faces.length) {
           throw new Error("Missing reference images.");
         }
+        const mintPriceEth = mintPriceWei ? Number(formatEther(mintPriceWei)) : null;
         if (!mounted) {
           return;
         }
@@ -219,8 +224,10 @@ export default function BuilderTokenViewerPage() {
           tokenId,
           description: DEFAULT_DESCRIPTION,
           mintedAt: formatMintedAt(null),
-          mintedBy: formatAddress(owner),
+          mintedBy: owner || "",
           network: formatChainName(chainId),
+          mintPriceEth,
+          currentFloorSumEth,
           provenanceNFTs: faces,
         });
       } catch (error) {

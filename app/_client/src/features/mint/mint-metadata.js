@@ -179,6 +179,7 @@ export function buildMintMetadata({
     schemaVersion: 1,
     name: displayName,
     tokenId,
+    issuer: minter,
     description: [
       "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own.",
       "Interactive cube:",

@@ -219,7 +219,8 @@ function isUiTarget(event) {
       target.closest("#network-picker") ||
       target.closest("#mint-confirm") ||
       target.closest("#share-cube") ||
-      target.closest("#share-modal")
+      target.closest("#share-modal") ||
+      target.closest("#paperclip-panel")
   );
 }
 
@@ -243,6 +244,7 @@ function isUiPointed() {
       el.closest("#mint-confirm") ||
       el.closest("#share-cube") ||
       el.closest("#share-modal") ||
+      el.closest("#paperclip-panel") ||
       el.closest(".toast-root") ||
       el.closest(".eth-hud") ||
       el.closest(".less-hud")

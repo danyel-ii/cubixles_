@@ -393,6 +393,13 @@ export default function AppShell({ mode = "mint" }) {
               </>
             )}
           </div>
+          {isBuilder ? (
+            <div className="ui-row">
+              <button id="paperclip-open" className="ui-button is-ghost" type="button">
+                View paper clip
+              </button>
+            </div>
+          ) : null}
         </div>
         {isBuilder ? (
           <div className="ui-section">
@@ -488,6 +495,30 @@ export default function AppShell({ mode = "mint" }) {
         </div>
         <pre id="debug-log" className="debug-log"></pre>
       </div>
+      {isBuilder ? (
+        <div
+          id="paperclip-panel"
+          className="paperclip-panel is-hidden"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="paperclip-backdrop" data-paperclip-close="true"></div>
+          <div className="paperclip-card">
+            <div className="paperclip-head">
+              <div className="paperclip-title">CubesPaperClip</div>
+              <button id="paperclip-close" className="paperclip-close" type="button">
+                Close
+              </button>
+            </div>
+            <div id="paperclip-status" className="paperclip-status">
+              Connect your wallet to render the sculpture.
+            </div>
+            <div className="paperclip-canvas-wrap">
+              <canvas id="paperclip-canvas" className="paperclip-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <main id="app"></main>
     </>
   );

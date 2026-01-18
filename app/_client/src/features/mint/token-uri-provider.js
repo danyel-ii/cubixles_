@@ -64,6 +64,13 @@ async function fetchNonce() {
   return json.nonce;
 }
 
+async function signPinRequest({ signer, chainId }) {
+  const nonce = await fetchNonce();
+  const { domain, types, value } = buildPinTypedData(nonce, chainId);
+  const signature = await signer.signTypedData(domain, types, value);
+  return { nonce, signature };
+}
+
 export async function pinTokenMetadata({
   metadata,
   signer,
@@ -75,9 +82,7 @@ export async function pinTokenMetadata({
   }
   let lastError = null;
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const nonce = await fetchNonce();
-    const { domain, types, value } = buildPinTypedData(nonce, chainId);
-    const signature = await signer.signTypedData(domain, types, value);
+    const { nonce, signature } = await signPinRequest({ signer, chainId });
 
     const response = await fetch("/api/pin/metadata", {
       method: "POST",
@@ -99,6 +104,52 @@ export async function pinTokenMetadata({
         tokenURI: json.tokenURI,
         metadataHash: json.metadataHash,
       };
+    }
+    const text = await response.text();
+    lastError = text || `Pinning failed (${response.status})`;
+    if (!/nonce already used/i.test(lastError)) {
+      break;
+    }
+  }
+  throw new Error(lastError || "Pinning failed.");
+}
+
+export async function pinBuilderAssets({
+  viewerUrl,
+  tokenId,
+  signer,
+  address,
+  chainId = CUBIXLES_CONTRACT.chainId,
+}) {
+  if (!signer || !address) {
+    throw new Error("Wallet signer unavailable.");
+  }
+  if (!viewerUrl) {
+    throw new Error("Viewer URL missing.");
+  }
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { nonce, signature } = await signPinRequest({ signer, chainId });
+    const response = await fetch("/api/pin/builder-assets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        address,
+        nonce,
+        signature,
+        chainId,
+        payload: {
+          viewerUrl,
+          tokenId,
+        },
+      }),
+    });
+    if (response.ok) {
+      const json = await response.json();
+      if (!json?.qrUrl || !json?.cardUrl) {
+        throw new Error("Pinning failed to return asset URLs.");
+      }
+      return json;
     }
     const text = await response.text();
     lastError = text || `Pinning failed (${response.status})`;

@@ -37,6 +37,7 @@ export function buildBuilderMetadata({
   imageUrl,
   animationUrl,
   externalUrl,
+  qrImage,
 }) {
   const refs = buildRefs(selection);
   const descriptionLines = [
@@ -58,6 +59,7 @@ export function buildBuilderMetadata({
     schemaVersion: 1,
     name: tokenId ? `cubixles_ builder #${tokenId}` : "cubixles_ builder",
     tokenId,
+    issuer: minter,
     description: descriptionLines.join("\n"),
     image: imageUrl || undefined,
     image_url: imageUrl || undefined,
@@ -70,6 +72,7 @@ export function buildBuilderMetadata({
       totalFloorEth,
       floorsWei: floorsWei || [],
       floorsEth: floorsEth || [],
+      qrImage: qrImage || undefined,
     },
     provenance: {
       mintedBy: minter,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import QRCode from "qrcode";
 
 import CubixlesLogo from "./CubixlesLogo.jsx";
 import CubixlesText from "./CubixlesText.jsx";
@@ -76,6 +77,26 @@ function formatFloorValue(floorEth) {
     return "n/a";
   }
   return floorEth.toFixed(4);
+}
+
+function formatSignedValue(value) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "n/a";
+  }
+  const sign = value > 0 ? "+" : value < 0 ? "-" : "";
+  const abs = Math.abs(value).toFixed(4);
+  return `${sign}${abs}`;
+}
+
+function toNumber(value) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
 }
 
 function formatTimestamp(value) {
@@ -194,6 +215,8 @@ export default function PaperTokenViewer({
   const [hudOpen, setHudOpen] = useState(true);
   const [diffusionAverage, setDiffusionAverage] = useState(null);
   const [diffusionStatus, setDiffusionStatus] = useState("idle");
+  const [qrOpen, setQrOpen] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState("");
 
   const faces = useMemo(() => {
     const byId = new Map();
@@ -250,6 +273,39 @@ export default function PaperTokenViewer({
     const rgb = hexToRgb(edgeColor);
     return rgb ? rgbaString(rgb, 0.45) : null;
   }, [edgeColor]);
+  const qrAddress = useMemo(() => {
+    const raw = cube?.mintedBy || "";
+    return /^0x[a-fA-F0-9]{40}$/.test(raw) ? raw : "";
+  }, [cube?.mintedBy]);
+
+  useEffect(() => {
+    if (!qrAddress || typeof window === "undefined") {
+      setQrDataUrl("");
+      return;
+    }
+    let cancelled = false;
+    QRCode.toDataURL(qrAddress, {
+      width: 180,
+      margin: 1,
+      color: {
+        dark: "#1b1713",
+        light: "#f7f2e8",
+      },
+    })
+      .then((url) => {
+        if (!cancelled) {
+          setQrDataUrl(url);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setQrDataUrl("");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [qrAddress]);
 
   useEffect(() => {
     setBaseRotation(DEFAULT_ROTATION);
@@ -585,6 +641,23 @@ export default function PaperTokenViewer({
     diffusionAverage?.hex ||
     (diffusionStatus === "loading" ? "Calculating..." : "n/a");
   const diffusionSwatch = diffusionAverage?.hex || "#f7f2e8";
+  const currentFloorSumEth = useMemo(() => {
+    const override = toNumber(cube?.currentFloorSumEth);
+    if (override != null) {
+      return override;
+    }
+    return faces.reduce((sum, face) => {
+      const value = toNumber(face.floorEth);
+      return sum + (value ?? 0);
+    }, 0);
+  }, [cube?.currentFloorSumEth, faces]);
+  const currentFeingehalt = currentFloorSumEth / 10;
+  const mintedFeingehalt = toNumber(cube?.mintPriceEth) ?? currentFeingehalt;
+  const deltaFeingehalt =
+    mintedFeingehalt != null ? mintedFeingehalt - currentFeingehalt : null;
+  const mintedFeingehaltLabel =
+    mintedFeingehalt != null ? formatFloorValue(mintedFeingehalt) : "n/a";
+  const deltaFeingehaltLabel = formatSignedValue(deltaFeingehalt);
 
   const handleExportHtml = useCallback(() => {
     if (!cube) {
@@ -1073,6 +1146,17 @@ export default function PaperTokenViewer({
         </aside>
       )}
 
+      <aside className="paper-fee-hud" aria-label="Feingehalt">
+        <span className="paper-fee-label">Feingehalt</span>
+        <span className="paper-fee-value">
+          {mintedFeingehaltLabel === "n/a" ? "n/a" : `${mintedFeingehaltLabel} ETH`}
+        </span>
+        <span className="paper-fee-sub">
+          Delta Feingehalt:{" "}
+          {deltaFeingehaltLabel === "n/a" ? "n/a" : `${deltaFeingehaltLabel} ETH`}
+        </span>
+      </aside>
+
       {diffusionStatus !== "idle" && (
         <aside
           className={`paper-hud${hudOpen ? "" : " is-collapsed"}`}
@@ -1100,6 +1184,30 @@ export default function PaperTokenViewer({
         </aside>
       )}
 
+      {qrAddress && qrDataUrl && (
+        <aside
+          className={`paper-qr${qrOpen ? "" : " is-collapsed"}`}
+          aria-label="Wallet QR"
+        >
+          <button
+            type="button"
+            className="paper-qr-toggle"
+            aria-expanded={qrOpen}
+            onClick={() => setQrOpen((open) => !open)}
+          >
+            Wallet QR
+          </button>
+          <div className="paper-qr-body">
+            <img
+              src={qrDataUrl}
+              alt={`Wallet QR for ${truncateMiddle(qrAddress)}`}
+              className="paper-qr-image"
+            />
+            <span className="paper-qr-address">{truncateMiddle(qrAddress)}</span>
+          </div>
+        </aside>
+      )}
+
       <aside className="paper-meta">
         <div>
           <span className="paper-meta-label">Minted</span>
@@ -1111,7 +1219,7 @@ export default function PaperTokenViewer({
         </div>
         <div>
           <span className="paper-meta-label">By</span>
-          <span>{cube.mintedBy}</span>
+          <span>{formatAddress(cube.mintedBy)}</span>
         </div>
       </aside>
     </main>

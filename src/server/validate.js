@@ -14,6 +14,17 @@ export const pinRequestSchema = z.object({
   payload: z.record(z.unknown()),
 });
 
+export const builderAssetRequestSchema = z.object({
+  address: z.string(),
+  nonce: z.string(),
+  signature: z.string(),
+  chainId: CHAIN_ID_SCHEMA.optional(),
+  payload: z.object({
+    viewerUrl: z.string().url(),
+    tokenId: z.union([z.string(), z.number()]),
+  }),
+});
+
 export const nftRequestSchema = z.object({
   mode: z.enum(["alchemy", "rpc"]).optional(),
   chainId: CHAIN_ID_SCHEMA,

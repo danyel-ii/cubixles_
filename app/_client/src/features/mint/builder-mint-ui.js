@@ -5,7 +5,7 @@ import { buildBuilderTokenViewUrl } from "../../config/links.js";
 import { state } from "../../app/app-state.js";
 import { buildImageCandidates } from "../../shared/utils/uri";
 import { buildBuilderMetadata } from "./builder-metadata.js";
-import { pinTokenMetadata } from "./token-uri-provider.js";
+import { pinBuilderAssets, pinTokenMetadata } from "./token-uri-provider.js";
 import { subscribeWallet, switchToActiveChain } from "../wallet/wallet.js";
 
 function formatEthFromWei(value) {
@@ -298,7 +298,32 @@ export function initBuilderMintUi() {
         : (await contract.totalMinted()) + 1n;
       const tokenId = expectedTokenId.toString();
       const externalUrl = buildBuilderTokenViewUrl(tokenId);
-      const imageUrl = pickPreviewImage(selection);
+      let qrUrl = "";
+      let cardUrl = "";
+      let assetDebug = [];
+      try {
+        setStatus("Pinning builder QR...");
+        const assetResult = await pinBuilderAssets({
+          viewerUrl: externalUrl,
+          tokenId,
+          signer,
+          address: walletState.address,
+          chainId: BUILDER_CONTRACT.chainId,
+        });
+        qrUrl = assetResult.qrUrl || "";
+        cardUrl = assetResult.cardUrl || "";
+        assetDebug = [
+          "assets: ready",
+          assetResult.qrUrl ? `qr: ${assetResult.qrUrl}` : null,
+          assetResult.cardUrl ? `card: ${assetResult.cardUrl}` : null,
+        ];
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "QR pin failed.";
+        assetDebug = ["assets: error", message];
+      }
+      const imageUrl = cardUrl || pickPreviewImage(selection);
+      const animationUrl = cardUrl || externalUrl;
       const floorsWeiStrings = floorsWei.map((floor) => floor.toString());
       const floorsEth = floorsWei.map((floor) => formatEthFromWei(floor));
       const metadataPayload = buildBuilderMetadata({
@@ -313,8 +338,9 @@ export function initBuilderMintUi() {
         mintPriceWei: mintPriceWei.toString(),
         mintPriceEth: formatEthFromWei(mintPriceWei),
         imageUrl,
-        animationUrl: externalUrl,
+        animationUrl,
         externalUrl,
+        qrImage: qrUrl,
       });
 
       setStatus("Pinning builder metadata...");
@@ -340,6 +366,7 @@ export function initBuilderMintUi() {
       setDebug([
         "mint: submitted",
         `tokenId: ${tokenId}`,
+        ...assetDebug,
         tokenURI ? `tokenURI: ${tokenURI}` : null,
         metadataHash ? `metadata: ${metadataHash}` : null,
         tx?.hash ? `tx: ${tx.hash}` : null,

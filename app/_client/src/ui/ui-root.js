@@ -13,6 +13,7 @@ import { initNetworkUi } from "../features/network/network-ui.js";
 import { initNftPickerUi } from "../features/nft/picker-ui.js";
 import { initMintUi } from "../features/mint/mint-ui.js";
 import { initBuilderMintUi } from "../features/mint/builder-mint-ui.js";
+import { initPaperClipUi } from "../features/paperclip/paperclip-ui.js";
 import { state } from "../app/app-state.js";
 import { buildTokenViewUrl } from "../config/links.js";
 
@@ -94,6 +95,7 @@ export function initUiRoot() {
   initNftPickerUi();
   if (isBuilderMode) {
     initBuilderMintUi();
+    initPaperClipUi();
   } else {
     initMintUi();
   }
@@ -125,6 +127,7 @@ function initUiTouchGuards() {
     "#mint-confirm",
     "#share-cube",
     "#share-modal",
+    "#paperclip-panel",
   ];
   const selectorList = selectors.join(", ");
   const stopTouchPropagation = (event) => {
@@ -195,6 +198,7 @@ function initUiPointerGuard() {
     "#mint-confirm",
     "#share-cube",
     "#share-modal",
+    "#paperclip-panel",
     ".toast-root",
   ];
 

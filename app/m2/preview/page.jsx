@@ -12,26 +12,7 @@ const PREVIEW_STORAGE_KEY = "cubixles:m2-preview";
 const FACE_ORDER = ["+Z", "-Z", "+X", "-X", "+Y", "-Y"];
 const DEFAULT_DESCRIPTION =
   "cubixles_ token viewer 02 preview, rendered on collegiate paper stock.";
-
-function truncateMiddle(value, start = 6, end = 4) {
-  if (!value) {
-    return "";
-  }
-  if (value.length <= start + end + 3) {
-    return value;
-  }
-  return `${value.slice(0, start)}...${value.slice(-end)}`;
-}
-
-function formatAddress(value) {
-  if (!value) {
-    return "n/a";
-  }
-  if (value.startsWith("0x") && value.length > 12) {
-    return truncateMiddle(value);
-  }
-  return value;
-}
+const MIN_FLOOR_ETH = 0.001;
 
 function formatMintedAt(value) {
   if (!value) {
@@ -97,6 +78,24 @@ async function loadFloorMap(entries, chainId) {
   return map;
 }
 
+function buildPricingSummary(entries, floorMap) {
+  const floors = entries.map((entry) => {
+    const contractKey = entry.contractAddress
+      ? entry.contractAddress.toLowerCase()
+      : null;
+    const snapshot = contractKey ? floorMap.get(contractKey) : null;
+    return typeof snapshot?.floorEth === "number" ? snapshot.floorEth : 0;
+  });
+  const currentSum = floors.reduce((sum, floor) => sum + floor, 0);
+  const paddedCount = Math.max(0, 6 - entries.length);
+  const totalFloor = floors.reduce(
+    (sum, floor) => sum + (floor > 0 ? floor : MIN_FLOOR_ETH),
+    0
+  );
+  const mintPrice = (totalFloor + paddedCount * MIN_FLOOR_ETH) * 0.1;
+  return { currentSum, mintPrice };
+}
+
 export default function PreviewTokenViewerPage() {
   const [cube, setCube] = useState(null);
   const [status, setStatus] = useState("Loading preview...");
@@ -123,6 +122,7 @@ export default function PreviewTokenViewerPage() {
         const chainId = getActiveChainId();
         const floorMap = await loadFloorMap(entries, chainId);
         const faces = buildFaces(entries, floorMap);
+        const pricing = buildPricingSummary(entries, floorMap);
         if (!faces.length) {
           setStatus("Preview has no faces. Select NFTs first.");
           return;
@@ -135,8 +135,10 @@ export default function PreviewTokenViewerPage() {
           tokenId,
           description: data?.description || DEFAULT_DESCRIPTION,
           mintedAt: formatMintedAt(data?.mintedAt),
-          mintedBy: formatAddress(data?.mintedBy),
+          mintedBy: data?.mintedBy || "",
           network: data?.network || formatChainName(chainId),
+          mintPriceEth: pricing.mintPrice,
+          currentFloorSumEth: pricing.currentSum,
           provenanceNFTs: faces,
         });
       } catch (error) {
