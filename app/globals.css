@@ -2270,6 +2270,7 @@ body.is-minted .preview-bar {
   text-decoration: none;
   pointer-events: auto;
   cursor: pointer;
+  touch-action: none;
   transform-style: preserve-3d;
   transform: translate3d(var(--cube-shift-x), var(--cube-shift-y), 0);
   transition: transform 0.12s ease-out;
@@ -2455,7 +2456,16 @@ body.is-minted .preview-bar {
   z-index: 3;
 }
 
-.paper-meta div {
+.paper-meta.is-collapsed .paper-meta-body {
+  display: none;
+}
+
+.paper-meta-body {
+  display: grid;
+  gap: 10px;
+}
+
+.paper-meta-body div {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -2627,6 +2637,15 @@ body.is-minted .preview-bar {
   z-index: 3;
 }
 
+.paper-palette.is-collapsed .paper-palette-body {
+  display: none;
+}
+
+.paper-palette-body {
+  display: grid;
+  gap: 6px;
+}
+
 .paper-palette-label {
   font-size: 0.55rem;
   letter-spacing: 0.18em;
@@ -2732,6 +2751,15 @@ body.is-minted .preview-bar {
   box-shadow: 4px 4px 0 var(--paper-ink);
   font-family: "Space Mono", "Space Grotesk", monospace;
   z-index: 3;
+}
+
+.paper-fee-hud.is-collapsed .paper-fee-body {
+  display: none;
+}
+
+.paper-fee-body {
+  display: grid;
+  gap: 4px;
 }
 
 .paper-fee-label {
@@ -3377,7 +3405,7 @@ body.is-minted .preview-bar {
   .paper-fee-hud {
     right: 20px;
     top: auto;
-    bottom: calc(20px + 300px);
+    bottom: calc(20px + 360px);
   }
 
   .paper-qr {

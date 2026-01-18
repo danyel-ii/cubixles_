@@ -39,6 +39,19 @@ function truncateMiddle(value, start = 6, end = 4) {
   return `${value.slice(0, start)}...${value.slice(-end)}`;
 }
 
+function getPointerPosition(event) {
+  if (!event) {
+    return null;
+  }
+  if (event.touches?.[0]) {
+    return event.touches[0];
+  }
+  if (event.changedTouches?.[0]) {
+    return event.changedTouches[0];
+  }
+  return event;
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -201,6 +214,7 @@ export default function PaperTokenViewer({
     startY: 0,
     startRotX: 0,
     startRotY: 0,
+    scale: 1,
     moved: false,
     lastMoveDistance: 0,
     lastDragAt: 0,
@@ -231,6 +245,9 @@ export default function PaperTokenViewer({
   const [diffusionStatus, setDiffusionStatus] = useState("idle");
   const [qrOpen, setQrOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState("");
+  const [paletteOpen, setPaletteOpen] = useState(true);
+  const [feeOpen, setFeeOpen] = useState(true);
+  const [metaOpen, setMetaOpen] = useState(true);
 
   const faces = useMemo(() => {
     const byId = new Map();
@@ -579,11 +596,20 @@ export default function PaperTokenViewer({
     if (event.button && event.button !== 0) {
       return;
     }
+    const point = getPointerPosition(event);
+    if (!point) {
+      return;
+    }
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    const isTouch = event.pointerType === "touch" || Boolean(event.touches?.length);
     dragRef.current.active = true;
-    dragRef.current.startX = event.clientX;
-    dragRef.current.startY = event.clientY;
+    dragRef.current.startX = point.clientX;
+    dragRef.current.startY = point.clientY;
     dragRef.current.startRotX = rotationRef.current.x;
     dragRef.current.startRotY = rotationRef.current.y;
+    dragRef.current.scale = isTouch ? 0.6 : 1;
     dragRef.current.moved = false;
     dragRef.current.lastMoveDistance = 0;
   }, []);
@@ -608,8 +634,9 @@ export default function PaperTokenViewer({
       if (!dragRef.current.moved && distance > 12) {
         dragRef.current.moved = true;
       }
-      const nextX = clamp(dragRef.current.startRotX + dy * 0.35, -80, 80);
-      const nextY = dragRef.current.startRotY + dx * 0.45;
+      const scale = dragRef.current.scale || 1;
+      const nextX = clamp(dragRef.current.startRotX + dy * 0.35 * scale, -80, 80);
+      const nextY = dragRef.current.startRotY + dx * 0.45 * scale;
       rotationRef.current = { x: nextX, y: nextY };
       scheduleUpdate();
     },
@@ -620,6 +647,16 @@ export default function PaperTokenViewer({
     scheduleUpdate();
     const handleWindowMove = (event) => {
       updateRotationFromDrag(event.clientX, event.clientY);
+    };
+    const handleTouchMove = (event) => {
+      const point = event.touches?.[0];
+      if (!point) {
+        return;
+      }
+      updateRotationFromDrag(point.clientX, point.clientY);
+      if (event.cancelable) {
+        event.preventDefault();
+      }
     };
     const resetVars = (node) => {
       if (!node) {
@@ -647,17 +684,23 @@ export default function PaperTokenViewer({
     };
     window.addEventListener("pointermove", handleWindowMove, { passive: true });
     window.addEventListener("mousemove", handleWindowMove, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
     window.addEventListener("pointerup", endDrag);
     window.addEventListener("pointercancel", endDrag);
     window.addEventListener("mouseup", endDrag);
+    window.addEventListener("touchend", endDrag);
+    window.addEventListener("touchcancel", endDrag);
     window.addEventListener("pointerleave", handleWindowLeave);
     window.addEventListener("blur", handleWindowLeave);
     return () => {
       window.removeEventListener("pointermove", handleWindowMove);
       window.removeEventListener("mousemove", handleWindowMove);
+      window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("pointerup", endDrag);
       window.removeEventListener("pointercancel", endDrag);
       window.removeEventListener("mouseup", endDrag);
+      window.removeEventListener("touchend", endDrag);
+      window.removeEventListener("touchcancel", endDrag);
       window.removeEventListener("pointerleave", handleWindowLeave);
       window.removeEventListener("blur", handleWindowLeave);
       if (frameRef.current !== null) {
@@ -1147,6 +1190,9 @@ export default function PaperTokenViewer({
           onPointerDown={startDrag}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
+          onTouchStart={startDrag}
+          onTouchEnd={endDrag}
+          onTouchCancel={endDrag}
         >
           <div ref={shadowRef} className="paper-cube-shadow" aria-hidden="true" />
           <div
@@ -1298,30 +1344,54 @@ export default function PaperTokenViewer({
       )}
 
       {paletteSwatches.length > 0 && (
-        <aside className="paper-palette" aria-label="Active palette">
-          <span className="paper-palette-label">Palette</span>
-          <div className="paper-palette-swatches">
-            {paletteSwatches.map((color, index) => (
-              <span
-                key={`${color}-${index}`}
-                className="paper-palette-swatch"
-                style={{ backgroundColor: color }}
-                title={color}
-              />
-            ))}
+        <aside
+          className={`paper-palette${paletteOpen ? "" : " is-collapsed"}`}
+          aria-label="Active palette"
+        >
+          <button
+            type="button"
+            className="paper-hud-toggle"
+            aria-expanded={paletteOpen}
+            onClick={() => setPaletteOpen((open) => !open)}
+          >
+            Palette
+          </button>
+          <div className="paper-palette-body">
+            <div className="paper-palette-swatches">
+              {paletteSwatches.map((color, index) => (
+                <span
+                  key={`${color}-${index}`}
+                  className="paper-palette-swatch"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
           </div>
         </aside>
       )}
 
-      <aside className="paper-fee-hud" aria-label="Feingehalt">
-        <span className="paper-fee-label">Feingehalt</span>
-        <span className="paper-fee-value">
-          {mintedFeingehaltLabel === "n/a" ? "n/a" : `${mintedFeingehaltLabel} ETH`}
-        </span>
-        <span className="paper-fee-sub">
-          Delta Feingehalt:{" "}
-          {deltaFeingehaltLabel === "n/a" ? "n/a" : `${deltaFeingehaltLabel} ETH`}
-        </span>
+      <aside
+        className={`paper-fee-hud${feeOpen ? "" : " is-collapsed"}`}
+        aria-label="Feingehalt"
+      >
+        <button
+          type="button"
+          className="paper-hud-toggle"
+          aria-expanded={feeOpen}
+          onClick={() => setFeeOpen((open) => !open)}
+        >
+          Feingehalt
+        </button>
+        <div className="paper-fee-body">
+          <span className="paper-fee-value">
+            {mintedFeingehaltLabel === "n/a" ? "n/a" : `${mintedFeingehaltLabel} ETH`}
+          </span>
+          <span className="paper-fee-sub">
+            Delta Feingehalt:{" "}
+            {deltaFeingehaltLabel === "n/a" ? "n/a" : `${deltaFeingehaltLabel} ETH`}
+          </span>
+        </div>
       </aside>
 
       {showDiffusion && diffusionStatus !== "idle" && (
@@ -1376,18 +1446,28 @@ export default function PaperTokenViewer({
         </aside>
       )}
 
-      <aside className="paper-meta">
-        <div>
-          <span className="paper-meta-label">Minted</span>
-          <span>{cube.mintedAt}</span>
-        </div>
-        <div>
-          <span className="paper-meta-label">Network</span>
-          <span>{cube.network}</span>
-        </div>
-        <div>
-          <span className="paper-meta-label">By</span>
-          <span>{formatAddress(cube.mintedBy)}</span>
+      <aside className={`paper-meta${metaOpen ? "" : " is-collapsed"}`}>
+        <button
+          type="button"
+          className="paper-hud-toggle"
+          aria-expanded={metaOpen}
+          onClick={() => setMetaOpen((open) => !open)}
+        >
+          Details
+        </button>
+        <div className="paper-meta-body">
+          <div>
+            <span className="paper-meta-label">Minted</span>
+            <span>{cube.mintedAt}</span>
+          </div>
+          <div>
+            <span className="paper-meta-label">Network</span>
+            <span>{cube.network}</span>
+          </div>
+          <div>
+            <span className="paper-meta-label">By</span>
+            <span>{formatAddress(cube.mintedBy)}</span>
+          </div>
         </div>
       </aside>
     </main>

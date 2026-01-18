@@ -985,13 +985,6 @@ function TokenIndex() {
               >
                 Ethereum
               </button>
-              <button
-                type="button"
-                className={`token-chain-button${chainId === 8453 ? " is-active" : ""}`}
-                onClick={() => setChainId(8453)}
-              >
-                Base
-              </button>
             </div>
           </div>
           <label className="token-index-control" htmlFor={pageSizeId}>
