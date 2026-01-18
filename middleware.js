@@ -25,6 +25,12 @@ function buildCsp({ nonce, frameAncestors, isProd, reportUri, reportTo, includeU
   }
   const scriptSrcElem = [...scriptSrc];
 
+  const styleSrc = [
+    "'self'",
+    "'unsafe-inline'",
+    "https://fonts.googleapis.com",
+    "https://provenance-viewer.vercel.app",
+  ];
   const directives = [
     "default-src 'self'",
     "base-uri 'self'",
@@ -34,8 +40,8 @@ function buildCsp({ nonce, frameAncestors, isProd, reportUri, reportTo, includeU
     "frame-src 'self' https://vercel.live https://verify.walletconnect.org",
     `script-src ${scriptSrc.join(" ")}`,
     `script-src-elem ${scriptSrcElem.join(" ")}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    `style-src ${styleSrc.join(" ")}`,
+    `style-src-elem ${styleSrc.join(" ")}`,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com https:",
     "connect-src 'self' https: wss: data: blob:",

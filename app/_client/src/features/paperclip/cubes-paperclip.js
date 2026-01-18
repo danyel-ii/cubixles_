@@ -144,14 +144,14 @@ export function renderCubesPaperClip({ canvas, seed, palette }) {
     const prng = mulberry32(layerSeed);
     const params = {
       color: colors[i % colors.length],
-      grid: Math.floor(6 + prng() * 14),
-      holeProb: 0.25 + prng() * 0.55,
-      radius: 0.18 + prng() * 0.35,
-      squareMix: prng(),
-      rotation: (prng() - 0.5) * 0.28,
-      scale: 0.92 + prng() * 0.12,
-      offsetX: (prng() - 0.5) * size * (0.06 + depth * 0.04),
-      offsetY: (prng() - 0.5) * size * (0.06 + depth * 0.04),
+      grid: Math.floor(8 + prng() * 12),
+      holeProb: 0.55 + prng() * 0.35,
+      radius: 0.32 + prng() * 0.32,
+      squareMix: prng() * 0.65,
+      rotation: 0,
+      scale: 1,
+      offsetX: 0,
+      offsetY: 0,
       shadow: 12 + depth * 12,
     };
 
