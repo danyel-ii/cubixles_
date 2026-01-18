@@ -1,7 +1,11 @@
 import { BrowserProvider, Contract, formatEther } from "ethers";
 import { BUILDER_CONTRACT } from "../../config/builder-contracts";
 import { formatChainName, subscribeActiveChain } from "../../config/chains.js";
+import { buildBuilderTokenViewUrl } from "../../config/links.js";
 import { state } from "../../app/app-state.js";
+import { buildImageCandidates } from "../../shared/utils/uri";
+import { buildBuilderMetadata } from "./builder-metadata.js";
+import { pinTokenMetadata } from "./token-uri-provider.js";
 import { subscribeWallet, switchToActiveChain } from "../wallet/wallet.js";
 
 function formatEthFromWei(value) {
@@ -20,6 +24,21 @@ function formatFloorLabel(floorWei) {
     return "0.0010 (fallback)";
   }
   return formatEthFromWei(floorWei);
+}
+
+function pickPreviewImage(selection) {
+  const candidate = selection.find((nft) => nft?.image);
+  if (!candidate) {
+    return "";
+  }
+  const candidates = buildImageCandidates(candidate.image);
+  if (candidates.length) {
+    return candidates[0];
+  }
+  if (typeof candidate.image === "string") {
+    return candidate.image;
+  }
+  return candidate.image?.resolved || candidate.image?.original || "";
 }
 
 export function initBuilderMintUi() {
@@ -168,6 +187,7 @@ export function initBuilderMintUi() {
         floorsWei,
         quote,
         signature: data.signature,
+        totalFloorWei,
         mintPriceWei,
       };
     } catch (error) {
@@ -241,10 +261,14 @@ export function initBuilderMintUi() {
 
     isMinting = true;
     setDisabled(true);
-    setStatus("Submitting builder mint...");
+    setStatus("Preparing builder mint...");
     setError("");
 
     try {
+      const selection = state.nftSelection || [];
+      if (selection.length < 1 || selection.length > 6) {
+        throw new Error("Select 1 to 6 NFTs before minting.");
+      }
       const provider = new BrowserProvider(walletState.provider);
       const network = await provider.getNetwork();
       const walletChainId = Number(network.chainId);
@@ -266,16 +290,58 @@ export function initBuilderMintUi() {
         BUILDER_CONTRACT.abi,
         signer
       );
-      const tx = await contract.mintBuilders(
+      const totalFloorWei = currentQuote.totalFloorWei ?? 0n;
+      const floorsWei = currentQuote.floorsWei ?? [];
+      const mintPriceWei = currentQuote.mintPriceWei ?? 0n;
+      const expectedTokenId = typeof contract.nextTokenId === "function"
+        ? await contract.nextTokenId()
+        : (await contract.totalMinted()) + 1n;
+      const tokenId = expectedTokenId.toString();
+      const externalUrl = buildBuilderTokenViewUrl(tokenId);
+      const imageUrl = pickPreviewImage(selection);
+      const floorsWeiStrings = floorsWei.map((floor) => floor.toString());
+      const floorsEth = floorsWei.map((floor) => formatEthFromWei(floor));
+      const metadataPayload = buildBuilderMetadata({
+        tokenId,
+        minter: walletState.address,
+        chainId: BUILDER_CONTRACT.chainId,
+        selection,
+        floorsWei: floorsWeiStrings,
+        floorsEth,
+        totalFloorWei: totalFloorWei.toString(),
+        totalFloorEth: formatEthFromWei(totalFloorWei),
+        mintPriceWei: mintPriceWei.toString(),
+        mintPriceEth: formatEthFromWei(mintPriceWei),
+        imageUrl,
+        animationUrl: externalUrl,
+        externalUrl,
+      });
+
+      setStatus("Pinning builder metadata...");
+      const { tokenURI, metadataHash } = await pinTokenMetadata({
+        metadata: metadataPayload,
+        signer,
+        address: walletState.address,
+        chainId: BUILDER_CONTRACT.chainId,
+      });
+
+      setStatus("Submitting builder mint...");
+      const tx = await contract.mintBuildersWithMetadata(
         currentQuote.refs,
-        currentQuote.floorsWei,
+        floorsWei,
         currentQuote.quote,
         currentQuote.signature,
-        { value: currentQuote.mintPriceWei }
+        tokenURI,
+        metadataHash,
+        expectedTokenId,
+        { value: mintPriceWei }
       );
       setStatus("Builder mint submitted.");
       setDebug([
         "mint: submitted",
+        `tokenId: ${tokenId}`,
+        tokenURI ? `tokenURI: ${tokenURI}` : null,
+        metadataHash ? `metadata: ${metadataHash}` : null,
         tx?.hash ? `tx: ${tx.hash}` : null,
       ]);
       await tx.wait();

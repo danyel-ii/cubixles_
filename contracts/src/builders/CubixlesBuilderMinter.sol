@@ -63,6 +63,12 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     error RoyaltyInfoFailed(address nft, uint256 tokenId);
     /// @notice Royalty receiver is required.
     error RoyaltyReceiverRequired(address nft, uint256 tokenId);
+    /// @notice Token URI is required.
+    error TokenUriRequired();
+    /// @notice Metadata hash is required.
+    error MetadataHashRequired();
+    /// @notice Expected token id does not match.
+    error ExpectedTokenIdMismatch(uint256 expected, uint256 actual);
 
     /// @notice Minimum floor price per face (0.001 ETH).
     uint256 public constant MIN_FLOOR_WEI = 1_000_000_000_000_000;
@@ -85,14 +91,22 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
 
     /// @notice Total minted token count.
     uint256 public totalMinted;
+    /// @notice Mint price recorded per token id.
+    mapping(uint256 => uint256) public mintPriceByTokenId;
+    /// @notice Metadata hash recorded per token id.
+    mapping(uint256 => bytes32) public metadataHashByTokenId;
     /// @notice Authorized signer for floor quotes.
     address public quoteSigner;
     /// @notice Pending owner balance when direct payouts fail.
     uint256 public pendingOwnerBalance;
     /// @notice Base token URI.
     string private _baseTokenURI;
+    /// @notice Token URI override per token id.
+    mapping(uint256 => string) private _tokenUriByTokenId;
     /// @notice References used per token id.
     mapping(uint256 => NftRef[]) private _refsByTokenId;
+    /// @notice Floors used per token id.
+    mapping(uint256 => uint256[]) private _floorsByTokenId;
     /// @notice Used quote nonces.
     mapping(uint256 => bool) public usedNonces;
 
@@ -150,6 +164,57 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
         address[] memory receivers = _resolveReceivers(refs, minter, mintPrice);
 
         tokenId = _mintToken(minter, refs);
+        mintPriceByTokenId[tokenId] = mintPrice;
+        _storeFloors(tokenId, floorsWei);
+        _distributePayouts(mintPrice, floorsWei, receivers, ownerAddr);
+
+        emit BuilderMinted(tokenId, minter, refCount, mintPrice);
+    }
+
+    /// @notice Mint with metadata and store token URI + floor snapshots.
+    /// @param refs References used for the cube faces (1-6).
+    /// @param floorsWei Floor prices (wei) aligned to refs order.
+    /// @param quote Signed quote containing total floor sum and expiry.
+    /// @param signature Signature from the quote signer.
+    /// @param tokenUri Metadata token URI.
+    /// @param metadataHash Hash of the metadata payload.
+    /// @param expectedTokenId Expected sequential token id.
+    function mintBuildersWithMetadata(
+        NftRef[] calldata refs,
+        uint256[] calldata floorsWei,
+        BuilderQuote calldata quote,
+        bytes calldata signature,
+        string calldata tokenUri,
+        bytes32 metadataHash,
+        uint256 expectedTokenId
+    ) external payable nonReentrant returns (uint256 tokenId) {
+        if (bytes(tokenUri).length == 0) {
+            revert TokenUriRequired();
+        }
+        if (metadataHash == bytes32(0)) {
+            revert MetadataHashRequired();
+        }
+        uint256 refCount = _requireValidRefCount(refs.length);
+        _requireFloorCount(refCount, floorsWei.length);
+
+        uint256 predictedTokenId = totalMinted + 1;
+        if (expectedTokenId != predictedTokenId) {
+            revert ExpectedTokenIdMismatch(expectedTokenId, predictedTokenId);
+        }
+
+        uint256 expectedTotalFloorWei = _computeTotalFloorWei(floorsWei, refCount);
+        uint256 mintPrice = _validateQuote(refs, floorsWei, quote, signature, expectedTotalFloorWei);
+        _requireExactPayment(mintPrice);
+
+        address minter = msg.sender;
+        address ownerAddr = owner();
+        address[] memory receivers = _resolveReceivers(refs, minter, mintPrice);
+
+        tokenId = _mintToken(minter, refs);
+        mintPriceByTokenId[tokenId] = mintPrice;
+        metadataHashByTokenId[tokenId] = metadataHash;
+        _tokenUriByTokenId[tokenId] = tokenUri;
+        _storeFloors(tokenId, floorsWei);
         _distributePayouts(mintPrice, floorsWei, receivers, ownerAddr);
 
         emit BuilderMinted(tokenId, minter, refCount, mintPrice);
@@ -158,6 +223,16 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     /// @notice Return the references stored for a token id.
     function getTokenRefs(uint256 tokenId) external view returns (NftRef[] memory) {
         return _refsByTokenId[tokenId];
+    }
+
+    /// @notice Return the floor snapshots stored for a token id.
+    function getTokenFloors(uint256 tokenId) external view returns (uint256[] memory) {
+        return _floorsByTokenId[tokenId];
+    }
+
+    /// @notice Return the next sequential token id.
+    function nextTokenId() external view returns (uint256) {
+        return totalMinted + 1;
     }
 
     /// @notice Update base token URI.
@@ -192,10 +267,26 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
         return _baseTokenURI;
     }
 
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        _requireMinted(tokenId);
+        string memory overrideUri = _tokenUriByTokenId[tokenId];
+        if (bytes(overrideUri).length > 0) {
+            return overrideUri;
+        }
+        return super.tokenURI(tokenId);
+    }
+
     function _storeRefs(uint256 tokenId, NftRef[] calldata refs) internal {
         uint256 refCount = refs.length;
         for (uint256 i = 0; i < refCount; i += 1) {
             _refsByTokenId[tokenId].push(refs[i]);
+        }
+    }
+
+    function _storeFloors(uint256 tokenId, uint256[] calldata floorsWei) internal {
+        uint256 floorCount = floorsWei.length;
+        for (uint256 i = 0; i < floorCount; i += 1) {
+            _floorsByTokenId[tokenId].push(floorsWei[i]);
         }
     }
 

@@ -1,8 +1,14 @@
-import abi from "../../../../contracts/abi/CubixlesBuilderMinter.json";
 import { getActiveChainId } from "./chains.js";
 import mainnetDeployment from "../../../../contracts/deployments/builder-mainnet.json";
 import baseDeployment from "../../../../contracts/deployments/builder-base.json";
 import sepoliaDeployment from "../../../../contracts/deployments/builder-sepolia.json";
+
+const abi = [
+  "function mintBuilders((address contractAddress,uint256 tokenId)[] refs,uint256[] floorsWei,(uint256 totalFloorWei,uint256 chainId,uint256 expiresAt,uint256 nonce) quote,bytes signature) payable returns (uint256)",
+  "function mintBuildersWithMetadata((address contractAddress,uint256 tokenId)[] refs,uint256[] floorsWei,(uint256 totalFloorWei,uint256 chainId,uint256 expiresAt,uint256 nonce) quote,bytes signature,string tokenUri,bytes32 metadataHash,uint256 expectedTokenId) payable returns (uint256)",
+  "function nextTokenId() view returns (uint256)",
+  "function totalMinted() view returns (uint256)",
+];
 
 function getDeployment(chainId: number) {
   if (chainId === 1) {

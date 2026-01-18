@@ -64,11 +64,13 @@ export function initIntro() {
   const isTokenView =
     typeof document !== "undefined" &&
     document.body.classList.contains("is-token-view");
+  const isBuilder =
+    typeof document !== "undefined" && document.body.classList.contains("is-builder");
   const duration = reduceMotion ? 1200 : INTRO_DURATION_MS;
   const zoomStart = Math.max(config.zoom.max + 260, config.zoom.initial + 380);
 
   state.intro = {
-    active: !reduceMotion && !isTokenView && !skipIntro,
+    active: !reduceMotion && !isTokenView && !isBuilder && !skipIntro,
     duration,
     startTime: typeof millis === "function" ? millis() : Date.now(),
     zoomStart,

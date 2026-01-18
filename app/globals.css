@@ -102,43 +102,9 @@ body {
 }
 
 body.is-builder {
-  background-color: #f7f2e8;
-  background-image:
-    radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
-    repeating-linear-gradient(
-      to right,
-      transparent,
-      transparent 23px,
-      rgba(30, 45, 70, 0.16) 24px
-    ),
-    repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 23px,
-      rgba(30, 45, 70, 0.16) 24px
-    ),
-    repeating-linear-gradient(
-      to right,
-      transparent,
-      transparent 119px,
-      rgba(30, 45, 70, 0.3) 120px
-    ),
-    repeating-linear-gradient(
-      to bottom,
-      transparent,
-      transparent 119px,
-      rgba(30, 45, 70, 0.3) 120px
-    ),
-    linear-gradient(
-      to right,
-      transparent 0,
-      transparent 62px,
-      rgba(208, 88, 88, 0.7) 62px,
-      rgba(208, 88, 88, 0.7) 64px,
-      transparent 64px
-    );
-  background-size: 4px 4px, auto, auto, auto, auto, auto;
-  background-attachment: fixed;
+  background: #f7f2e8;
+  background-image: none;
+  background-attachment: scroll;
 }
 
 .intro-shield {
@@ -2006,6 +1972,8 @@ body.is-minted .preview-bar {
   --cube-base-y: 38deg;
   --cube-user-x: 0deg;
   --cube-user-y: 0deg;
+  --cube-edge-color: rgba(27, 23, 19, 0.55);
+  --cube-edge-glow: rgba(27, 23, 19, 0.35);
   --cube-tilt-x: 0deg;
   --cube-tilt-y: 0deg;
   --cube-shadow-x: 0px;
@@ -2247,8 +2215,8 @@ body.is-minted .preview-bar {
   background-image: var(--face-shade), var(--face-image);
   background-size: cover;
   background-position: center;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--cube-edge-color);
+  box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.35), 0 0 10px var(--cube-edge-glow);
   backface-visibility: hidden;
   filter: saturate(1.05) contrast(1.08);
   cursor: pointer;
@@ -2565,6 +2533,233 @@ body.is-minted .preview-bar {
   border: 1px solid rgba(27, 23, 19, 0.5);
 }
 
+.paper-hud {
+  position: absolute;
+  right: clamp(24px, 4vw, 64px);
+  top: clamp(92px, 12vw, 140px);
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid var(--paper-ink);
+  background: var(--paper-panel);
+  box-shadow: 4px 4px 0 var(--paper-ink);
+  z-index: 3;
+  font-family: "Space Mono", "Space Grotesk", monospace;
+}
+
+.paper-hud.is-collapsed .paper-hud-body {
+  display: none;
+}
+
+.paper-hud-toggle {
+  border: 1px solid var(--paper-ink);
+  background: #f4d7a1;
+  color: var(--paper-ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+}
+
+.paper-hud-body {
+  display: grid;
+  gap: 6px;
+}
+
+.paper-hud-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.paper-hud-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(27, 23, 19, 0.6);
+}
+
+.paper-hud-value {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.paper-hud-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(27, 23, 19, 0.6);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.25);
+}
+
+.shaolin-deck {
+  --deck-base: #f7f2e8;
+  --deck-ink: #1b1713;
+  --deck-grid: rgba(30, 45, 70, 0.16);
+  --deck-grid-bold: rgba(30, 45, 70, 0.3);
+  --deck-grid-size: 24px;
+  --deck-grid-bold-size: 120px;
+  --deck-margin: rgba(208, 88, 88, 0.7);
+
+  min-height: 100vh;
+  padding: clamp(32px, 5vw, 80px);
+  background: var(--deck-base);
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      transparent,
+      transparent calc(var(--deck-grid-size) - 1px),
+      var(--deck-grid) calc(var(--deck-grid-size))
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent calc(var(--deck-grid-size) - 1px),
+      var(--deck-grid) calc(var(--deck-grid-size))
+    ),
+    repeating-linear-gradient(
+      to right,
+      transparent,
+      transparent calc(var(--deck-grid-bold-size) - 1px),
+      var(--deck-grid-bold) calc(var(--deck-grid-bold-size))
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent calc(var(--deck-grid-bold-size) - 1px),
+      var(--deck-grid-bold) calc(var(--deck-grid-bold-size))
+    ),
+    linear-gradient(
+      to right,
+      transparent 0,
+      transparent 62px,
+      var(--deck-margin) 62px,
+      var(--deck-margin) 64px,
+      transparent 64px
+    );
+  color: var(--deck-ink);
+  font-family: "Space Grotesk", "Instrument Sans", system-ui, sans-serif;
+}
+
+.shaolin-deck-header {
+  max-width: 680px;
+  padding: 20px 22px;
+  border-radius: 14px;
+  border: 2px solid var(--deck-ink);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 8px 8px 0 var(--deck-ink);
+}
+
+.shaolin-deck-eyebrow {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-family: "Space Mono", "Space Grotesk", monospace;
+  color: rgba(27, 23, 19, 0.6);
+}
+
+.shaolin-deck-title {
+  margin: 6px 0 8px;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+}
+
+.shaolin-deck-subhead {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.shaolin-deck-status {
+  margin-top: 24px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px dashed rgba(27, 23, 19, 0.5);
+  background: rgba(255, 255, 255, 0.8);
+  font-family: "Space Mono", "Space Grotesk", monospace;
+}
+
+.shaolin-deck-grid {
+  margin-top: clamp(24px, 4vw, 36px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(16px, 2vw, 24px);
+}
+
+.shaolin-card {
+  display: grid;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 16px;
+  border: 2px solid var(--deck-ink);
+  box-shadow: 6px 6px 0 var(--deck-ink);
+  overflow: hidden;
+}
+
+.shaolin-card-media {
+  background: #e4ddd4;
+  min-height: 150px;
+}
+
+.shaolin-card-media img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.shaolin-card-placeholder {
+  height: 180px;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(27, 23, 19, 0.6);
+}
+
+.shaolin-card-body {
+  padding: 14px 16px 16px;
+  display: grid;
+  gap: 6px;
+}
+
+.shaolin-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.shaolin-card-meta {
+  font-family: "Space Mono", "Space Grotesk", monospace;
+  font-size: 0.75rem;
+  color: rgba(27, 23, 19, 0.7);
+}
+
+.shaolin-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.shaolin-card-link {
+  border-radius: 999px;
+  border: 1px solid var(--deck-ink);
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--deck-ink);
+  text-decoration: none;
+  background: #f4d7a1;
+}
+
+.shaolin-card-link.is-ghost {
+  background: transparent;
+}
+
 @media (max-width: 900px) {
   .paper-viewer {
     --cube-size: clamp(180px, 52vw, 260px);
@@ -2591,6 +2786,12 @@ body.is-minted .preview-bar {
     right: 20px;
     top: auto;
     bottom: calc(20px + 220px);
+  }
+
+  .paper-hud {
+    right: 20px;
+    top: auto;
+    bottom: calc(20px + 140px);
   }
 
   .paper-inspector {

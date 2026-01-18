@@ -44,6 +44,14 @@ export function buildTokenViewUrl(tokenId) {
   return `${base}/m/${tokenId}`;
 }
 
+export function buildBuilderTokenViewUrl(tokenId) {
+  const base = getTokenViewBaseUrl();
+  if (!base) {
+    return "";
+  }
+  return `${base}/m2/${tokenId}`;
+}
+
 export function buildPalettePreviewGifUrl() {
   const base = getTokenViewBaseUrl();
   if (!base) {

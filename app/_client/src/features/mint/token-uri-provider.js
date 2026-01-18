@@ -64,14 +64,19 @@ async function fetchNonce() {
   return json.nonce;
 }
 
-export async function pinTokenMetadata({ metadata, signer, address }) {
+export async function pinTokenMetadata({
+  metadata,
+  signer,
+  address,
+  chainId = CUBIXLES_CONTRACT.chainId,
+}) {
   if (!signer || !address) {
     throw new Error("Wallet signer unavailable.");
   }
   let lastError = null;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const nonce = await fetchNonce();
-    const { domain, types, value } = buildPinTypedData(nonce, CUBIXLES_CONTRACT.chainId);
+    const { domain, types, value } = buildPinTypedData(nonce, chainId);
     const signature = await signer.signTypedData(domain, types, value);
 
     const response = await fetch("/api/pin/metadata", {
@@ -81,7 +86,7 @@ export async function pinTokenMetadata({ metadata, signer, address }) {
         address,
         nonce,
         signature,
-        chainId: CUBIXLES_CONTRACT.chainId,
+        chainId,
         payload: metadata,
       }),
     });

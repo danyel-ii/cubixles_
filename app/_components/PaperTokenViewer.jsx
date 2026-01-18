@@ -42,6 +42,35 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function hexToRgb(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const normalized = value.trim().replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return null;
+  }
+  const int = Number.parseInt(normalized, 16);
+  return {
+    r: (int >> 16) & 255,
+    g: (int >> 8) & 255,
+    b: int & 255,
+  };
+}
+
+function rgbToHex({ r, g, b }) {
+  const toHex = (value) => value.toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+}
+
+function rgbaString({ r, g, b }, alpha) {
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function getLuminance({ r, g, b }) {
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
 function formatFloorValue(floorEth) {
   if (typeof floorEth !== "number" || Number.isNaN(floorEth)) {
     return "n/a";
@@ -80,6 +109,61 @@ function pickFaceImage(face) {
   return face.media?.image ?? null;
 }
 
+async function sampleAverageColor(url) {
+  if (!url || typeof url !== "string") {
+    return null;
+  }
+  const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
+  if (!response.ok) {
+    return null;
+  }
+  const blob = await response.blob();
+  let bitmap = null;
+  try {
+    bitmap = await createImageBitmap(blob);
+  } catch (error) {
+    return null;
+  }
+  const size = 24;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) {
+    if (bitmap && typeof bitmap.close === "function") {
+      bitmap.close();
+    }
+    return null;
+  }
+  ctx.drawImage(bitmap, 0, 0, size, size);
+  if (bitmap && typeof bitmap.close === "function") {
+    bitmap.close();
+  }
+  const { data } = ctx.getImageData(0, 0, size, size);
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const alpha = data[i + 3];
+    if (alpha < 10) {
+      continue;
+    }
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
+    count += 1;
+  }
+  if (!count) {
+    return null;
+  }
+  return {
+    r: Math.round(r / count),
+    g: Math.round(g / count),
+    b: Math.round(b / count),
+  };
+}
+
 export default function PaperTokenViewer({
   cube,
   requestedTokenId,
@@ -95,6 +179,7 @@ export default function PaperTokenViewer({
     startRotX: 0,
     startRotY: 0,
     moved: false,
+    lastMoveDistance: 0,
     lastDragAt: 0,
   });
   const cubeLinkRef = useRef(null);
@@ -106,6 +191,9 @@ export default function PaperTokenViewer({
   const inspectedIndicesRef = useRef([]);
   const [inspectedIndices, setInspectedIndices] = useState([]);
   const [baseRotation, setBaseRotation] = useState(DEFAULT_ROTATION);
+  const [hudOpen, setHudOpen] = useState(true);
+  const [diffusionAverage, setDiffusionAverage] = useState(null);
+  const [diffusionStatus, setDiffusionStatus] = useState("idle");
 
   const faces = useMemo(() => {
     const byId = new Map();
@@ -132,11 +220,95 @@ export default function PaperTokenViewer({
     });
   }, [cube?.provenanceNFTs]);
 
+  const paletteSwatches = useMemo(
+    () => (Array.isArray(palette) ? palette : []),
+    [palette]
+  );
+  const edgeColor = useMemo(() => {
+    if (!paletteSwatches.length) {
+      return null;
+    }
+    let bestColor = null;
+    let bestLuminance = Infinity;
+    paletteSwatches.forEach((color) => {
+      const rgb = hexToRgb(color);
+      if (!rgb) {
+        return;
+      }
+      const luminance = getLuminance(rgb);
+      if (luminance < bestLuminance) {
+        bestLuminance = luminance;
+        bestColor = color;
+      }
+    });
+    return bestColor || paletteSwatches[0];
+  }, [paletteSwatches]);
+  const edgeGlow = useMemo(() => {
+    if (!edgeColor) {
+      return null;
+    }
+    const rgb = hexToRgb(edgeColor);
+    return rgb ? rgbaString(rgb, 0.45) : null;
+  }, [edgeColor]);
+
   useEffect(() => {
     setBaseRotation(DEFAULT_ROTATION);
     rotationRef.current = { x: 0, y: 0 };
     setInspectedIndices([]);
   }, [cube?.tokenId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const urls = faces.map((face) => face.image).filter(Boolean);
+    if (!urls.length) {
+      setDiffusionAverage(null);
+      setDiffusionStatus("idle");
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      setDiffusionStatus("loading");
+      const samples = await Promise.all(
+        urls.slice(0, 6).map(async (url) => {
+          try {
+            return await sampleAverageColor(url);
+          } catch (error) {
+            return null;
+          }
+        })
+      );
+      if (cancelled) {
+        return;
+      }
+      const valid = samples.filter(Boolean);
+      if (!valid.length) {
+        setDiffusionAverage(null);
+        setDiffusionStatus("error");
+        return;
+      }
+      const sum = valid.reduce(
+        (acc, color) => ({
+          r: acc.r + color.r,
+          g: acc.g + color.g,
+          b: acc.b + color.b,
+        }),
+        { r: 0, g: 0, b: 0 }
+      );
+      const avg = {
+        r: Math.round(sum.r / valid.length),
+        g: Math.round(sum.g / valid.length),
+        b: Math.round(sum.b / valid.length),
+      };
+      setDiffusionAverage({ ...avg, hex: rgbToHex(avg) });
+      setDiffusionStatus("ready");
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [faces]);
 
   useLayoutEffect(() => {
     inspectedIndicesRef.current = inspectedIndices;
@@ -273,11 +445,11 @@ export default function PaperTokenViewer({
     dragRef.current.startRotX = rotationRef.current.x;
     dragRef.current.startRotY = rotationRef.current.y;
     dragRef.current.moved = false;
-    event.currentTarget?.setPointerCapture?.(event.pointerId);
+    dragRef.current.lastMoveDistance = 0;
   }, []);
 
   const endDrag = useCallback(() => {
-    if (dragRef.current.moved) {
+    if (dragRef.current.moved && dragRef.current.lastMoveDistance > 12) {
       dragRef.current.lastDragAt = Date.now();
     }
     dragRef.current.active = false;
@@ -291,7 +463,9 @@ export default function PaperTokenViewer({
       }
       const dx = clientX - dragRef.current.startX;
       const dy = clientY - dragRef.current.startY;
-      if (!dragRef.current.moved && Math.hypot(dx, dy) > 6) {
+      const distance = Math.hypot(dx, dy);
+      dragRef.current.lastMoveDistance = distance;
+      if (!dragRef.current.moved && distance > 12) {
         dragRef.current.moved = true;
       }
       const nextX = clamp(dragRef.current.startRotX + dy * 0.35, -80, 80);
@@ -359,7 +533,9 @@ export default function PaperTokenViewer({
     if (!inspectedIndices.length) {
       return;
     }
-    const frame = window.requestAnimationFrame(updateInspectorLayout);
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(updateInspectorLayout);
+    });
     return () => window.cancelAnimationFrame(frame);
   }, [inspectedIndices, updateInspectorLayout]);
 
@@ -374,7 +550,7 @@ export default function PaperTokenViewer({
 
   const handleFaceInspect = useCallback(
     (index) => {
-      if (dragRef.current.lastDragAt && Date.now() - dragRef.current.lastDragAt < 200) {
+      if (dragRef.current.lastDragAt && Date.now() - dragRef.current.lastDragAt < 240) {
         return;
       }
       const face = faces[index];
@@ -405,6 +581,10 @@ export default function PaperTokenViewer({
     return next.replace(/\b\d{20,}\b/g, (match) => truncateMiddle(match));
   }, [cube?.description, cube?.tokenId, requestedTokenId, truncatedTokenId]);
   const isMismatch = cube?.tokenId !== requestedTokenId;
+  const diffusionLabel =
+    diffusionAverage?.hex ||
+    (diffusionStatus === "loading" ? "Calculating..." : "n/a");
+  const diffusionSwatch = diffusionAverage?.hex || "#f7f2e8";
 
   const handleExportHtml = useCallback(() => {
     if (!cube) {
@@ -417,6 +597,8 @@ export default function PaperTokenViewer({
         .replace(/>/g, "&gt;")
         .replace(/\"/g, "&quot;")
         .replace(/'/g, "&#39;");
+    const exportEdgeColor = edgeColor || "rgba(27, 23, 19, 0.55)";
+    const exportEdgeGlow = edgeGlow || "rgba(27, 23, 19, 0.35)";
 
     const exportFaces = faces
       .map((face) => {
@@ -447,10 +629,14 @@ export default function PaperTokenViewer({
         --cube-size: min(360px, 60vw);
         --cube-base-x: -26deg;
         --cube-base-y: 38deg;
+        --cube-user-x: 0deg;
+        --cube-user-y: 0deg;
         --cube-tilt-x: 0deg;
         --cube-tilt-y: 0deg;
         --cube-shadow-x: 0px;
         --cube-shadow-y: 0px;
+        --cube-edge-color: ${exportEdgeColor};
+        --cube-edge-glow: ${exportEdgeGlow};
       }
       * { box-sizing: border-box; }
       body { margin: 0; font-family: \"Space Grotesk\", \"Instrument Sans\", sans-serif; }
@@ -523,12 +709,42 @@ export default function PaperTokenViewer({
       .paper-title { margin: 0 0 10px; font-size: 2rem; }
       .paper-subhead { margin: 0; font-size: 0.95rem; }
       .paper-stage { position: absolute; inset: 0; display: grid; place-items: center; z-index: 2; }
+      .paper-cube-link {
+        position: relative;
+        width: var(--cube-size);
+        height: var(--cube-size);
+        display: grid;
+        place-items: center;
+        transform-style: preserve-3d;
+        cursor: grab;
+      }
+      .paper-cube-link:active { cursor: grabbing; }
+      .paper-cube-shadow {
+        position: absolute;
+        width: 80%;
+        height: 22%;
+        left: 50%;
+        top: 72%;
+        transform: translate(
+          calc(-50% + var(--cube-shadow-x)),
+          calc(var(--cube-shadow-y))
+        );
+        background: radial-gradient(
+          ellipse at center,
+          rgba(0, 0, 0, 0.45),
+          transparent 70%
+        );
+        filter: blur(12px);
+        opacity: 0.7;
+      }
       .paper-cube {
         position: relative;
         width: var(--cube-size);
         height: var(--cube-size);
         transform-style: preserve-3d;
-        transform: rotateX(var(--cube-base-x)) rotateY(var(--cube-base-y));
+        transform: rotateX(calc(var(--cube-base-x) + var(--cube-user-x)))
+          rotateY(calc(var(--cube-base-y) + var(--cube-user-y)));
+        transition: transform 0.12s ease-out;
       }
       .paper-cube-face {
         position: absolute;
@@ -537,7 +753,9 @@ export default function PaperTokenViewer({
         background-image: var(--face-image);
         background-size: cover;
         background-position: center;
-        border: 1px solid rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--cube-edge-color);
+        box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.35), 0 0 10px var(--cube-edge-glow);
+        backface-visibility: hidden;
       }
       .paper-face-front { transform: translateZ(calc(var(--cube-size) / 2)); }
       .paper-face-back { transform: rotateY(180deg) translateZ(calc(var(--cube-size) / 2)); }
@@ -563,9 +781,61 @@ export default function PaperTokenViewer({
             <p class=\"paper-subhead\">${escapeHtml(displayDescription)}</p>
           </header>
           <div class=\"paper-stage\">
-            <div class=\"paper-cube\">${exportFaces}</div>
+            <div class=\"paper-cube-link\" aria-label=\"Cubixles cube\">
+              <div class=\"paper-cube-shadow\" aria-hidden=\"true\"></div>
+              <div class=\"paper-cube\">${exportFaces}</div>
+            </div>
           </div>
         </main>
+        <script>
+          (() => {
+            const viewer = document.querySelector(".paper-viewer");
+            const cubeLink = document.querySelector(".paper-cube-link");
+            if (!viewer || !cubeLink) {
+              return;
+            }
+            let active = false;
+            let startX = 0;
+            let startY = 0;
+            let startRotX = 0;
+            let startRotY = 0;
+            let rotX = 0;
+            let rotY = 0;
+            const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+            const updateVars = () => {
+              viewer.style.setProperty("--cube-user-x", `${rotX}deg`);
+              viewer.style.setProperty("--cube-user-y", `${rotY}deg`);
+            };
+            const onMove = (event) => {
+              if (!active) {
+                return;
+              }
+              const dx = event.clientX - startX;
+              const dy = event.clientY - startY;
+              rotX = clamp(startRotX + dy * 0.35, -80, 80);
+              rotY = startRotY + dx * 0.45;
+              updateVars();
+            };
+            cubeLink.addEventListener("pointerdown", (event) => {
+              active = true;
+              startX = event.clientX;
+              startY = event.clientY;
+              startRotX = rotX;
+              startRotY = rotY;
+              if (cubeLink.setPointerCapture) {
+                cubeLink.setPointerCapture(event.pointerId);
+              }
+            });
+            window.addEventListener("pointermove", onMove, { passive: true });
+            window.addEventListener("pointerup", () => {
+              active = false;
+            });
+            window.addEventListener("pointercancel", () => {
+              active = false;
+            });
+            updateVars();
+          })();
+        </script>
       </body>
       </html>`;
 
@@ -578,13 +848,11 @@ export default function PaperTokenViewer({
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(url);
-  }, [cube, displayDescription, faces, truncatedTokenId]);
+  }, [cube, displayDescription, edgeColor, edgeGlow, faces, truncatedTokenId]);
 
   if (!cube) {
     return null;
   }
-
-  const paletteSwatches = Array.isArray(palette) ? palette : [];
 
   return (
     <main
@@ -593,6 +861,12 @@ export default function PaperTokenViewer({
       style={{
         "--cube-base-x": baseRotation.x,
         "--cube-base-y": baseRotation.y,
+        ...(edgeColor
+          ? {
+              "--cube-edge-color": edgeColor,
+              "--cube-edge-glow": edgeGlow || edgeColor,
+            }
+          : null),
       }}
     >
       <header className="paper-header">
@@ -663,9 +937,12 @@ export default function PaperTokenViewer({
                   tabIndex={0}
                   aria-pressed={isActive}
                   aria-label={`${FACE_NAMES[face.id] || "Face"}: ${face.label}`}
-                  onClick={(event) => {
+                  onPointerUp={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
+                    if (dragRef.current.moved) {
+                      return;
+                    }
                     handleFaceInspect(index);
                   }}
                   onKeyDown={(event) => {
@@ -792,6 +1069,33 @@ export default function PaperTokenViewer({
                 title={color}
               />
             ))}
+          </div>
+        </aside>
+      )}
+
+      {diffusionStatus !== "idle" && (
+        <aside
+          className={`paper-hud${hudOpen ? "" : " is-collapsed"}`}
+          aria-label="Diffusion HUD"
+        >
+          <button
+            type="button"
+            className="paper-hud-toggle"
+            aria-expanded={hudOpen}
+            onClick={() => setHudOpen((open) => !open)}
+          >
+            Diffusion HUD
+          </button>
+          <div className="paper-hud-body">
+            <div className="paper-hud-row">
+              <span className="paper-hud-label">Average</span>
+              <span className="paper-hud-value">{diffusionLabel}</span>
+              <span
+                className="paper-hud-swatch"
+                style={{ backgroundColor: diffusionSwatch }}
+                aria-hidden="true"
+              />
+            </div>
           </div>
         </aside>
       )}
