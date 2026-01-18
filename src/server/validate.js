@@ -27,6 +27,7 @@ export const builderAssetRequestSchema = z.object({
         seed: z.string(),
         palette: z.array(z.string()).max(8).optional(),
         size: z.number().optional(),
+        qrText: z.string().optional(),
       })
       .optional(),
   }),

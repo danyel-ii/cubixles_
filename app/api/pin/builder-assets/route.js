@@ -138,11 +138,19 @@ export async function POST(request) {
       }
       const palette = normalizePaperclipPalette(payload.paperclip.palette);
       const size = Number(payload.paperclip.size) || DEFAULT_PAPERCLIP_SIZE;
+      const qrText = payload.paperclip.qrText;
       const paletteKey = palette.length ? palette.join(",") : "fallback";
-      const clipHash = hashPayload(`builder-paperclip:${seed}:${paletteKey}:${size}`);
+      const clipHash = hashPayload(
+        `builder-paperclip:${seed}:${paletteKey}:${size}:${qrText || ""}`
+      );
       paperclipCid = await getCachedCid(clipHash);
       if (!paperclipCid) {
-        const clipBuffer = await renderPaperclipBuffer({ seed, palette, size });
+        const clipBuffer = await renderPaperclipBuffer({
+          seed,
+          palette,
+          size,
+          qrText,
+        });
         paperclipCid = await pinFile(clipBuffer, {
           name: `cubixles_${tokenId}_paperclip.png`,
           mimeType: "image/png",
@@ -152,6 +160,7 @@ export async function POST(request) {
             tokenId,
             seed,
             palette: paletteKey,
+            qrText,
           },
         });
         if (!paperclipCid) {

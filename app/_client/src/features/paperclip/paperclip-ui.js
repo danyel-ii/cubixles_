@@ -1,6 +1,10 @@
 import { getWalletState, subscribeWallet } from "../wallet/wallet.js";
 import { renderCubesPaperClip } from "./cubes-paperclip.js";
-import { loadPaperclipOverlay, resolvePaperclipPalette } from "./paperclip-utils.js";
+import {
+  loadPaperclipOverlay,
+  resolvePaperclipPalette,
+  resolvePaperclipQrText,
+} from "./paperclip-utils.js";
 
 function truncateMiddle(value, start = 6, end = 4) {
   if (!value || value.length <= start + end + 3) {
@@ -36,6 +40,7 @@ export function initPaperClipUi() {
       return;
     }
     const palette = resolvePaperclipPalette();
+    const qrText = resolvePaperclipQrText();
     const paletteLabel = palette.length
       ? `${palette.length} sheets`
       : "Palette unavailable";
@@ -49,6 +54,7 @@ export function initPaperClipUi() {
       seed: address.toLowerCase(),
       palette,
       overlay,
+      qrText,
     });
   }
 

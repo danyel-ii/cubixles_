@@ -7,6 +7,11 @@ import { buildBuilderMetadata } from "./builder-metadata.js";
 import { pinBuilderAssets, pinTokenMetadata } from "./token-uri-provider.js";
 import { subscribeWallet, switchToActiveChain } from "../wallet/wallet.js";
 import { resolvePaperclipPalette } from "../paperclip/paperclip-utils.js";
+import { fetchWithGateways } from "src/shared/ipfs-fetch.js";
+import {
+  buildPaperclipSpec,
+  DEFAULT_PAPERCLIP_SIZE,
+} from "src/shared/paperclip-model.js";
 
 function formatEthFromWei(value) {
   if (!value) {
@@ -24,6 +29,80 @@ function formatFloorLabel(floorWei) {
     return "0.0010 (fallback)";
   }
   return formatEthFromWei(floorWei);
+}
+
+function parseDataJson(dataUrl) {
+  const match = dataUrl.match(/^data:application\/json([^,]*),(.*)$/i);
+  if (!match) {
+    return null;
+  }
+  const meta = match[1] || "";
+  const payload = match[2] || "";
+  try {
+    const decoded = meta.includes(";base64")
+      ? atob(payload)
+      : decodeURIComponent(payload);
+    return JSON.parse(decoded);
+  } catch (error) {
+    return null;
+  }
+}
+
+function resolveTokenUri(nft) {
+  const tokenUri = nft?.tokenUri?.original ?? nft?.tokenUri?.resolved ?? "";
+  return typeof tokenUri === "string" ? tokenUri.trim() : "";
+}
+
+function normalizeTokenUri(tokenUri) {
+  if (!tokenUri) {
+    return "";
+  }
+  if (tokenUri.startsWith("ar://")) {
+    return `https://arweave.net/${tokenUri.slice("ar://".length)}`;
+  }
+  return tokenUri;
+}
+
+async function fetchNftMetadata(tokenUri) {
+  if (!tokenUri) {
+    return null;
+  }
+  if (tokenUri.startsWith("data:")) {
+    return parseDataJson(tokenUri);
+  }
+  const resolvedUri = normalizeTokenUri(tokenUri);
+  try {
+    let response;
+    if (resolvedUri.startsWith("ipfs://")) {
+      ({ response } = await fetchWithGateways(resolvedUri, { expectsJson: true }));
+    } else {
+      response = await fetch(resolvedUri);
+    }
+    if (!response?.ok) {
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
+}
+
+async function fetchSelectionMetadata(selection) {
+  if (!Array.isArray(selection) || selection.length === 0) {
+    return [];
+  }
+  return Promise.all(
+    selection.map(async (nft) => {
+      const tokenUri = resolveTokenUri(nft);
+      const metadata = await fetchNftMetadata(tokenUri);
+      return {
+        contractAddress: nft.contractAddress,
+        tokenId: nft.tokenId,
+        tokenUri: tokenUri || null,
+        metadata,
+      };
+    })
+  );
 }
 
 export function initBuilderMintUi() {
@@ -254,6 +333,7 @@ export function initBuilderMintUi() {
       if (selection.length < 1 || selection.length > 6) {
         throw new Error("Select 1 to 6 NFTs before minting.");
       }
+      const selectionMetadataPromise = fetchSelectionMetadata(selection);
       const provider = new BrowserProvider(walletState.provider);
       const network = await provider.getNetwork();
       const walletChainId = Number(network.chainId);
@@ -285,6 +365,12 @@ export function initBuilderMintUi() {
       const externalUrl = buildBuilderTokenViewUrl(tokenId);
       const paperclipPalette = resolvePaperclipPalette();
       const paperclipSeed = walletState.address?.toLowerCase() || "";
+      const paperclipSpec = buildPaperclipSpec({
+        seed: paperclipSeed,
+        palette: paperclipPalette,
+        size: DEFAULT_PAPERCLIP_SIZE,
+      });
+      const paperclipQrText = externalUrl;
       setStatus("Pinning builder assets...");
       const assetResult = await pinBuilderAssets({
         viewerUrl: externalUrl,
@@ -295,6 +381,8 @@ export function initBuilderMintUi() {
         paperclip: {
           seed: paperclipSeed,
           palette: paperclipPalette,
+          size: DEFAULT_PAPERCLIP_SIZE,
+          qrText: paperclipQrText,
         },
       });
       const qrUrl = assetResult.qrUrl || "";
@@ -310,6 +398,8 @@ export function initBuilderMintUi() {
       const animationUrl = cardUrl || externalUrl;
       const floorsWeiStrings = floorsWei.map((floor) => floor.toString());
       const floorsEth = floorsWei.map((floor) => formatEthFromWei(floor));
+      setStatus("Collecting linked NFT metadata...");
+      const selectedNftMetadata = await selectionMetadataPromise;
       const metadataPayload = buildBuilderMetadata({
         tokenId,
         minter: walletState.address,
@@ -326,6 +416,9 @@ export function initBuilderMintUi() {
         externalUrl,
         qrImage: qrUrl,
         paperclipImage: paperclipUrl,
+        paperclipSpec,
+        paperclipQrText,
+        selectedNftMetadata,
       });
 
       setStatus("Pinning builder metadata...");
