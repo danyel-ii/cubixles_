@@ -38,6 +38,7 @@ export function buildBuilderMetadata({
   animationUrl,
   externalUrl,
   qrImage,
+  paperclipImage,
 }) {
   const refs = buildRefs(selection);
   const descriptionLines = [
@@ -63,6 +64,10 @@ export function buildBuilderMetadata({
     description: descriptionLines.join("\n"),
     image: imageUrl || undefined,
     image_url: imageUrl || undefined,
+    image_ipfs:
+      imageUrl && typeof imageUrl === "string" && imageUrl.startsWith("ipfs://")
+        ? imageUrl
+        : undefined,
     animation_url: animationUrl || undefined,
     external_url: externalUrl || undefined,
     builder: {
@@ -73,6 +78,7 @@ export function buildBuilderMetadata({
       floorsWei: floorsWei || [],
       floorsEth: floorsEth || [],
       qrImage: qrImage || undefined,
+      paperclipImage: paperclipImage || undefined,
     },
     provenance: {
       mintedBy: minter,

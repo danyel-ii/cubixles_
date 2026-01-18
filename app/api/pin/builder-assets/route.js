@@ -10,6 +10,11 @@ import {
 } from "../../../../src/server/validate.js";
 import { verifyNonce, verifySignature } from "../../../../src/server/auth.js";
 import { generateQrBuffer, renderBuilderCard } from "../../../../src/server/builder-assets.js";
+import {
+  DEFAULT_PAPERCLIP_SIZE,
+  normalizePaperclipPalette,
+  renderPaperclipBuffer,
+} from "../../../../src/server/paperclip.js";
 import { hashPayload, getCachedCid, setCachedCid, pinFile } from "../../../../src/server/pinata.js";
 import { recordMetric } from "../../../../src/server/metrics.js";
 import { readEnvBool } from "../../../../src/server/env.js";
@@ -124,11 +129,46 @@ export async function POST(request) {
       await setCachedCid(cardHash, cardCid);
     }
 
+    let paperclipCid = null;
+    let paperclipUrl = null;
+    if (payload.paperclip?.seed) {
+      const seed = String(payload.paperclip.seed || "").trim();
+      if (!seed) {
+        throw new Error("Paperclip seed missing.");
+      }
+      const palette = normalizePaperclipPalette(payload.paperclip.palette);
+      const size = Number(payload.paperclip.size) || DEFAULT_PAPERCLIP_SIZE;
+      const paletteKey = palette.length ? palette.join(",") : "fallback";
+      const clipHash = hashPayload(`builder-paperclip:${seed}:${paletteKey}:${size}`);
+      paperclipCid = await getCachedCid(clipHash);
+      if (!paperclipCid) {
+        const clipBuffer = renderPaperclipBuffer({ seed, palette, size });
+        paperclipCid = await pinFile(clipBuffer, {
+          name: `cubixles_${tokenId}_paperclip.png`,
+          mimeType: "image/png",
+          keyvalues: {
+            kind: "builder_paperclip",
+            chainId: resolvedChainId,
+            tokenId,
+            seed,
+            palette: paletteKey,
+          },
+        });
+        if (!paperclipCid) {
+          throw new Error("Paperclip pinning failed.");
+        }
+        await setCachedCid(clipHash, paperclipCid);
+      }
+      paperclipUrl = `ipfs://${paperclipCid}`;
+    }
+
     const responsePayload = {
       qrCid,
       qrUrl: `ipfs://${qrCid}`,
       cardCid,
       cardUrl: `ipfs://${cardCid}`,
+      paperclipCid,
+      paperclipUrl,
       requestId,
     };
 

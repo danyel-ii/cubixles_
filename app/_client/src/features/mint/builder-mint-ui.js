@@ -3,10 +3,10 @@ import { BUILDER_CONTRACT } from "../../config/builder-contracts";
 import { formatChainName, subscribeActiveChain } from "../../config/chains.js";
 import { buildBuilderTokenViewUrl } from "../../config/links.js";
 import { state } from "../../app/app-state.js";
-import { buildImageCandidates } from "../../shared/utils/uri";
 import { buildBuilderMetadata } from "./builder-metadata.js";
 import { pinBuilderAssets, pinTokenMetadata } from "./token-uri-provider.js";
 import { subscribeWallet, switchToActiveChain } from "../wallet/wallet.js";
+import { resolvePaperclipPalette } from "../paperclip/paperclip-utils.js";
 
 function formatEthFromWei(value) {
   if (!value) {
@@ -24,21 +24,6 @@ function formatFloorLabel(floorWei) {
     return "0.0010 (fallback)";
   }
   return formatEthFromWei(floorWei);
-}
-
-function pickPreviewImage(selection) {
-  const candidate = selection.find((nft) => nft?.image);
-  if (!candidate) {
-    return "";
-  }
-  const candidates = buildImageCandidates(candidate.image);
-  if (candidates.length) {
-    return candidates[0];
-  }
-  if (typeof candidate.image === "string") {
-    return candidate.image;
-  }
-  return candidate.image?.resolved || candidate.image?.original || "";
 }
 
 export function initBuilderMintUi() {
@@ -298,31 +283,30 @@ export function initBuilderMintUi() {
         : (await contract.totalMinted()) + 1n;
       const tokenId = expectedTokenId.toString();
       const externalUrl = buildBuilderTokenViewUrl(tokenId);
-      let qrUrl = "";
-      let cardUrl = "";
-      let assetDebug = [];
-      try {
-        setStatus("Pinning builder QR...");
-        const assetResult = await pinBuilderAssets({
-          viewerUrl: externalUrl,
-          tokenId,
-          signer,
-          address: walletState.address,
-          chainId: BUILDER_CONTRACT.chainId,
-        });
-        qrUrl = assetResult.qrUrl || "";
-        cardUrl = assetResult.cardUrl || "";
-        assetDebug = [
-          "assets: ready",
-          assetResult.qrUrl ? `qr: ${assetResult.qrUrl}` : null,
-          assetResult.cardUrl ? `card: ${assetResult.cardUrl}` : null,
-        ];
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "QR pin failed.";
-        assetDebug = ["assets: error", message];
-      }
-      const imageUrl = cardUrl || pickPreviewImage(selection);
+      const paperclipPalette = resolvePaperclipPalette();
+      const paperclipSeed = walletState.address?.toLowerCase() || "";
+      setStatus("Pinning builder assets...");
+      const assetResult = await pinBuilderAssets({
+        viewerUrl: externalUrl,
+        tokenId,
+        signer,
+        address: walletState.address,
+        chainId: BUILDER_CONTRACT.chainId,
+        paperclip: {
+          seed: paperclipSeed,
+          palette: paperclipPalette,
+        },
+      });
+      const qrUrl = assetResult.qrUrl || "";
+      const cardUrl = assetResult.cardUrl || "";
+      const paperclipUrl = assetResult.paperclipUrl || "";
+      const assetDebug = [
+        "assets: ready",
+        qrUrl ? `qr: ${qrUrl}` : null,
+        cardUrl ? `card: ${cardUrl}` : null,
+        paperclipUrl ? `paperclip: ${paperclipUrl}` : null,
+      ];
+      const imageUrl = paperclipUrl;
       const animationUrl = cardUrl || externalUrl;
       const floorsWeiStrings = floorsWei.map((floor) => floor.toString());
       const floorsEth = floorsWei.map((floor) => formatEthFromWei(floor));
@@ -341,6 +325,7 @@ export function initBuilderMintUi() {
         animationUrl,
         externalUrl,
         qrImage: qrUrl,
+        paperclipImage: paperclipUrl,
       });
 
       setStatus("Pinning builder metadata...");

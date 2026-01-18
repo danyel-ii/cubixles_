@@ -119,6 +119,7 @@ export async function pinBuilderAssets({
   tokenId,
   signer,
   address,
+  paperclip,
   chainId = CUBIXLES_CONTRACT.chainId,
 }) {
   if (!signer || !address) {
@@ -141,6 +142,7 @@ export async function pinBuilderAssets({
         payload: {
           viewerUrl,
           tokenId,
+          paperclip,
         },
       }),
     });
@@ -148,6 +150,9 @@ export async function pinBuilderAssets({
       const json = await response.json();
       if (!json?.qrUrl || !json?.cardUrl) {
         throw new Error("Pinning failed to return asset URLs.");
+      }
+      if (paperclip && !json?.paperclipUrl) {
+        throw new Error("Pinning failed to return paperclip URL.");
       }
       return json;
     }

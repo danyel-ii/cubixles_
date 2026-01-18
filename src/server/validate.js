@@ -22,6 +22,13 @@ export const builderAssetRequestSchema = z.object({
   payload: z.object({
     viewerUrl: z.string().url(),
     tokenId: z.union([z.string(), z.number()]),
+    paperclip: z
+      .object({
+        seed: z.string(),
+        palette: z.array(z.string()).max(8).optional(),
+        size: z.number().optional(),
+      })
+      .optional(),
   }),
 });
 
