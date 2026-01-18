@@ -4,11 +4,14 @@ pragma solidity ^0.8.20;
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IBuilderRoyaltyForwarder } from "../interfaces/IBuilderRoyaltyForwarder.sol";
 
 /// @title BuilderRoyaltyForwarder
 /// @notice Per-mint royalty receiver that forwards ETH to configurable splits.
 /// @dev Default behavior forwards 100% to the owner (minting wallet).
-contract BuilderRoyaltyForwarder is Ownable, ReentrancyGuard {
+contract BuilderRoyaltyForwarder is IBuilderRoyaltyForwarder, Ownable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
     struct Split {
         address recipient;
         uint16 bps;
@@ -37,7 +40,7 @@ contract BuilderRoyaltyForwarder is Ownable, ReentrancyGuard {
 
     constructor() Ownable(msg.sender) {}
 
-    function initialize(address owner_) external {
+    function initialize(address owner_) external override {
         if (_initialized) {
             revert AlreadyInitialized();
         }
@@ -62,7 +65,8 @@ contract BuilderRoyaltyForwarder is Ownable, ReentrancyGuard {
             revert SplitLengthMismatch(recipients.length, bps.length);
         }
         uint256 totalBps = 0;
-        for (uint256 i = 0; i < recipients.length; i += 1) {
+        uint256 length = recipients.length;
+        for (uint256 i = 0; i < length; i += 1) {
             if (recipients[i] == address(0)) {
                 revert SplitRecipientRequired();
             }
@@ -73,7 +77,7 @@ contract BuilderRoyaltyForwarder is Ownable, ReentrancyGuard {
         }
 
         delete _splits;
-        for (uint256 i = 0; i < recipients.length; i += 1) {
+        for (uint256 i = 0; i < length; i += 1) {
             _splits.push(Split({ recipient: recipients[i], bps: bps[i] }));
         }
         emit SplitsUpdated(recipients, bps);
@@ -84,9 +88,10 @@ contract BuilderRoyaltyForwarder is Ownable, ReentrancyGuard {
         view
         returns (address[] memory recipients, uint16[] memory bps)
     {
-        recipients = new address[](_splits.length);
-        bps = new uint16[](_splits.length);
-        for (uint256 i = 0; i < _splits.length; i += 1) {
+        uint256 length = _splits.length;
+        recipients = new address[](length);
+        bps = new uint16[](length);
+        for (uint256 i = 0; i < length; i += 1) {
             Split memory split = _splits[i];
             recipients[i] = split.recipient;
             bps[i] = split.bps;
@@ -111,13 +116,14 @@ contract BuilderRoyaltyForwarder is Ownable, ReentrancyGuard {
             revert SweepRecipientRequired();
         }
         uint256 amount = IERC20(token).balanceOf(address(this));
-        if (amount == 0) {
+        if (amount <= 0) {
             return;
         }
-        IERC20(token).transfer(recipient, amount);
+        IERC20(token).safeTransfer(recipient, amount);
         emit TokenSwept(token, recipient, amount);
     }
 
+    // slither-disable-start reentrancy-eth
     function _distribute(uint256 amount) internal {
         if (amount == 0) {
             return;
@@ -127,7 +133,8 @@ contract BuilderRoyaltyForwarder is Ownable, ReentrancyGuard {
             return;
         }
         uint256 remaining = amount;
-        for (uint256 i = 0; i < _splits.length; i += 1) {
+        uint256 length = _splits.length;
+        for (uint256 i = 0; i < length; i += 1) {
             Split memory split = _splits[i];
             uint256 share = (amount * split.bps) / BPS;
             if (share == 0) {
@@ -140,6 +147,7 @@ contract BuilderRoyaltyForwarder is Ownable, ReentrancyGuard {
             _sendOrCredit(owner(), remaining);
         }
     }
+    // slither-disable-end reentrancy-eth
 
     function _sendOrCredit(address recipient, uint256 amount) internal {
         if (amount == 0) {
@@ -154,6 +162,7 @@ contract BuilderRoyaltyForwarder is Ownable, ReentrancyGuard {
     }
 
     function _send(address recipient, uint256 amount) internal returns (bool) {
+        // slither-disable-next-line low-level-calls
         (bool success, ) = payable(recipient).call{ value: amount }("");
         return success;
     }

@@ -13,10 +13,7 @@ import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
-
-interface IBuilderRoyaltyForwarder {
-    function initialize(address owner_) external;
-}
+import { IBuilderRoyaltyForwarder } from "../interfaces/IBuilderRoyaltyForwarder.sol";
 
 /// @title CubixlesBuilderMinter
 /// @notice Builder minting contract that routes mint fees to ERC-2981 creators.

@@ -3,7 +3,7 @@ import {
   buildPaperclipLayers,
   createPaperclipRng,
   PAPERCLIP_SCALE,
-} from "src/shared/paperclip-model.js";
+} from "../../shared/paperclip-model.js";
 
 const BACKDROP = "#0b1220";
 const QR_BACKDROP = "#f7f2e8";

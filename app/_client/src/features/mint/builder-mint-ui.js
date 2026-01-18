@@ -7,11 +7,11 @@ import { buildBuilderMetadata } from "./builder-metadata.js";
 import { pinBuilderAssets, pinTokenMetadata } from "./token-uri-provider.js";
 import { subscribeWallet, switchToActiveChain } from "../wallet/wallet.js";
 import { resolvePaperclipPalette } from "../paperclip/paperclip-utils.js";
-import { fetchWithGateways } from "src/shared/ipfs-fetch.js";
+import { fetchWithGateways } from "../../../../../src/shared/ipfs-fetch.js";
 import {
   buildPaperclipSpec,
   DEFAULT_PAPERCLIP_SIZE,
-} from "src/shared/paperclip-model.js";
+} from "../../shared/paperclip-model.js";
 
 function formatEthFromWei(value) {
   if (!value) {
