@@ -7,10 +7,30 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 load_env_file() {
   local env_file="$1"
   if [[ -f "${env_file}" ]]; then
+    local existing_mainnet="${MAINNET_RPC_URL:-}"
+    local existing_base="${BASE_RPC_URL:-}"
+    local existing_fork="${FORK_RPC_URL:-}"
+    local existing_base_block="${BASE_FORK_BLOCK:-}"
+    local existing_fork_block="${FORK_BLOCK_NUMBER:-}"
     set -a
     # shellcheck disable=SC1090
     source "${env_file}"
     set +a
+    if [[ -n "${existing_mainnet}" ]]; then
+      MAINNET_RPC_URL="${existing_mainnet}"
+    fi
+    if [[ -n "${existing_base}" ]]; then
+      BASE_RPC_URL="${existing_base}"
+    fi
+    if [[ -n "${existing_fork}" ]]; then
+      FORK_RPC_URL="${existing_fork}"
+    fi
+    if [[ -n "${existing_base_block}" ]]; then
+      BASE_FORK_BLOCK="${existing_base_block}"
+    fi
+    if [[ -n "${existing_fork_block}" ]]; then
+      FORK_BLOCK_NUMBER="${existing_fork_block}"
+    fi
   fi
 }
 

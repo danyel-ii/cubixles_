@@ -268,7 +268,7 @@ contract CubixlesBuilderMinter is ERC721, Ownable, ReentrancyGuard, EIP712 {
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        _requireMinted(tokenId);
+        _requireOwned(tokenId);
         string memory overrideUri = _tokenUriByTokenId[tokenId];
         if (bytes(overrideUri).length > 0) {
             return overrideUri;

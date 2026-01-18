@@ -624,4 +624,206 @@ contract BuilderMinterTest is Test {
         vm.prank(owner);
         minter.setBaseURI("ipfs://new/");
     }
+
+    function testBuilderMintWithMetadataStoresState() public {
+        assertEq(minter.nextTokenId(), 1);
+        CubixlesBuilderMinter.NftRef[] memory refs = _mintRefs();
+        uint256[] memory floorsWei = new uint256[](2);
+        floorsWei[0] = 2 ether;
+        floorsWei[1] = 1 ether;
+        (
+            CubixlesBuilderMinter.BuilderQuote memory quote,
+            bytes memory signature,
+            uint256 price
+        ) = _buildQuote(refs, floorsWei, 9);
+        bytes32 metadataHash = keccak256("builder-metadata");
+        string memory tokenUri = "ipfs://metadata/1";
+
+        vm.deal(minterAddr, price);
+        vm.prank(minterAddr);
+        uint256 tokenId = minter.mintBuildersWithMetadata{ value: price }(
+            refs,
+            floorsWei,
+            quote,
+            signature,
+            tokenUri,
+            metadataHash,
+            1
+        );
+
+        assertEq(tokenId, 1);
+        assertEq(minter.tokenURI(tokenId), tokenUri);
+        assertEq(minter.metadataHashByTokenId(tokenId), metadataHash);
+        assertEq(minter.mintPriceByTokenId(tokenId), price);
+        uint256[] memory storedFloors = minter.getTokenFloors(tokenId);
+        assertEq(storedFloors.length, floorsWei.length);
+        assertEq(storedFloors[0], floorsWei[0]);
+        assertEq(minter.nextTokenId(), tokenId + 1);
+    }
+
+    function testBuilderMintWithMetadataRequiresTokenUri() public {
+        vm.expectRevert(CubixlesBuilderMinter.TokenUriRequired.selector);
+        minter.mintBuildersWithMetadata(
+            new CubixlesBuilderMinter.NftRef[](0),
+            new uint256[](0),
+            CubixlesBuilderMinter.BuilderQuote(0, 0, 0, 0),
+            "",
+            "",
+            bytes32(0),
+            0
+        );
+    }
+
+    function testBuilderMintWithMetadataRequiresMetadataHash() public {
+        vm.expectRevert(CubixlesBuilderMinter.MetadataHashRequired.selector);
+        minter.mintBuildersWithMetadata(
+            new CubixlesBuilderMinter.NftRef[](0),
+            new uint256[](0),
+            CubixlesBuilderMinter.BuilderQuote(0, 0, 0, 0),
+            "",
+            "ipfs://metadata/1",
+            bytes32(0),
+            0
+        );
+    }
+
+    function testBuilderMintWithMetadataRejectsExpectedTokenIdMismatch() public {
+        CubixlesBuilderMinter.NftRef[] memory refs = _mintRefs();
+        uint256[] memory floorsWei = new uint256[](2);
+        floorsWei[0] = 1 ether;
+        floorsWei[1] = 1 ether;
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CubixlesBuilderMinter.ExpectedTokenIdMismatch.selector,
+                2,
+                1
+            )
+        );
+        minter.mintBuildersWithMetadata(
+            refs,
+            floorsWei,
+            CubixlesBuilderMinter.BuilderQuote(0, 0, 0, 0),
+            "",
+            "ipfs://metadata/1",
+            keccak256("metadata"),
+            2
+        );
+    }
+
+    function testBuilderTokenUriUsesBaseWhenNoOverride() public {
+        CubixlesBuilderMinter.NftRef[] memory refs = _mintRefs();
+        uint256[] memory floorsWei = new uint256[](2);
+        floorsWei[0] = 1 ether;
+        floorsWei[1] = 1 ether;
+        (
+            CubixlesBuilderMinter.BuilderQuote memory quote,
+            bytes memory signature,
+            uint256 price
+        ) = _buildQuote(refs, floorsWei, 10);
+        vm.deal(minterAddr, price);
+        vm.prank(minterAddr);
+        minter.mintBuilders{ value: price }(refs, floorsWei, quote, signature);
+
+        assertEq(minter.tokenURI(1), string.concat("ipfs://base/", "1"));
+    }
+
+    function testBuilderMintRequiresQuoteSigner() public {
+        vm.prank(owner);
+        CubixlesBuilderMinter noSigner =
+            new CubixlesBuilderMinter("Cubixles Builders", "BLDR", "ipfs://base/");
+        CubixlesBuilderMinter.NftRef[] memory refs = _mintRefs();
+        uint256[] memory floorsWei = new uint256[](2);
+        floorsWei[0] = 1 ether;
+        floorsWei[1] = 1 ether;
+        CubixlesBuilderMinter.BuilderQuote memory quote = CubixlesBuilderMinter.BuilderQuote({
+            totalFloorWei: 0,
+            chainId: block.chainid,
+            expiresAt: block.timestamp + 1 days,
+            nonce: 1
+        });
+
+        vm.prank(minterAddr);
+        vm.expectRevert(CubixlesBuilderMinter.QuoteSignerRequired.selector);
+        noSigner.mintBuilders(refs, floorsWei, quote, "");
+    }
+
+    function testBuilderMintRejectsChainIdMismatch() public {
+        CubixlesBuilderMinter.NftRef[] memory refs = _mintRefs();
+        uint256[] memory floorsWei = new uint256[](2);
+        floorsWei[0] = 1 ether;
+        floorsWei[1] = 1 ether;
+        CubixlesBuilderMinter.BuilderQuote memory quote = CubixlesBuilderMinter.BuilderQuote({
+            totalFloorWei: 0,
+            chainId: block.chainid + 1,
+            expiresAt: block.timestamp + 1 days,
+            nonce: 1
+        });
+
+        vm.prank(minterAddr);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                CubixlesBuilderMinter.QuoteChainIdMismatch.selector,
+                block.chainid,
+                block.chainid + 1
+            )
+        );
+        minter.mintBuilders(refs, floorsWei, quote, "");
+    }
+
+    function testBuilderMintZeroRoyaltyAmountDoesNotRevert() public {
+        nftA.setRoyalty(receiverA, 0);
+        CubixlesBuilderMinter.NftRef[] memory refs = _mintRefs();
+        uint256[] memory floorsWei = new uint256[](2);
+        floorsWei[0] = 1 ether;
+        floorsWei[1] = 1 ether;
+        (
+            CubixlesBuilderMinter.BuilderQuote memory quote,
+            bytes memory signature,
+            uint256 price
+        ) = _buildQuote(refs, floorsWei, 11);
+
+        vm.deal(minterAddr, price);
+        vm.prank(minterAddr);
+        minter.mintBuilders{ value: price }(refs, floorsWei, quote, signature);
+    }
+
+    function testBuilderSetQuoteSignerRevertsOnZeroAddress() public {
+        vm.prank(owner);
+        vm.expectRevert(CubixlesBuilderMinter.ZeroAddress.selector);
+        minter.setQuoteSigner(address(0));
+    }
+
+    function testBuilderWithdrawOwnerBalanceNoopWhenZero() public {
+        vm.prank(owner);
+        minter.withdrawOwnerBalance(payable(owner));
+    }
+
+    function testBuilderWithdrawOwnerBalanceTransfersPending() public {
+        ReceiverRevertsOnReceive badOwner = new ReceiverRevertsOnReceive();
+        vm.prank(owner);
+        minter.transferOwnership(address(badOwner));
+
+        CubixlesBuilderMinter.NftRef[] memory refs = _mintRefs();
+        uint256[] memory floorsWei = new uint256[](2);
+        floorsWei[0] = 2 ether;
+        floorsWei[1] = 1 ether;
+        (
+            CubixlesBuilderMinter.BuilderQuote memory quote,
+            bytes memory signature,
+            uint256 price
+        ) = _buildQuote(refs, floorsWei, 12);
+
+        vm.deal(minterAddr, price);
+        vm.prank(minterAddr);
+        minter.mintBuilders{ value: price }(refs, floorsWei, quote, signature);
+
+        uint256 pending = minter.pendingOwnerBalance();
+        assertGt(pending, 0);
+
+        uint256 recipientStart = owner.balance;
+        vm.prank(address(badOwner));
+        minter.withdrawOwnerBalance(payable(owner));
+        assertEq(minter.pendingOwnerBalance(), 0);
+        assertEq(owner.balance - recipientStart, pending);
+    }
 }

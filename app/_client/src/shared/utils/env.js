@@ -17,9 +17,10 @@ export function readEnvValue(key) {
   if (typeof process === "undefined") {
     return null;
   }
-  const raw = Object.prototype.hasOwnProperty.call(PUBLIC_ENV, key)
-    ? PUBLIC_ENV[key]
-    : process.env[key];
+  if (!Object.prototype.hasOwnProperty.call(PUBLIC_ENV, key)) {
+    return null;
+  }
+  const raw = PUBLIC_ENV[key];
   if (typeof raw !== "string") {
     return null;
   }
