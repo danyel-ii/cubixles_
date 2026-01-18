@@ -170,8 +170,9 @@ export function renderCubesPaperClip({ canvas, seed, palette, overlay }) {
 
   if (overlay) {
     const overlaySize = size * 0.65;
-    const overlayX = centerX - overlaySize / 2;
-    const overlayY = centerY - overlaySize / 2;
+    const margin = size * 0.04;
+    const overlayX = centerX + size / 2 - overlaySize - margin;
+    const overlayY = centerY + size / 2 - overlaySize - margin;
     ctx.save();
     ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
     ctx.shadowBlur = 10;

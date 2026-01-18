@@ -189,8 +189,9 @@ export async function renderPaperclipBuffer({
   const overlayImage = await loadOverlayImage();
   if (overlayImage) {
     const overlaySize = sizePx * 0.65;
-    const overlayX = centerX - overlaySize / 2;
-    const overlayY = centerY - overlaySize / 2;
+    const margin = sizePx * 0.04;
+    const overlayX = centerX + sizePx / 2 - overlaySize - margin;
+    const overlayY = centerY + sizePx / 2 - overlaySize - margin;
     ctx.save();
     ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
     ctx.shadowBlur = 10;
