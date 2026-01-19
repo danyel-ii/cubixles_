@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&family=Caveat:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&family=Caveat:wght@400;700&family=Permanent+Marker&family=Rock+Salt&display=swap");
 
 :root {
   color-scheme: dark;
@@ -1154,21 +1154,37 @@ body.cube-fade-in .landing-home .landing-cube-icon {
   z-index: 0;
 }
 
+.cubixles-logo-link::before,
 .cubixles-logo-link::after {
   content: "banga bootlegged tokens";
   position: absolute;
   left: 50%;
   top: 52%;
-  transform: translate(-50%, -50%) rotate(-7deg);
-  font-family: "Graffiti Edding", "Rock Salt", "Permanent Marker", "Marker Felt", "Comic Sans MS",
-    cursive;
-  font-size: 0.34em;
-  font-weight: 400;
-  color: #c80a0a;
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35), 0 0 6px rgba(0, 0, 0, 0.35);
   pointer-events: none;
   white-space: nowrap;
+  font-weight: 400;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4), -1px 2px 0 rgba(0, 0, 0, 0.28),
+    0 0 10px rgba(0, 0, 0, 0.35);
+  mix-blend-mode: multiply;
   z-index: 2;
+}
+
+.cubixles-logo-link::before {
+  transform: translate(-52%, -58%) rotate(-19deg) skew(-6deg);
+  font-family: "Permanent Marker", "Rock Salt", "Caveat", "Marker Felt", "Comic Sans MS", cursive;
+  font-size: 0.52em;
+  letter-spacing: 0.08em;
+  color: #c60a0a;
+  opacity: 0.95;
+}
+
+.cubixles-logo-link::after {
+  transform: translate(-47%, -45%) rotate(12deg) skew(4deg);
+  font-family: "Rock Salt", "Caveat", "Permanent Marker", "Marker Felt", "Comic Sans MS", cursive;
+  font-size: 0.46em;
+  letter-spacing: -0.02em;
+  color: #a90707;
+  opacity: 0.82;
 }
 
 .cubixles-logo-link:focus-visible {
