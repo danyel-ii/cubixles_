@@ -80,10 +80,9 @@ export async function GET(
         );
       }
 
-      const candidateIds = new Set<string>([
-        ...metadataReferences.keys(),
-        ...sameTransactionReferences.keys(),
-      ]);
+      const candidateIds = new Set<string>();
+      Array.from(metadataReferences.keys()).forEach((id) => candidateIds.add(id));
+      Array.from(sameTransactionReferences.keys()).forEach((id) => candidateIds.add(id));
 
       const targetOwners = await getOwnersForToken(tokenId, chainId);
       const ownerOverlap = new Map();
