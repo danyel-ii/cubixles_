@@ -27,7 +27,8 @@ const embedderPromises = new Map<string, Promise<any>>();
 
 function computeNorm(vector: Float32Array): number {
   let sum = 0;
-  for (const value of vector) {
+  for (let i = 0; i < vector.length; i += 1) {
+    const value = vector[i];
     sum += value * value;
   }
   return Math.sqrt(sum) || 1;
