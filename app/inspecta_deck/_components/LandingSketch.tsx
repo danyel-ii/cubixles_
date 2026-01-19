@@ -11,7 +11,7 @@ type LandingSketchProps = {
 
 const P5_SRC = "https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.min.js";
 
-function loadP5Library(): Promise<typeof window.p5> {
+function loadP5Library(): Promise<any> {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return Promise.reject(new Error("p5 unavailable on the server"));
   }
@@ -67,7 +67,7 @@ export default function LandingSketch({
 
     (async () => {
       try {
-        const P5Module = await loadP5Library();
+        const P5Module = (await loadP5Library()) as any;
         const { createLandingSketch } = await import("../_sketches/landing-sketch");
         if (cancelled) {
           return;
