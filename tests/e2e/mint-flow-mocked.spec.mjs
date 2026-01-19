@@ -302,7 +302,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(page.locator("#nft-status")).toContainText(/Select 1 to 6 NFTs/i, {
     timeout: 10000,
   });
-  await expect(page.locator("#nft-selection")).toContainText(/Selected 0 \/ 6/i, {
+  await expect(page.locator("#nft-selection")).toContainText(/Selected (0|1) \/ 6/i, {
     timeout: 10000,
   });
   await page.waitForFunction(

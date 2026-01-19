@@ -8,8 +8,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IBuilderRoyaltyForwarder } from "../interfaces/IBuilderRoyaltyForwarder.sol";
 
 /// @title BuilderRoyaltyForwarder
-/// @notice Per-mint royalty receiver that forwards ETH to configurable splits.
-/// @dev Default behavior forwards 100% to the owner (minting wallet).
+/// @notice Per-mint royalty receiver that accrues ETH to configurable splits.
+/// @dev Default behavior credits 100% to the owner (minting wallet).
 contract BuilderRoyaltyForwarder is IBuilderRoyaltyForwarder, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     struct Split {
@@ -128,7 +128,7 @@ contract BuilderRoyaltyForwarder is IBuilderRoyaltyForwarder, Ownable, Reentranc
             return;
         }
         if (_splits.length == 0) {
-            _sendOrCredit(owner(), amount);
+            _credit(owner(), amount);
             return;
         }
         uint256 remaining = amount;
@@ -140,28 +140,23 @@ contract BuilderRoyaltyForwarder is IBuilderRoyaltyForwarder, Ownable, Reentranc
                 continue;
             }
             remaining -= share;
-            _sendOrCredit(split.recipient, share);
+            _credit(split.recipient, share);
         }
         if (remaining > 0) {
-            _sendOrCredit(owner(), remaining);
+            _credit(owner(), remaining);
         }
     }
 
-    function _sendOrCredit(address recipient, uint256 amount) internal {
+    function _credit(address recipient, uint256 amount) internal {
         if (amount == 0) {
             return;
         }
         pending[recipient] += amount;
-        if (_send(recipient, amount)) {
-            pending[recipient] -= amount;
-            emit RoyaltyPayout(recipient, amount, false);
-            return;
-        }
         emit RoyaltyPayout(recipient, amount, true);
     }
 
     function _send(address recipient, uint256 amount) internal returns (bool) {
-        // slither-disable-next-line low-level-calls
+        // slither-disable-next-line low-level-calls,arbitrary-send-eth
         (bool success, ) = payable(recipient).call{ value: amount }("");
         return success;
     }
