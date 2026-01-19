@@ -123,7 +123,6 @@ contract BuilderRoyaltyForwarder is IBuilderRoyaltyForwarder, Ownable, Reentranc
         emit TokenSwept(token, recipient, amount);
     }
 
-    // slither-disable-start reentrancy-eth
     function _distribute(uint256 amount) internal {
         if (amount == 0) {
             return;
@@ -147,18 +146,18 @@ contract BuilderRoyaltyForwarder is IBuilderRoyaltyForwarder, Ownable, Reentranc
             _sendOrCredit(owner(), remaining);
         }
     }
-    // slither-disable-end reentrancy-eth
 
     function _sendOrCredit(address recipient, uint256 amount) internal {
         if (amount == 0) {
             return;
         }
-        if (!_send(recipient, amount)) {
-            pending[recipient] += amount;
-            emit RoyaltyPayout(recipient, amount, true);
+        pending[recipient] += amount;
+        if (_send(recipient, amount)) {
+            pending[recipient] -= amount;
+            emit RoyaltyPayout(recipient, amount, false);
             return;
         }
-        emit RoyaltyPayout(recipient, amount, false);
+        emit RoyaltyPayout(recipient, amount, true);
     }
 
     function _send(address recipient, uint256 amount) internal returns (bool) {

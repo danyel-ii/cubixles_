@@ -55,8 +55,8 @@ export default function AppShell({ mode = "mint" }) {
             {isBuilder ? (
               <p className="overlay-text">
                 An ERC-721 with metadata pinned to IPFS, a paper clip sculpture image, a QR render
-                derived from it, and an <span className="overlay-em">external_url</span> pointing
-                to the interactive cube.
+                derived from it, a per-mint royalty contract owned by the minter, and an{" "}
+                <span className="overlay-em">external_url</span> pointing to the interactive cube.
               </p>
             ) : (
               <p className="overlay-text">
@@ -148,7 +148,8 @@ export default function AppShell({ mode = "mint" }) {
             <p className="overlay-text">
               Builder mints snapshot live floor data to set the Feingehalt, deploy a per-mint
               royalty forwarder so the minter controls future splits, and generate a wallet-seeded
-              paper clip sculpture (with QR) pinned to IPFS as the display image.
+              paper clip sculpture (with QR) pinned to IPFS as the display image, plus a p5.js
+              inspector capture of the cube at mint.
             </p>
             <p className="overlay-text">
               In this framework, rarity is no longer a property of images or traits. It is a

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import CubixlesLogo from "../_components/CubixlesLogo.jsx";
 import CubixlesText from "../_components/CubixlesText.jsx";
 import { CUBIXLES_LOGO_GLYPH } from "../_lib/logo.js";
-import { buildBuilderTokenViewUrl, buildTokenViewUrl } from "../_client/src/config/links.js";
 import { buildGatewayUrls } from "../_client/src/shared/uri-policy.js";
 
 const DEFAULT_CHAIN_ID = 1;
@@ -355,14 +354,9 @@ function formatMintDate(value) {
   return date.toISOString().split("T")[0];
 }
 
-function resolveViewerUrl(tokenId, buildUrl, fallbackPath) {
-  if (typeof buildUrl === "function") {
-    const built = buildUrl(tokenId);
-    if (built) {
-      return built;
-    }
-  }
-  return `${fallbackPath}/${tokenId}`;
+function buildViewerUrl(tokenId, chainId) {
+  const params = new URLSearchParams({ chainId: String(chainId) });
+  return `/token/${tokenId}?${params.toString()}`;
 }
 
 function ImageCandidate({
@@ -777,7 +771,12 @@ function PaletteSync() {
 
     const loadPalette = async () => {
       try {
-        const response = await fetch("/assets/generative_plot/manifest.json", { cache: "no-store" });
+        let response = await fetch("/palette_outputs/manifest.json", { cache: "no-store" });
+        if (!response.ok) {
+          response = await fetch("/assets/generative_plot/manifest.json", {
+            cache: "no-store",
+          });
+        }
         if (!response.ok) {
           applyPalette(DEFAULT_PALETTE);
           return;
@@ -819,7 +818,7 @@ function PaletteSync() {
   return null;
 }
 
-function TokenIndex({ tokenMode = "minter", viewerPath = "/m", buildViewerUrl }) {
+function TokenIndex() {
   const [chainId, setChainId] = useState(DEFAULT_CHAIN_ID);
   const [paginationMode, setPaginationMode] = useState("page");
   const [tokens, setTokens] = useState([]);
@@ -848,16 +847,14 @@ function TokenIndex({ tokenMode = "minter", viewerPath = "/m", buildViewerUrl })
         const params = new URLSearchParams();
         params.set("limit", String(pageSize));
         params.set("chainId", String(chainId));
-        if (tokenMode === "builder") {
-          params.set("mode", "builder");
-        }
+        params.set("mode", "builder");
         if (isAllMode) {
           params.set("all", "true");
           params.set("maxPages", String(maxPages));
         } else if (nextPageKey) {
           params.set("pageKey", String(nextPageKey));
         }
-        const response = await fetch(`/api/tokens?${params.toString()}`, {
+        const response = await fetch(`/api/poc/tokens?${params.toString()}`, {
           cache: "no-store",
         });
         const text = await response.text();
@@ -902,7 +899,7 @@ function TokenIndex({ tokenMode = "minter", viewerPath = "/m", buildViewerUrl })
         setError(message);
       }
     },
-    [chainId, isAllMode, maxPages, pageSize, tokenMode]
+    [chainId, isAllMode, maxPages, pageSize]
   );
 
   useEffect(() => {
@@ -993,6 +990,13 @@ function TokenIndex({ tokenMode = "minter", viewerPath = "/m", buildViewerUrl })
               >
                 Ethereum
               </button>
+              <button
+                type="button"
+                className={`token-chain-button${chainId === 8453 ? " is-active" : ""}`}
+                onClick={() => setChainId(8453)}
+              >
+                Base
+              </button>
             </div>
           </div>
           <label className="token-index-control" htmlFor={pageSizeId}>
@@ -1079,7 +1083,7 @@ function TokenIndex({ tokenMode = "minter", viewerPath = "/m", buildViewerUrl })
             ? title.replace(tokenId, shortId)
             : title;
           const candidates = buildImageCandidates(token);
-          const viewerUrl = resolveViewerUrl(tokenId, buildViewerUrl, viewerPath);
+          const viewerUrl = buildViewerUrl(tokenId, chainId);
           const isHighlighted = index === activeIndex;
           return (
             <a
@@ -1128,16 +1132,7 @@ function TokenIndex({ tokenMode = "minter", viewerPath = "/m", buildViewerUrl })
   );
 }
 
-export function DeckPage({
-  tokenMode = "builder",
-  viewerPath,
-  buildViewerUrl,
-}) {
-  const resolvedViewerPath =
-    viewerPath || (tokenMode === "builder" ? "/m2" : "/m");
-  const resolvedBuildViewerUrl =
-    buildViewerUrl ||
-    (tokenMode === "builder" ? buildBuilderTokenViewUrl : buildTokenViewUrl);
+export function DeckPage() {
   const notesTiles = useMemo(() => buildNotesTiles(), []);
   const logoStyle = useMemo(() => buildLogoStyle(), []);
 
@@ -1190,14 +1185,9 @@ export function DeckPage({
         <section className="landing-header">
           <div className="landing-intro">
             <h1 className="landing-title">
-              <span className="deck-logo-wrap">
-                <a href="https://www.cubixles.xyz" className="cubixles-logo-link">
-                  <CubixlesLogo />
-                </a>
-                <span className="deck-logo-scribble" aria-hidden="true">
-                  banger bootlegs
-                </span>
-              </span>
+              <a href="https://www.cubixles.xyz" className="cubixles-logo-link">
+                <CubixlesLogo />
+              </a>
             </h1>
             <p className="landing-subhead">
               Provenance as building blocks, NFTs as materials, and citations as structure.
@@ -1220,11 +1210,7 @@ export function DeckPage({
           <LandingCubeIcon />
         </section>
         <section id="token-list" className="landing-token-list">
-          <TokenIndex
-            tokenMode={tokenMode}
-            viewerPath={resolvedViewerPath}
-            buildViewerUrl={resolvedBuildViewerUrl}
-          />
+          <TokenIndex />
         </section>
         <footer className="landing-watermark">
           hat's off to{" "}

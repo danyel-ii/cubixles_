@@ -1,18 +1,8 @@
-# cubixles_ — Master Index
-
-Last updated: 2026-01-08
-
-This is the top-level entry point for project documentation.
+# cubixles_ — Documentation Index
 
 Start here:
-- `docs/00-OVERVIEW/MASTER.md`
-- `docs/20-CONTRACTS/CONTRACT_DETAILS.md`
-- `docs/30-SECURITY/SECURITY_AUDIT.md`
-
-Quick commands:
-- `npm run dev`
-- `npm run coverage:contracts`
-- `npm run check:no-client-secrets`
-- `npm run check:no-repo-secrets`
-- `cd contracts && forge test -vvv`
-- `npm run fork-test`
+- `docs/overview.md`
+- `docs/contracts.md`
+- `docs/security.md`
+- `docs/operations.md`
+- `technical-review.md`

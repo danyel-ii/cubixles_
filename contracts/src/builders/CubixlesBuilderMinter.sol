@@ -374,13 +374,10 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
         // slither-disable-next-line calls-loop
         try IERC2981(nft).royaltyInfo(tokenId, salePrice) returns (
             address receiver,
-            uint256 royaltyAmount
+            uint256
         ) {
             if (receiver == address(0)) {
                 revert RoyaltyReceiverRequired(nft, tokenId);
-            }
-            if (royaltyAmount == 0) {
-                // Intentional no-op to document the ignored amount.
             }
             return receiver;
         } catch {

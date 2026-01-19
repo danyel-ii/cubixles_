@@ -9,12 +9,20 @@ import { getCache, setCache } from "../../../src/server/cache.js";
 import { getBuilderContractAddress } from "../../../src/server/builder-config.js";
 import { getMinterContractAddress } from "../../../src/server/minter-config.js";
 import { fetchWithGateways } from "../../../src/shared/ipfs-fetch.js";
+import { safeFetch, getHostAllowlist } from "../../../src/server/safe-fetch.js";
+import { IPFS_GATEWAYS } from "../../../src/shared/uri-policy.js";
 
 const CACHE_TTL_MS = 60_000;
 const MAX_LIMIT = 120;
 const DEFAULT_LIMIT = 8;
 const MAX_PAGES = 50;
 const DEFAULT_MAX_PAGES = 25;
+const MAX_METADATA_BYTES = 1_000_000;
+const DEFAULT_ALLOWED_HOSTS = [
+  ...IPFS_GATEWAYS.map((gateway) => new URL(gateway).hostname),
+  "arweave.net",
+  "ar-io.net",
+];
 
 const MINTER_ABI = [
   "function totalMinted() view returns (uint256)",
@@ -47,18 +55,41 @@ async function fetchMetadata(tokenUri) {
     return null;
   }
   try {
-    if (tokenUri.startsWith("ipfs://")) {
-      const { response } = await fetchWithGateways(tokenUri, { expectsJson: true });
-      return await response.json();
-    }
-    const response = await fetch(tokenUri);
-    if (!response.ok) {
+    const normalized = normalizeMetadataUri(tokenUri);
+    if (!normalized) {
       return null;
     }
-    return await response.json();
+    if (normalized.startsWith("ipfs://")) {
+      const { response } = await fetchWithGateways(normalized, { expectsJson: true });
+      return await response.json();
+    }
+    const allowlist = getHostAllowlist(
+      "TOKEN_METADATA_ALLOWED_HOSTS",
+      DEFAULT_ALLOWED_HOSTS
+    );
+    const { buffer } = await safeFetch(normalized, {
+      allowlist,
+      maxBytes: MAX_METADATA_BYTES,
+      headers: { Accept: "application/json" },
+    });
+    return JSON.parse(buffer.toString("utf8"));
   } catch (error) {
     return null;
   }
+}
+
+function normalizeMetadataUri(tokenUri) {
+  if (typeof tokenUri !== "string") {
+    return "";
+  }
+  const trimmed = tokenUri.trim();
+  if (!trimmed) {
+    return "";
+  }
+  if (trimmed.startsWith("ar://")) {
+    return `https://arweave.net/${trimmed.slice("ar://".length)}`;
+  }
+  return trimmed;
 }
 
 function parsePositiveInt(value) {

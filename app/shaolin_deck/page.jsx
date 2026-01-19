@@ -1,5 +1,5 @@
 import { DeckPage } from "./DeckPage.jsx";
 
 export default function ShaolinDeckPage() {
-  return <DeckPage tokenMode="builder" viewerPath="/m2" />;
+  return <DeckPage />;
 }

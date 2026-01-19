@@ -1,3 +1,5 @@
+import { buildBuilderTokenViewUrl } from "../../config/links.js";
+
 function safeText(value, fallback) {
   if (typeof value === "string" && value.trim()) {
     return value.trim();
@@ -119,11 +121,13 @@ export function buildBuilderMetadata({
     eth: mintPriceEth ?? "0.0000",
     wei: mintPriceWei ?? "0",
   };
+  const viewerUrl = tokenId ? buildBuilderTokenViewUrl(tokenId) : "";
+  const resolvedViewerUrl = viewerUrl || externalUrl || "";
   const descriptionLines = [
     "cubixles_ builder mint: an ERC-721 composed from your NFT references.",
   ];
-  if (externalUrl) {
-    descriptionLines.push(`Token viewer: ${externalUrl}`);
+  if (resolvedViewerUrl) {
+    descriptionLines.push(`Token viewer: ${resolvedViewerUrl}`);
   }
   const attributes = [
     { trait_type: "Feingehalt (ETH)", value: mintPriceEth ?? "0.0000" },
@@ -147,7 +151,7 @@ export function buildBuilderMetadata({
         ? imageUrl
         : undefined,
     animation_url: animationUrl || undefined,
-    external_url: externalUrl || undefined,
+    external_url: resolvedViewerUrl || undefined,
     builder: {
       mintPriceWei,
       mintPriceEth,

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Interface, formatEther } from "ethers";
 
 import PaperTokenViewer from "../../_components/PaperTokenViewer.jsx";
-import builderDeployment from "../../../contracts/deployments/builder-mainnet.json";
+import builderMainnet from "../../../contracts/deployments/builder-mainnet.json";
+import builderBase from "../../../contracts/deployments/builder-base.json";
+import builderSepolia from "../../../contracts/deployments/builder-sepolia.json";
 import { buildImageCandidates } from "../../_client/src/shared/utils/uri";
 import { formatChainName, setActiveChainId } from "../../_client/src/config/chains.js";
 import { getProvenance } from "../../_client/src/data/nft/indexer";
@@ -19,6 +21,19 @@ const BUILDER_ABI = [
   "function ownerOf(uint256 tokenId) view returns (address)",
   "function mintPriceByTokenId(uint256 tokenId) view returns (uint256)",
 ];
+
+const BUILDER_DEPLOYMENTS = new Map([
+  [1, builderMainnet],
+  [8453, builderBase],
+  [11155111, builderSepolia],
+]);
+
+function getBuilderDeployment(chainId) {
+  if (chainId && BUILDER_DEPLOYMENTS.has(chainId)) {
+    return BUILDER_DEPLOYMENTS.get(chainId);
+  }
+  return builderMainnet;
+}
 
 function formatMintedAt(value) {
   if (!value) {
@@ -161,6 +176,8 @@ async function fetchBuilderRefsAndOwner(tokenId, chainId, contractAddress) {
 export default function BuilderTokenViewerPage() {
   const params = useParams();
   const tokenId = params?.tokenId ? String(params.tokenId) : "";
+  const searchParams = useSearchParams();
+  const requestedChainId = searchParams?.get("chainId");
   const [cube, setCube] = useState(null);
   const [status, setStatus] = useState("Loading token...");
   const [palette, setPalette] = useState(null);
@@ -182,8 +199,12 @@ export default function BuilderTokenViewerPage() {
 
     const load = async () => {
       try {
-        const chainId = builderDeployment.chainId || 1;
-        const contractAddress = builderDeployment.address;
+        const parsedChainId = Number(requestedChainId);
+        const deployment = getBuilderDeployment(
+          Number.isFinite(parsedChainId) ? parsedChainId : null
+        );
+        const chainId = deployment?.chainId || 1;
+        const contractAddress = deployment?.address;
         if (!contractAddress) {
           throw new Error("Builder contract not configured.");
         }
@@ -243,7 +264,7 @@ export default function BuilderTokenViewerPage() {
     return () => {
       mounted = false;
     };
-  }, [tokenId]);
+  }, [tokenId, requestedChainId]);
 
   const content = useMemo(() => {
     if (cube) {
