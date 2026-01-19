@@ -194,7 +194,8 @@ function isAllowedHost(hostname: string): boolean {
   if (!host) {
     return false;
   }
-  for (const allowed of METADATA_ALLOWED_HOSTS) {
+  const allowedHosts = Array.from(METADATA_ALLOWED_HOSTS);
+  for (const allowed of allowedHosts) {
     if (host === allowed || host.endsWith(`.${allowed}`)) {
       return true;
     }
