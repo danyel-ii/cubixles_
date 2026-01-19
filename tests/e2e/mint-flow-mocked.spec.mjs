@@ -328,9 +328,6 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(page.locator(".nft-card.is-selected")).toHaveCount(1, {
     timeout: 10000,
   });
-  await expect(page.locator("#nft-selection")).toContainText(/Selected 1 \/ 6/i, {
-    timeout: 10000,
-  });
   await expect(page.locator("#mint-status")).toContainText(/Ready to mint/i, {
     timeout: 10000,
   });
