@@ -2,7 +2,6 @@ import Link from "next/link";
 import LandingCubeIcon from "../_components/LandingCubeIcon";
 import CubixlesLogo from "../_components/CubixlesLogo";
 import LandingLoaderOverlay from "../_components/LandingLoaderOverlay";
-import NotesFlockOverlay from "../_components/NotesFlockOverlay";
 import TokenIndexPanel from "../_components/TokenIndexPanel";
 import DigItOverlay from "../_components/DigItOverlay";
 import PaletteRandomizer from "../_components/PaletteRandomizer";
@@ -12,7 +11,6 @@ export default function LandingExperience() {
     <main className="landing-page landing-home">
       <PaletteRandomizer />
       <LandingLoaderOverlay />
-      <NotesFlockOverlay />
       <section className="landing-header">
         <div className="landing-intro">
           <h1 className="landing-title">

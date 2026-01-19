@@ -19,12 +19,18 @@ export default function LandingLoaderOverlay() {
   }
 
   const loaderUrl = withBasePath("/assets/loader.png");
+  const loaderMobileUrl = withBasePath("/assets/loader_mobile.jpg");
 
   return (
     <div className="landing-loader" aria-hidden="true">
       <div
         className="landing-loader-art"
-        style={{ "--loader-mask": `url(${loaderUrl})` } as React.CSSProperties}
+        style={
+          {
+            "--loader-mask": `url(${loaderUrl})`,
+            "--loader-mask-mobile": `url(${loaderMobileUrl})`,
+          } as React.CSSProperties
+        }
       ></div>
     </div>
   );

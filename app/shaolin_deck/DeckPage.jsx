@@ -1,22 +1,46 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import CubixlesLogo from "../_components/CubixlesLogo.jsx";
 import CubixlesText from "../_components/CubixlesText.jsx";
-import { CUBIXLES_LOGO_GLYPH } from "../_lib/logo.js";
 import { buildGatewayUrls } from "../_client/src/shared/uri-policy.js";
 
 const DEFAULT_CHAIN_ID = 1;
 const DEFAULT_PAGE_SIZE = 8;
 const DEFAULT_MAX_PAGES = 25;
-const NOTES_COLUMNS = 25;
-const NOTES_ROWS = 32;
-const NOTES_SEED = 13579;
-const LOGO_SEED = 24680;
 const LOADER_DURATION_MS = 2000;
+const FLOATING_TILE_SIZE = 36;
 
-const NOTES_COLORS = ["#000000", "#FFFFFF", "#D00000"];
+const FLOATING_TILE_COLORS = [
+  "#000000",
+  "#FFFFFF",
+  "#D00000",
+  "#FFFFFF",
+  "#000000",
+  "#D00000",
+  "#000000",
+  "#FFFFFF",
+  "#D00000",
+];
+
+const FLOATING_TILES = [
+  {
+    href: "https://nodefoundation.com/",
+    label: "Open Node Foundation",
+    colors: FLOATING_TILE_COLORS,
+  },
+  {
+    href: "https://less.ripe.wtf/",
+    label: "Open less.ripe.wtf",
+    colors: FLOATING_TILE_COLORS,
+  },
+  {
+    href: "https://studybook.eth.link",
+    label: "Open Studybook",
+    colors: FLOATING_TILE_COLORS,
+  },
+];
 
 const DEFAULT_PALETTE = {
   id: "EA7B7BD253539E3B3BFFEAD3",
@@ -26,71 +50,8 @@ const DEFAULT_PALETTE = {
 const TOKEN_LIST_COPY =
   "Quick inspection list pulled from the collection API. Use pagination or pull the full set.";
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function mulberry32(seed) {
-  let t = seed >>> 0;
-  return function next() {
-    t += 0x6d2b79f5;
-    let x = t;
-    x = Math.imul(x ^ (x >>> 15), x | 1);
-    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function buildNotesTiles() {
-  const tiles = [];
-  const prng = mulberry32(NOTES_SEED);
-  const sizeMax = 94;
-  const sizeMin = 66;
-  for (let row = 0; row < NOTES_ROWS; row += 1) {
-    const rowFactor = NOTES_ROWS > 1 ? row / (NOTES_ROWS - 1) : 0;
-    const baseSize = sizeMax - (sizeMax - sizeMin) * rowFactor;
-    for (let col = 0; col < NOTES_COLUMNS; col += 1) {
-      const jitterX = (prng() - 0.5) * 2.4;
-      const jitterY = (prng() - 0.5) * 2.4;
-      const left = clamp(((col + 0.5) / NOTES_COLUMNS) * 100 + jitterX, 0, 100);
-      const top = clamp(((row + 0.5) / NOTES_ROWS) * 100 + jitterY, 0, 100);
-      const size = baseSize + (prng() - 0.5) * 3;
-      const delay = 350 + prng() * 2000;
-      const clusterX = (prng() - 0.5) * 130;
-      const clusterY = (prng() - 0.5) * 130;
-      const rotation = -13 + prng() * 0.6;
-      const color = NOTES_COLORS[Math.floor(prng() * NOTES_COLORS.length)];
-      tiles.push({
-        key: `tile-${row * NOTES_COLUMNS + col}`,
-        style: {
-          backgroundColor: color,
-          left: `${left}%`,
-          top: `${top}%`,
-          width: `${size}px`,
-          height: `${size}px`,
-          "--delay": `${delay}ms`,
-          "--cluster-x": `${clusterX}px`,
-          "--cluster-y": `${clusterY}px`,
-          "--rotation": `${rotation}deg`,
-        },
-      });
-    }
-  }
-  return tiles;
-}
-
-function buildLogoStyle() {
-  const prng = mulberry32(LOGO_SEED);
-  const x = (prng() - 0.5) * 160;
-  const y = (prng() - 0.5) * 120;
-  const rotation = (prng() - 0.5) * 18;
-  const delay = 180 + prng() * 260;
-  return {
-    "--logo-x": `${x}px`,
-    "--logo-y": `${y}px`,
-    "--logo-r": `${rotation}deg`,
-    "--logo-delay": `${delay}ms`,
-  };
+function randomBetween(min, max) {
+  return min + Math.random() * (max - min);
 }
 
 function useDebounced(value, delay = 300) {
@@ -409,151 +370,6 @@ function LandingCubeIcon() {
       </div>
     </div>
   );
-}
-
-function NotesOverlayMotion() {
-  useEffect(() => {
-    const overlay = document.querySelector("[data-notes-overlay]");
-    if (!overlay) {
-      return;
-    }
-    let fadeTimeout = null;
-    let dockTimeout = null;
-    let raf = null;
-    let onDelayTimeout = null;
-    let maxDelay = 0;
-
-    const setFadeDuration = (value) => {
-      document.body.style.setProperty(
-        "--cube-fade-duration",
-        `${Math.max(0, value)}ms`
-      );
-    };
-
-    const activateCube = () => {
-      document.body.classList.add("cube-fade-in");
-    };
-
-    const STORAGE_KEY = "cubixles_notes_flock_v1";
-    const NAVIGATE = "navigate";
-    const getNavigationType = () => {
-      if (typeof performance === "undefined") {
-        return NAVIGATE;
-      }
-      const entries = performance.getEntriesByType?.("navigation");
-      const entry = entries?.[0];
-      if (entry?.type) {
-        return entry.type;
-      }
-      const legacy = performance.navigation;
-      return legacy?.type === 1 ? "reload" : NAVIGATE;
-    };
-
-    const getOrientationKey = () => {
-      const orientation = window.screen?.orientation?.type;
-      if (orientation) {
-        return orientation;
-      }
-      const { innerWidth, innerHeight } = window;
-      return `ratio-${(innerHeight ? innerHeight / innerWidth : 0).toFixed(2)}`;
-    };
-
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      let parsed = null;
-      if (stored) {
-        try {
-          parsed = JSON.parse(stored);
-        } catch (error) {
-          parsed = { v: 1 };
-        }
-      }
-      const navigation = getNavigationType();
-      const orientation = getOrientationKey();
-      const sameOrientation = !parsed || !parsed.orientation || parsed.orientation === orientation;
-      if (parsed && !(navigation === "reload" && sameOrientation)) {
-        setFadeDuration(600);
-        activateCube();
-        overlay.classList.add("dock");
-        document.body.classList.add("notes-docked");
-        window.localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            v: 2,
-            orientation,
-            lastRun: parsed?.lastRun ?? 0,
-          })
-        );
-        return;
-      }
-      maxDelay = Date.now();
-      window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ v: 2, orientation, lastRun: maxDelay })
-      );
-    } catch (error) {
-      void error;
-    }
-
-    overlay.classList.remove("flock");
-    overlay.classList.remove("dock");
-    document.body.classList.remove("notes-docked");
-    document.body.classList.remove("cube-fade-in");
-
-    raf = window.requestAnimationFrame(() => {
-      const cube = document.querySelector("[data-cube-icon]");
-      const fallback = { x: 0.78 * window.innerWidth, y: 0.2 * window.innerHeight };
-      let targetX = fallback.x;
-      let targetY = fallback.y;
-      if (cube) {
-        const rect = cube.getBoundingClientRect();
-        targetX = rect.left + rect.width / 2;
-        targetY = rect.top + rect.height / 2;
-      }
-      const tiles = Array.from(overlay.querySelectorAll(".notes-tile"));
-      maxDelay = 0;
-      tiles.forEach((tile) => {
-        const rect = tile.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const dx = targetX - centerX;
-        const dy = targetY - centerY;
-        const delay = Number.parseFloat(tile.style.getPropertyValue("--delay") || "0");
-        maxDelay = Math.max(maxDelay, delay);
-        tile.style.setProperty("--dx", `${dx}px`);
-        tile.style.setProperty("--dy", `${dy}px`);
-      });
-      setFadeDuration(Math.max(0, maxDelay + 1800 + 520 - 150));
-      fadeTimeout = window.setTimeout(() => {
-        overlay.classList.add("flock");
-        onDelayTimeout = window.setTimeout(() => activateCube(), 150);
-      }, 1400);
-      dockTimeout = window.setTimeout(() => {
-        overlay.classList.add("dock");
-        document.body.classList.add("notes-docked");
-      }, 1400 + maxDelay + 1800);
-    });
-
-    return () => {
-      if (fadeTimeout) {
-        window.clearTimeout(fadeTimeout);
-      }
-      if (dockTimeout) {
-        window.clearTimeout(dockTimeout);
-      }
-      if (raf) {
-        window.cancelAnimationFrame(raf);
-      }
-      if (onDelayTimeout) {
-        window.clearTimeout(onDelayTimeout);
-      }
-      document.body.classList.remove("notes-docked");
-      document.body.classList.remove("cube-fade-in");
-      document.body.style.removeProperty("--cube-fade-duration");
-    };
-  }, []);
-
-  return null;
 }
 
 function PaletteSync() {
@@ -1021,9 +837,8 @@ function TokenIndex() {
 }
 
 export function DeckPage() {
-  const notesTiles = useMemo(() => buildNotesTiles(), []);
-  const logoStyle = useMemo(() => buildLogoStyle(), []);
   const [showLoader, setShowLoader] = useState(true);
+  const floatingTileRefs = useRef([]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setShowLoader(false), LOADER_DURATION_MS);
@@ -1043,29 +858,91 @@ export function DeckPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const tiles = floatingTileRefs.current.filter(Boolean);
+    if (!tiles.length) {
+      return;
+    }
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    const states = tiles.map(() => ({
+      x: randomBetween(0, Math.max(0, width - FLOATING_TILE_SIZE)),
+      y: randomBetween(0, Math.max(0, height - FLOATING_TILE_SIZE)),
+      vx: randomBetween(-0.7, 0.7),
+      vy: randomBetween(-0.7, 0.7),
+      rotation: randomBetween(-12, 12),
+      vRotation: randomBetween(-0.12, 0.12),
+    }));
+    let rafId = null;
+    const step = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      tiles.forEach((tile, index) => {
+        const state = states[index];
+        if (!state) {
+          return;
+        }
+        state.x += state.vx;
+        state.y += state.vy;
+        state.rotation += state.vRotation;
+        if (state.x > width + FLOATING_TILE_SIZE) state.x = -FLOATING_TILE_SIZE;
+        if (state.x < -FLOATING_TILE_SIZE) state.x = width + FLOATING_TILE_SIZE;
+        if (state.y > height + FLOATING_TILE_SIZE) state.y = -FLOATING_TILE_SIZE;
+        if (state.y < -FLOATING_TILE_SIZE) state.y = height + FLOATING_TILE_SIZE;
+        tile.style.transform = `translate3d(${state.x}px, ${state.y}px, 0) rotate(${state.rotation}deg)`;
+      });
+      rafId = window.requestAnimationFrame(step);
+    };
+    const onResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+    };
+    window.addEventListener("resize", onResize);
+    rafId = window.requestAnimationFrame(step);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, []);
+
   return (
     <>
-      <NotesOverlayMotion />
       <PaletteSync />
+      {FLOATING_TILES.map((tile, index) => (
+        <a
+          key={tile.href}
+          ref={(node) => {
+            floatingTileRefs.current[index] = node;
+          }}
+          className="floating-tile"
+          href={tile.href}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <span className="sr-only">{tile.label}</span>
+          {tile.colors.map((color, index) => (
+            <span
+              key={`${tile.href}-${color}-${index}`}
+              className="floating-cubelet"
+              style={{ backgroundColor: color }}
+            ></span>
+          ))}
+        </a>
+      ))}
       <main className="landing-page landing-home">
         {showLoader ? (
           <div className="landing-loader" aria-hidden="true">
             <div
               className="landing-loader-art"
-              style={{ "--loader-mask": "url(/inspecta_deck/assets/loader.png)" }}
+              style={{
+                "--loader-mask": "url(/inspecta_deck/assets/loader.png)",
+                "--loader-mask-mobile": "url(/inspecta_deck/assets/loader_mobile.jpg)",
+              }}
             ></div>
           </div>
         ) : null}
-        <div className="notes-overlay" data-notes-overlay="true" aria-hidden="true">
-          {notesTiles.map((tile) => (
-            <div key={tile.key} className="notes-tile" style={tile.style}></div>
-          ))}
-          <div className="notes-logo cubixles-logo" aria-hidden="true">
-            <span className="notes-logo-letter" style={logoStyle}>
-              {CUBIXLES_LOGO_GLYPH}
-            </span>
-          </div>
-        </div>
         <section className="landing-header">
           <div className="landing-intro">
             <h1 className="landing-title">

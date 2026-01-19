@@ -89,7 +89,15 @@ function readEnvValue(name: string): string | undefined {
     return undefined;
   }
   const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
+  if (!trimmed) {
+    return undefined;
+  }
+  const prefix = `${name}=`;
+  if (trimmed.startsWith(prefix)) {
+    const stripped = trimmed.slice(prefix.length).trim();
+    return stripped.length > 0 ? stripped : undefined;
+  }
+  return trimmed;
 }
 
 function normalizeTokenId(value?: string | null): string | null {
