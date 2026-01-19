@@ -33,16 +33,31 @@ const FLOATING_TILES = [
     href: "https://nodefoundation.com/",
     label: "Open Node Foundation",
     colors: FLOATING_TILE_COLORS,
+    x: "6vw",
+    y: "10vh",
+    delay: "0s",
+    duration: "9s",
+    drift: "10px",
   },
   {
     href: "https://less.ripe.wtf/",
     label: "Open less.ripe.wtf",
     colors: FLOATING_TILE_COLORS,
+    x: "14vw",
+    y: "38vh",
+    delay: "1.2s",
+    duration: "11s",
+    drift: "14px",
   },
   {
     href: "https://studybook.eth.link",
     label: "Open Studybook",
     colors: FLOATING_TILE_COLORS,
+    x: "8vw",
+    y: "68vh",
+    delay: "0.6s",
+    duration: "10s",
+    drift: "12px",
   },
 ];
 
@@ -425,13 +440,15 @@ function DigOverlay() {
 function LandingCubeIcon() {
   return (
     <div className="landing-cube-icon" data-cube-icon="true" aria-hidden="true">
-      <div className="landing-sketch-shell">
-        <img
-          src="/assets/default-cube.svg"
-          alt=""
-          className="landing-sketch-canvas"
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
+      <div className="landing-cube-preview">
+        <div className="landing-cube">
+          <span className="landing-cube-face landing-cube-front"></span>
+          <span className="landing-cube-face landing-cube-back"></span>
+          <span className="landing-cube-face landing-cube-right"></span>
+          <span className="landing-cube-face landing-cube-left"></span>
+          <span className="landing-cube-face landing-cube-top"></span>
+          <span className="landing-cube-face landing-cube-bottom"></span>
+        </div>
       </div>
     </div>
   );
@@ -1074,6 +1091,13 @@ export function DeckPage() {
           href={tile.href}
           target="_blank"
           rel="noreferrer"
+          style={{
+            "--float-x": tile.x,
+            "--float-y": tile.y,
+            "--float-delay": tile.delay,
+            "--float-duration": tile.duration,
+            "--float-drift": tile.drift,
+          }}
         >
           <span className="sr-only">{tile.label}</span>
           {tile.colors.map((color, index) => (

@@ -127,6 +127,10 @@ export function initNftPickerUi() {
     const selection = selectedOrder.map((key) => inventoryMap.get(key));
     state.nftSelection = selection;
     selectionEl.textContent = `Selected ${selection.length} / ${MAX_SELECTION}`;
+    selectionEl.classList.remove("is-hidden");
+    if (typeof document !== "undefined" && !document.body.classList.contains("is-preview")) {
+      document.getElementById("ui")?.classList.remove("is-hidden");
+    }
     clearButton.disabled = selection.length === 0 || isLoading;
     applyButton.disabled =
       selection.length < 1 || selection.length > MAX_SELECTION || isLoading;
