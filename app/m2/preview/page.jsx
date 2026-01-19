@@ -161,6 +161,7 @@ export default function PreviewTokenViewerPage() {
           palette={palette}
           allowExport={false}
           showDiffusion={false}
+          isPreview
         />
       );
     }

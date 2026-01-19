@@ -204,6 +204,7 @@ export default function PaperTokenViewer({
   palette = null,
   allowExport = true,
   showDiffusion = true,
+  isPreview = false,
 }) {
   const viewerRef = useRef(null);
   const headerRef = useRef(null);
@@ -1161,7 +1162,7 @@ export default function PaperTokenViewer({
   return (
     <main
       ref={viewerRef}
-      className="paper-viewer"
+      className={`paper-viewer${isPreview ? " is-preview" : ""}`}
       style={{
         "--cube-base-x": baseRotation.x,
         "--cube-base-y": baseRotation.y,
