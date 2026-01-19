@@ -36,6 +36,32 @@
   background: radial-gradient(circle at 20% 20%, rgba(10, 12, 20, 0.8), #030305 45%, #000 100%);
 }
 
+.landing-loader {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--neo-bg);
+  z-index: 400;
+}
+
+.landing-loader-art {
+  --loader-mask: url("/inspecta_deck/assets/loader.png");
+  width: min(60vw, 360px);
+  aspect-ratio: 1 / 1;
+  background: conic-gradient(
+    from 140deg,
+    var(--neo-primary),
+    var(--neo-secondary),
+    var(--neo-accent),
+    var(--neo-mint),
+    var(--neo-primary)
+  );
+  -webkit-mask: var(--loader-mask) center / contain no-repeat;
+  mask: var(--loader-mask) center / contain no-repeat;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.28));
+}
+
 .landing-home {
   --neo-bg: #ffead3;
   --neo-surface: #ea7b7b;
@@ -1174,27 +1200,24 @@
 }
 
 .cubixles-logo-link::before {
-  content: "banga bootlegged tokens";
+  content: "bang bootlegged tokens";
   position: absolute;
-  left: 50%;
+  left: 0;
   top: 50%;
   pointer-events: none;
   white-space: nowrap;
   font-weight: 700;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4), -1px 2px 0 rgba(0, 0, 0, 0.28),
     0 0 10px rgba(0, 0, 0, 0.35);
-  mix-blend-mode: multiply;
+  mix-blend-mode: normal;
   z-index: 2;
-}
-
-.cubixles-logo-link::before {
-  transform: translate(-50%, -50%) rotate(-12deg) skew(-4deg);
+  transform: translate(-0.6em, -50%);
   font-family: "Aerosoldier Drip", "Permanent Marker", "Rock Salt", "Caveat", "Marker Felt",
     "Comic Sans MS", cursive;
   font-size: 0.92em;
   letter-spacing: 0.06em;
   color: var(--neo-accent);
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .cubixles-logo-link:focus-visible {
