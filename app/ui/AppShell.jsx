@@ -158,11 +158,6 @@ export default function AppShell({ mode = "mint" }) {
           </div>
         </div>
       </div>
-      {isBuilder ? (
-        <div className="builder-corner-tag" aria-hidden="true">
-          dig it
-        </div>
-      ) : null}
       <div id="toast-root" className="toast-root" aria-live="polite" aria-atomic="true"></div>
       <div id="confetti-root" className="confetti-root" aria-hidden="true"></div>
       <div id="wallet-picker" className="wallet-picker is-hidden" role="dialog" aria-modal="true">
@@ -427,9 +422,6 @@ export default function AppShell({ mode = "mint" }) {
             <div id="builder-error" className="ui-hint is-error is-hidden">
               —
             </div>
-            <div id="builder-debug" className="builder-debug is-hidden">
-              —
-            </div>
           </div>
         ) : null}
         <div className="ui-row">
@@ -531,15 +523,6 @@ export default function AppShell({ mode = "mint" }) {
             Landing
           </button>
         </div>
-      </div>
-      <div id="debug-panel" className="debug-panel is-hidden" aria-live="polite">
-        <div className="debug-header">
-          <span>Debug</span>
-          <button id="debug-close" className="debug-close" type="button">
-            ×
-          </button>
-        </div>
-        <pre id="debug-log" className="debug-log"></pre>
       </div>
       {isBuilder ? (
         <div

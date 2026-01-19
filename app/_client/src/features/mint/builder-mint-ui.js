@@ -113,7 +113,6 @@ export function initBuilderMintUi() {
   const floorSummaryEl = document.getElementById("mint-floor-summary");
   const floorListEl = document.getElementById("mint-floor-list");
   const errorEl = document.getElementById("builder-error");
-  const debugEl = document.getElementById("builder-debug");
 
   if (!statusEl || !mintButton || !amountInput) {
     return;
@@ -138,15 +137,6 @@ export function initBuilderMintUi() {
     }
     errorEl.textContent = message || "-";
     errorEl.classList.toggle("is-hidden", !message);
-  }
-
-  function setDebug(lines) {
-    if (!debugEl) {
-      return;
-    }
-    const text = lines.filter(Boolean).join("\n");
-    debugEl.textContent = text || "-";
-    debugEl.classList.toggle("is-hidden", !text);
   }
 
   function setDisabled(disabled) {
@@ -193,7 +183,6 @@ export function initBuilderMintUi() {
     }
     quoteInFlight = true;
     setError("");
-    setDebug(["quote: requesting..."]);
 
     try {
       const response = await fetch("/api/builder/quote", {
@@ -211,15 +200,10 @@ export function initBuilderMintUi() {
       if (!response.ok) {
         const message = data?.error || `Quote failed (${response.status})`;
         setError(message);
-        setDebug([
-          "quote: error",
-          data?.requestId ? `requestId: ${data.requestId}` : null,
-        ]);
         return null;
       }
       if (!data?.signature || !data?.quote) {
         setError("Quote response missing signature.");
-        setDebug(["quote: error", "missing signature or quote payload"]);
         return null;
       }
       const floorsWei = (data.floorsWei || []).map((floor) => BigInt(floor));
@@ -238,11 +222,6 @@ export function initBuilderMintUi() {
           ? `Mint price: ${formatEthFromWei(mintPriceWei)} ETH`
           : "Mint price: -";
       }
-      setDebug([
-        "quote: ready",
-        data?.requestId ? `requestId: ${data.requestId}` : null,
-        data?.verifyingContract ? `verifier: ${data.verifyingContract}` : null,
-      ]);
       return {
         refs: selection.map((nft) => ({
           contractAddress: nft.contractAddress,
@@ -257,7 +236,6 @@ export function initBuilderMintUi() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Quote failed.";
       setError(message);
-      setDebug(["quote: error", message]);
       return null;
     } finally {
       quoteInFlight = false;
@@ -388,12 +366,6 @@ export function initBuilderMintUi() {
       const qrUrl = assetResult.qrUrl || "";
       const cardUrl = assetResult.cardUrl || "";
       const paperclipUrl = assetResult.paperclipUrl || "";
-      const assetDebug = [
-        "assets: ready",
-        qrUrl ? `qr: ${qrUrl}` : null,
-        cardUrl ? `card: ${cardUrl}` : null,
-        paperclipUrl ? `paperclip: ${paperclipUrl}` : null,
-      ];
       const imageUrl = paperclipUrl;
       const animationUrl = cardUrl || externalUrl;
       const floorsWeiStrings = floorsWei.map((floor) => floor.toString());
@@ -441,21 +413,12 @@ export function initBuilderMintUi() {
         { value: mintPriceWei }
       );
       setStatus("Builder mint submitted.");
-      setDebug([
-        "mint: submitted",
-        `tokenId: ${tokenId}`,
-        ...assetDebug,
-        tokenURI ? `tokenURI: ${tokenURI}` : null,
-        metadataHash ? `metadata: ${metadataHash}` : null,
-        tx?.hash ? `tx: ${tx.hash}` : null,
-      ]);
       await tx.wait();
       setStatus("Builder mint confirmed.", "success");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Mint failed.";
       setError(message);
       setStatus(message, "error");
-      setDebug(["mint: error", message]);
     } finally {
       isMinting = false;
       setDisabled(false);

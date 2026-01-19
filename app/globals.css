@@ -122,10 +122,6 @@ body.is-canvas-ready .intro-shield {
   pointer-events: none;
 }
 
-body:not(.is-canvas-ready) .builder-corner-tag {
-  opacity: 0;
-}
-
 button,
 input,
 select,
@@ -169,74 +165,6 @@ body.is-intro #paperclip-panel {
 #paperclip-panel {
   transition: opacity 500ms ease, transform 500ms ease, filter 500ms ease;
   will-change: opacity, transform, filter;
-}
-
-.debug-panel {
-  position: fixed;
-  right: 12px;
-  bottom: 12px;
-  max-width: 320px;
-  max-height: 40vh;
-  overflow: hidden;
-  background: var(--glass-strong);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 10px;
-  color: var(--ink);
-  font-size: 12px;
-  z-index: 30;
-  pointer-events: auto;
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-tight);
-}
-
-.debug-panel.is-hidden {
-  display: none;
-}
-
-.debug-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
-.debug-close {
-  background: transparent;
-  border: none;
-  color: inherit;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.debug-log {
-  white-space: pre-wrap;
-  font-family: "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  font-size: 11px;
-  margin: 0;
-  max-height: 32vh;
-  overflow: auto;
-}
-
-.builder-corner-tag {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  z-index: 1100;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 2px solid var(--line);
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: lowercase;
-  font-family: var(--font-mono);
-  box-shadow: var(--shadow-tight);
-  pointer-events: none;
 }
 
 .token-view-status {
@@ -1684,18 +1612,6 @@ body.is-minted .preview-bar {
   font-size: 11px;
   color: var(--ink-soft);
   font-family: var(--font-mono);
-}
-
-.builder-debug {
-  margin-top: 8px;
-  padding: 8px 10px;
-  border: 1px dashed var(--line);
-  border-radius: 8px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 11px;
-  line-height: 1.4;
-  white-space: pre-wrap;
 }
 
 #mint-status {

@@ -20,21 +20,6 @@ import { buildTokenViewUrl } from "../config/links.js";
 let uiInitialized = false;
 let uiDeferred = false;
 
-function isDebugEnabled() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("debug") === "1") {
-    return true;
-  }
-  try {
-    return window.localStorage.getItem("cubixles_debug") === "1";
-  } catch (error) {
-    return false;
-  }
-}
-
 function shouldSkipIntro() {
   if (typeof window === "undefined") {
     return false;
@@ -113,7 +98,6 @@ export function initUiRoot() {
   initUiPointerGuard();
   initTokenIdFromUrl();
   initLandingReturn();
-  initDebugPanel();
 }
 
 function initUiTouchGuards() {
@@ -278,66 +262,4 @@ function initMintedBanner() {
 
   document.addEventListener("cube-token-change", updateLink);
   updateLink();
-}
-
-function initDebugPanel() {
-  if (!isDebugEnabled()) {
-    return;
-  }
-  const panel = document.getElementById("debug-panel");
-  const logEl = document.getElementById("debug-log");
-  const closeButton = document.getElementById("debug-close");
-  if (!panel || !logEl || !closeButton) {
-    return;
-  }
-
-  let buffer = [];
-
-  function append(entry) {
-    buffer.push(entry);
-    if (buffer.length > 80) {
-      buffer = buffer.slice(-80);
-    }
-    logEl.textContent = buffer.join("\n");
-    panel.classList.remove("is-hidden");
-  }
-
-  function formatPayload(payload) {
-    if (payload === null || payload === undefined) {
-      return String(payload);
-    }
-    if (payload instanceof Error) {
-      return payload.message;
-    }
-    if (typeof payload === "object") {
-      try {
-        return JSON.stringify(payload);
-      } catch (error) {
-        return "[object]";
-      }
-    }
-    return String(payload);
-  }
-
-  function logWithPrefix(prefix, payload) {
-    append(`${prefix} ${formatPayload(payload)}`);
-  }
-
-  window.addEventListener("error", (event) => {
-    const details = event?.error?.stack || event?.message || "Unknown error";
-    logWithPrefix("[error]", details);
-  });
-
-  window.addEventListener("unhandledrejection", (event) => {
-    const reason = event?.reason;
-    logWithPrefix("[promise]", reason);
-  });
-
-  document.addEventListener("wallet-error", (event) => {
-    logWithPrefix("[wallet]", event?.detail || "Wallet error");
-  });
-
-  closeButton.addEventListener("click", () => {
-    panel.classList.add("is-hidden");
-  });
 }
