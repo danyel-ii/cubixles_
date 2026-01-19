@@ -937,8 +937,8 @@ export function DeckPage() {
             <div
               className="landing-loader-art"
               style={{
-                "--loader-mask": "url(/inspecta_deck/assets/loader.png)",
-                "--loader-mask-mobile": "url(/inspecta_deck/assets/loader_mobile.jpg)",
+                "--loader-image": "url(/inspecta_deck/assets/loader.png)",
+                "--loader-image-mobile": "url(/inspecta_deck/assets/loader_mobile.jpg)",
               }}
             ></div>
           </div>

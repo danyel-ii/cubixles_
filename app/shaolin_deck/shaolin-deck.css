@@ -24,6 +24,6 @@
 .floating-tile{animation:none}
 .landing-home .notes-overlay.flock{z-index:0}
 .landing-home .notes-overlay.dock{z-index:0}
-.landing-loader{position:fixed;inset:0;display:grid;place-items:center;background:var(--neo-bg);z-index:400}
-.landing-loader-art{--loader-mask:url("/inspecta_deck/assets/loader.png");--loader-mask-mobile:url("/inspecta_deck/assets/loader_mobile.jpg");width:min(60vw,360px);aspect-ratio:1/1;background:conic-gradient(from 140deg,var(--neo-primary),var(--neo-secondary),var(--neo-accent),var(--neo-mint),var(--neo-primary));-webkit-mask:var(--loader-mask) center/contain no-repeat;mask:var(--loader-mask) center/contain no-repeat;filter:drop-shadow(0 18px 30px rgba(0,0,0,.28))}
-@media (max-width:600px){.landing-loader-art{--loader-mask:var(--loader-mask-mobile);width:min(72vw,280px)}}
+.landing-loader{position:fixed;inset:0;background:#000;z-index:400;overflow:hidden}
+.landing-loader-art{--loader-image:url("/inspecta_deck/assets/loader.png");--loader-image-mobile:url("/inspecta_deck/assets/loader_mobile.jpg");position:absolute;inset:0;background-image:var(--loader-image);background-size:cover;background-position:center;background-repeat:no-repeat}
+@media (max-width:700px){.landing-loader-art{background-image:var(--loader-image-mobile)}}

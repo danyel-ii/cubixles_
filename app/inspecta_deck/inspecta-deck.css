@@ -39,34 +39,25 @@
 .landing-loader {
   position: fixed;
   inset: 0;
-  display: grid;
-  place-items: center;
-  background: var(--neo-bg);
+  background: #000000;
   z-index: 400;
+  overflow: hidden;
 }
 
 .landing-loader-art {
-  --loader-mask: url("/inspecta_deck/assets/loader.png");
-  --loader-mask-mobile: url("/inspecta_deck/assets/loader_mobile.jpg");
-  width: min(60vw, 360px);
-  aspect-ratio: 1 / 1;
-  background: conic-gradient(
-    from 140deg,
-    var(--neo-primary),
-    var(--neo-secondary),
-    var(--neo-accent),
-    var(--neo-mint),
-    var(--neo-primary)
-  );
-  -webkit-mask: var(--loader-mask) center / contain no-repeat;
-  mask: var(--loader-mask) center / contain no-repeat;
-  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.28));
+  --loader-image: url("/inspecta_deck/assets/loader.png");
+  --loader-image-mobile: url("/inspecta_deck/assets/loader_mobile.jpg");
+  position: absolute;
+  inset: 0;
+  background-image: var(--loader-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 @media (max-width: 700px) {
   .landing-loader-art {
-    --loader-mask: var(--loader-mask-mobile);
-    width: min(78vw, 320px);
+    background-image: var(--loader-image-mobile);
   }
 }
 

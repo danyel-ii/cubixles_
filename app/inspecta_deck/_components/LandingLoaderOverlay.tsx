@@ -27,8 +27,8 @@ export default function LandingLoaderOverlay() {
         className="landing-loader-art"
         style={
           {
-            "--loader-mask": `url(${loaderUrl})`,
-            "--loader-mask-mobile": `url(${loaderMobileUrl})`,
+            "--loader-image": `url(${loaderUrl})`,
+            "--loader-image-mobile": `url(${loaderMobileUrl})`,
           } as React.CSSProperties
         }
       ></div>
