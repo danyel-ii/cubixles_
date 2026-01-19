@@ -3,7 +3,7 @@ import {
   IMAGE_PROXY_PATH,
   buildGatewayUrls,
   buildImageProxyUrl,
-  isIpfsUri,
+  parseIpfsUrl,
 } from "src/shared/uri-policy.js";
 
 export function resolveUri(original: string | null | undefined): {
@@ -17,10 +17,11 @@ export function resolveUri(original: string | null | undefined): {
   if (!trimmed) {
     return null;
   }
-  if (trimmed.startsWith("ipfs://")) {
+  const parsed = parseIpfsUrl(trimmed);
+  if (parsed) {
     return {
       original: trimmed,
-      resolved: `${DEFAULT_IPFS_GATEWAY}${trimmed.replace("ipfs://", "")}`,
+      resolved: `${DEFAULT_IPFS_GATEWAY}${parsed.path}${parsed.search || ""}`,
     };
   }
   return {
@@ -46,8 +47,9 @@ export function buildImageCandidates(
   }
   const candidates = new Set<string>();
   const original = typeof input === "string" ? input : uri.original;
-  if (typeof original === "string" && isIpfsUri(original)) {
-    buildGatewayUrls(original).forEach((gatewayUrl) => candidates.add(gatewayUrl));
+  const parsed = typeof original === "string" ? parseIpfsUrl(original) : null;
+  if (parsed) {
+    buildGatewayUrls(parsed).forEach((gatewayUrl) => candidates.add(gatewayUrl));
   } else {
     candidates.add(uri.resolved);
   }

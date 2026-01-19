@@ -12,6 +12,7 @@ import {
 import FallbackImage from "./FallbackImage";
 import CubixlesText from "./CubixlesText";
 import { withBasePath } from "../_lib/basePath";
+import { buildGatewayUrls } from "../../../src/shared/uri-policy.js";
 
 type TokenMedia = {
   gateway?: string;
@@ -47,6 +48,7 @@ const DEFAULT_PAGE_SIZE = 8;
 const PAGE_SIZE_LIMIT = 100;
 const MAX_PAGES_LIMIT = 50;
 const DEFAULT_MAX_PAGES = 25;
+const ARWEAVE_GATEWAYS = ["https://arweave.net/", "https://ar-io.net/"];
 
 function truncateMiddle(value: string, start = 6, end = 4) {
   if (value.length <= start + end + 3) {
@@ -66,16 +68,16 @@ function formatTimestamp(value?: string) {
   return parsed.toISOString().split("T")[0] ?? value;
 }
 
-function resolveGatewayUrl(value: string): string {
-  if (value.startsWith("ipfs://") || value.toLowerCase().startsWith("ipfs://")) {
-    const path = value.replace(/^ipfs:\/\/ipfs\//i, "").replace(/^ipfs:\/\//i, "");
-    return `https://ipfs.io/ipfs/${path}`;
+function resolveGatewayCandidates(value: string): string[] {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return [];
   }
-  if (value.startsWith("ar://") || value.toLowerCase().startsWith("ar://")) {
-    const path = value.replace(/^ar:\/\//i, "");
-    return `https://arweave.net/${path}`;
+  if (trimmed.toLowerCase().startsWith("ar://")) {
+    const path = trimmed.replace(/^ar:\/\//i, "");
+    return ARWEAVE_GATEWAYS.map((gateway) => `${gateway}${path}`);
   }
-  return value;
+  return buildGatewayUrls(trimmed);
 }
 
 function uniqueStrings(values: string[]) {
@@ -266,7 +268,7 @@ function getTokenImageCandidates(token: TokenListItem): string[] {
     token.media?.flatMap((media) =>
       [media.gateway, media.thumbnail, media.raw]
         .filter(Boolean)
-        .map((entry) => resolveGatewayUrl(entry as string))
+        .flatMap((entry) => resolveGatewayCandidates(entry as string))
     ) ?? [];
   candidates.push(...mediaCandidates);
 
@@ -279,8 +281,8 @@ function getTokenImageCandidates(token: TokenListItem): string[] {
       token.metadata.preview ??
       token.metadata.thumbnail;
     candidates.push(
-      ...extractStringValues(metadataImage).map((entry) =>
-        resolveGatewayUrl(entry)
+      ...extractStringValues(metadataImage).flatMap((entry) =>
+        resolveGatewayCandidates(entry)
       )
     );
   }

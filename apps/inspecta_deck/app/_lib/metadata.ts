@@ -1,11 +1,42 @@
 import { getCachedJson } from "./cache";
 import { normalizeTokenId } from "./normalize";
 
-const IPFS_GATEWAYS = [
+function normalizeGatewayBase(raw?: string): string | null {
+  if (!raw) {
+    return null;
+  }
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const withScheme = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    const basePath = url.pathname.replace(/\/+$/, "");
+    const nextPath = basePath.endsWith("/ipfs")
+      ? `${basePath}/`
+      : `${basePath}/ipfs/`;
+    url.pathname = nextPath;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+const CUSTOM_IPFS_GATEWAY = normalizeGatewayBase(
+  process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? process.env.IPFS_GATEWAY
+);
+const DEFAULT_IPFS_GATEWAYS = [
   "https://ipfs.io/ipfs/",
   "https://cloudflare-ipfs.com/ipfs/",
   "https://gateway.pinata.cloud/ipfs/",
 ];
+const IPFS_GATEWAYS = [
+  ...(CUSTOM_IPFS_GATEWAY ? [CUSTOM_IPFS_GATEWAY] : []),
+  ...DEFAULT_IPFS_GATEWAYS,
+].filter((gateway, index, list) => list.indexOf(gateway) === index);
 
 const ARWEAVE_GATEWAYS = ["https://arweave.net/", "https://ar-io.net/"];
 const DEFAULT_METADATA_TIMEOUT_MS = 8000;
@@ -58,6 +89,10 @@ function stripIpfsPrefix(uri: string): string {
 function stripArweavePrefix(uri: string): string {
   return uri.replace(/^ar:\/\//i, "");
 }
+
+const IPFS_GATEWAY_HOSTS = new Set(
+  IPFS_GATEWAYS.map((gateway) => new URL(gateway).hostname.toLowerCase())
+);
 
 function parsePositiveInt(
   raw: string | undefined,
@@ -242,6 +277,26 @@ function isAllowedUrl(raw: string): boolean {
   }
 }
 
+function extractIpfsGatewayPath(raw: string): string | null {
+  try {
+    const url = new URL(raw);
+    if (!IPFS_GATEWAY_HOSTS.has(url.hostname.toLowerCase())) {
+      return null;
+    }
+    const match = url.pathname.match(/^\/ipfs\/(.+)$/);
+    if (!match) {
+      return null;
+    }
+    const path = match[1].replace(/^\/+/, "");
+    if (!path || path.includes("..")) {
+      return null;
+    }
+    return `${path}${url.search}`;
+  } catch {
+    return null;
+  }
+}
+
 function buildGatewayUrls(rawUrl: string): string[] {
   const trimmed = rawUrl.trim();
   if (!trimmed) {
@@ -260,6 +315,12 @@ function buildGatewayUrls(rawUrl: string): string[] {
   }
 
   if (lower.startsWith("http://") || lower.startsWith("https://")) {
+    const gatewayPath = extractIpfsGatewayPath(trimmed);
+    if (gatewayPath) {
+      return filterAllowedUrls(
+        IPFS_GATEWAYS.map((gateway) => `${gateway}${gatewayPath}`)
+      );
+    }
     return filterAllowedUrls([trimmed]);
   }
 
