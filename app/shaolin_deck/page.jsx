@@ -5,7 +5,7 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import CubixlesLogo from "../_components/CubixlesLogo.jsx";
 import CubixlesText from "../_components/CubixlesText.jsx";
 import { CUBIXLES_LOGO_GLYPH } from "../_lib/logo.js";
-import { buildBuilderTokenViewUrl } from "../_client/src/config/links.js";
+import { buildBuilderTokenViewUrl, buildTokenViewUrl } from "../_client/src/config/links.js";
 import { buildGatewayUrls } from "../_client/src/shared/uri-policy.js";
 
 const DEFAULT_CHAIN_ID = 1;
@@ -355,8 +355,14 @@ function formatMintDate(value) {
   return date.toISOString().split("T")[0];
 }
 
-function buildViewerUrl(tokenId) {
-  return buildBuilderTokenViewUrl(tokenId) || `/m2/${tokenId}`;
+function resolveViewerUrl(tokenId, buildUrl, fallbackPath) {
+  if (typeof buildUrl === "function") {
+    const built = buildUrl(tokenId);
+    if (built) {
+      return built;
+    }
+  }
+  return `${fallbackPath}/${tokenId}`;
 }
 
 function ImageCandidate({
@@ -813,9 +819,9 @@ function PaletteSync() {
   return null;
 }
 
-function TokenIndex() {
+function TokenIndex({ tokenMode = "minter", viewerPath = "/m", buildViewerUrl }) {
   const [chainId, setChainId] = useState(DEFAULT_CHAIN_ID);
-  const [mode, setMode] = useState("page");
+  const [paginationMode, setPaginationMode] = useState("page");
   const [tokens, setTokens] = useState([]);
   const [pageKey, setPageKey] = useState(null);
   const [pages, setPages] = useState(1);
@@ -828,7 +834,7 @@ function TokenIndex() {
   const [refreshTick, setRefreshTick] = useState(0);
   const [highlightIndex, setHighlightIndex] = useState(0);
   const [hoverIndex, setHoverIndex] = useState(null);
-  const isAllMode = mode === "all";
+  const isAllMode = paginationMode === "all";
   const hasMorePages = Boolean(pageKey);
   const pageSizeId = "token-index-page-size";
   const maxPagesId = "token-index-max-pages";
@@ -842,7 +848,9 @@ function TokenIndex() {
         const params = new URLSearchParams();
         params.set("limit", String(pageSize));
         params.set("chainId", String(chainId));
-        params.set("mode", "builder");
+        if (tokenMode === "builder") {
+          params.set("mode", "builder");
+        }
         if (isAllMode) {
           params.set("all", "true");
           params.set("maxPages", String(maxPages));
@@ -894,7 +902,7 @@ function TokenIndex() {
         setError(message);
       }
     },
-    [chainId, isAllMode, maxPages, pageSize]
+    [chainId, isAllMode, maxPages, pageSize, tokenMode]
   );
 
   useEffect(() => {
@@ -1024,7 +1032,9 @@ function TokenIndex() {
           <button
             type="button"
             className="landing-button secondary"
-            onClick={() => setMode((value) => (value === "all" ? "page" : "all"))}
+            onClick={() =>
+              setPaginationMode((value) => (value === "all" ? "page" : "all"))
+            }
             disabled={status === "loading"}
           >
             {isAllMode ? "Use pagination" : `Load all (max ${maxPages} pages)`}
@@ -1069,7 +1079,7 @@ function TokenIndex() {
             ? title.replace(tokenId, shortId)
             : title;
           const candidates = buildImageCandidates(token);
-          const viewerUrl = buildViewerUrl(tokenId);
+          const viewerUrl = resolveViewerUrl(tokenId, buildViewerUrl, viewerPath);
           const isHighlighted = index === activeIndex;
           return (
             <a
@@ -1118,7 +1128,16 @@ function TokenIndex() {
   );
 }
 
-export default function ShaolinDeckPage() {
+export function DeckPage({
+  tokenMode = "builder",
+  viewerPath,
+  buildViewerUrl,
+}) {
+  const resolvedViewerPath =
+    viewerPath || (tokenMode === "builder" ? "/m2" : "/m");
+  const resolvedBuildViewerUrl =
+    buildViewerUrl ||
+    (tokenMode === "builder" ? buildBuilderTokenViewUrl : buildTokenViewUrl);
   const notesTiles = useMemo(() => buildNotesTiles(), []);
   const logoStyle = useMemo(() => buildLogoStyle(), []);
 
@@ -1201,7 +1220,11 @@ export default function ShaolinDeckPage() {
           <LandingCubeIcon />
         </section>
         <section id="token-list" className="landing-token-list">
-          <TokenIndex />
+          <TokenIndex
+            tokenMode={tokenMode}
+            viewerPath={resolvedViewerPath}
+            buildViewerUrl={resolvedBuildViewerUrl}
+          />
         </section>
         <footer className="landing-watermark">
           hat's off to{" "}
@@ -1215,5 +1238,15 @@ export default function ShaolinDeckPage() {
         </footer>
       </main>
     </>
+  );
+}
+
+export default function ShaolinDeckPage() {
+  return (
+    <DeckPage
+      tokenMode="builder"
+      viewerPath="/m2"
+      buildViewerUrl={buildBuilderTokenViewUrl}
+    />
   );
 }
