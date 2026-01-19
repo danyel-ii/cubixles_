@@ -40,7 +40,18 @@ function readEnv(name: string): string | undefined {
   if (!value) {
     return undefined;
   }
-  const trimmed = value.trim();
+  let trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const quote = trimmed[0];
+  if ((quote === "\"" || quote === "'") && trimmed.endsWith(quote)) {
+    trimmed = trimmed.slice(1, -1).trim();
+  }
+  const prefix = `${name}=`;
+  if (trimmed.startsWith(prefix)) {
+    trimmed = trimmed.slice(prefix.length).trim();
+  }
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
@@ -68,6 +79,11 @@ function resolveChainId(chainIdOverride?: number): number | null {
   return null;
 }
 
+function extractAddress(value: string): string | null {
+  const match = value.match(/0x[a-fA-F0-9]{40}/);
+  return match ? match[0] : null;
+}
+
 function resolveNetwork(chainIdOverride?: number): string {
   const chainId = resolveChainId(chainIdOverride);
   if (chainId && NETWORK_BY_CHAIN_ID[chainId]) {
@@ -85,13 +101,19 @@ function resolveContractAddress(chainIdOverride?: number): string {
   if (chainId === 8453) {
     const baseContract = readEnv("CUBIXLES_BASE_CONTRACT_ADDRESS");
     if (baseContract) {
-      return baseContract;
+      const extracted = extractAddress(baseContract);
+      if (extracted) {
+        return extracted;
+      }
     }
   }
   const direct =
     readEnv("CUBIXLES_CONTRACT") ?? readEnv("CUBIXLES_CONTRACT_ADDRESS");
   if (direct) {
-    return direct;
+    const extracted = extractAddress(direct);
+    if (extracted) {
+      return extracted;
+    }
   }
   const fallback = chainId ? FALLBACK_CONTRACT_BY_CHAIN[chainId] : undefined;
   if (fallback) {
