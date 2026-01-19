@@ -1250,6 +1250,7 @@ export default function PaperTokenViewer({
                   aria-pressed={isActive}
                   aria-label={`${FACE_NAMES[face.id] || "Face"}: ${face.label}`}
                   onPointerUp={(event) => {
+                    endDrag();
                     event.preventDefault();
                     event.stopPropagation();
                     if (dragRef.current.moved) {
