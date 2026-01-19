@@ -1,0 +1,122 @@
+[
+  {
+    "question": "What does \"provenance as trace\" mean in the canon?",
+    "expectedCitations": ["docs/PHILOSOPHY/00-canon.md"]
+  },
+  {
+    "question": "How is compositional provenance different from custody provenance?",
+    "expectedCitations": ["docs/PHILOSOPHY/00-canon.md"]
+  },
+  {
+    "question": "What is refsFaces in metadata?",
+    "expectedCitations": ["docs/PHILOSOPHY/01-glossary.md"]
+  },
+  {
+    "question": "What is refsCanonical and its ordering?",
+    "expectedCitations": ["docs/PHILOSOPHY/01-glossary.md"]
+  },
+  {
+    "question": "In the glossary, where can the provenance object live (root or metadata.properties)?",
+    "expectedCitations": ["docs/PHILOSOPHY/01-glossary.md"]
+  },
+  {
+    "question": "What is provenanceNote used for?",
+    "expectedCitations": ["docs/PHILOSOPHY/01-glossary.md"]
+  },
+  {
+    "question": "What is provenanceTrail?",
+    "expectedCitations": ["docs/PHILOSOPHY/01-glossary.md"]
+  },
+  {
+    "question": "Which image field aliases are accepted (image, image_url, image_uri, imageUrl)?",
+    "expectedCitations": ["app/_lib/metadata.ts"]
+  },
+  {
+    "question": "In extractMedia, which animation field aliases are checked (animation_url, animation_uri, animationUrl)?",
+    "expectedCitations": ["app/_lib/metadata.ts"]
+  },
+  {
+    "question": "What issue is raised when metadata has no image or animation?",
+    "expectedCitations": ["app/_lib/metadata.ts"]
+  },
+  {
+    "question": "Which IPFS gateways are used for fallback?",
+    "expectedCitations": ["docs/decisions.md"]
+  },
+  {
+    "question": "Which Arweave gateways are used for fallback?",
+    "expectedCitations": ["docs/decisions.md"]
+  },
+  {
+    "question": "What are the default cache TTLs?",
+    "expectedCitations": ["docs/decisions.md"]
+  },
+  {
+    "question": "Which cache providers are supported by default?",
+    "expectedCitations": ["docs/decisions.md"]
+  },
+  {
+    "question": "What confidence weights are used for provenance scoring?",
+    "expectedCitations": ["docs/decisions.md"]
+  },
+  {
+    "question": "What are the Alchemy base URLs used by the app?",
+    "expectedCitations": ["docs/integration.md"]
+  },
+  {
+    "question": "Which Alchemy REST endpoints are used for the collection list?",
+    "expectedCitations": ["docs/integration.md"]
+  },
+  {
+    "question": "Which RPC methods are used for verification?",
+    "expectedCitations": ["docs/integration.md"]
+  },
+  {
+    "question": "Which function scans metadata references (scanMetadataReferences)?",
+    "expectedCitations": ["app/_lib/provenance.ts"]
+  },
+  {
+    "question": "In scanMetadataReferences, what does the REFERENCE_KEYWORDS regex contain?",
+    "expectedCitations": ["app/_lib/provenance.ts"]
+  },
+  {
+    "question": "How is same-transaction evidence built for provenance?",
+    "expectedCitations": ["app/_lib/provenance.ts"]
+  },
+  {
+    "question": "How is owner overlap evidence calculated?",
+    "expectedCitations": ["app/_lib/provenance.ts"]
+  },
+  {
+    "question": "What does /api/poc/tokens return in page mode?",
+    "expectedCitations": ["app/api/poc/tokens/route.ts"]
+  },
+  {
+    "question": "How does /api/poc/tokens handle pageKey, maxPages, and all=true?",
+    "expectedCitations": ["app/api/poc/tokens/route.ts"]
+  },
+  {
+    "question": "What does /api/token/:id/provenance return besides candidates?",
+    "expectedCitations": ["app/api/token/[id]/provenance/route.ts"]
+  },
+  {
+    "question": "Where are metadata references and same-transaction evidence combined in provenance lookup?",
+    "expectedCitations": ["app/api/token/[id]/provenance/route.ts"]
+  },
+  {
+    "question": "Which env vars are required for Alchemy and contract config?",
+    "expectedCitations": ["app/_lib/env.ts"]
+  },
+  {
+    "question": "How is NETWORK resolved when NETWORK is missing?",
+    "expectedCitations": ["app/_lib/env.ts"]
+  },
+  {
+    "question": "In fetchWithRetry, what retryable status codes are in RETRYABLE_STATUSES?",
+    "expectedCitations": ["app/_lib/alchemy.ts"]
+  },
+  {
+    "question": "What is the max page size for getNFTsForCollection?",
+    "expectedCitations": ["app/_lib/alchemy.ts"]
+  }
+]
