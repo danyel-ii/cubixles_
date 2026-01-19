@@ -1,3 +1,6 @@
+import baseDeployment from "../../../contracts/deployments/base.json";
+import mainnetDeployment from "../../../contracts/deployments/mainnet.json";
+
 type CacheTtls = {
   tokens: number;
   metadata: number;
@@ -25,6 +28,11 @@ const NETWORK_BY_CHAIN_ID: Record<number, string> = {
   80001: "polygon-mumbai",
   8453: "base-mainnet",
   84532: "base-sepolia",
+};
+
+const FALLBACK_CONTRACT_BY_CHAIN: Record<number, string | undefined> = {
+  1: mainnetDeployment.address,
+  8453: baseDeployment.address,
 };
 
 function readEnv(name: string): string | undefined {
@@ -79,6 +87,15 @@ function resolveContractAddress(chainIdOverride?: number): string {
     if (baseContract) {
       return baseContract;
     }
+  }
+  const direct =
+    readEnv("CUBIXLES_CONTRACT") ?? readEnv("CUBIXLES_CONTRACT_ADDRESS");
+  if (direct) {
+    return direct;
+  }
+  const fallback = chainId ? FALLBACK_CONTRACT_BY_CHAIN[chainId] : undefined;
+  if (fallback) {
+    return fallback;
   }
   return requireEnv(
     ["CUBIXLES_CONTRACT", "CUBIXLES_CONTRACT_ADDRESS"],

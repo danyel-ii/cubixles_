@@ -22,3 +22,5 @@
 @keyframes floatTileDrift{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(var(--float-drift,10px),calc(var(--float-drift,10px) * -1),0)}100%{transform:translate3d(0,0,0)}}
 
 .floating-tile{animation:none}
+.landing-home .notes-overlay.flock,
+.landing-home .notes-overlay.dock{z-index:0}

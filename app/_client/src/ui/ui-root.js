@@ -19,6 +19,20 @@ import { buildTokenViewUrl } from "../config/links.js";
 
 let uiInitialized = false;
 let uiDeferred = false;
+let uiRetryCount = 0;
+const UI_RETRY_LIMIT = 20;
+const UI_RETRY_DELAY_MS = 50;
+
+function hasUiAnchors() {
+  if (typeof document === "undefined") {
+    return true;
+  }
+  return Boolean(
+    document.getElementById("ui") &&
+      document.getElementById("wallet-connect") &&
+      document.getElementById("mint-submit")
+  );
+}
 
 function shouldSkipIntro() {
   if (typeof window === "undefined") {
@@ -63,7 +77,15 @@ export function initUiRoot() {
       return;
     }
   }
+  if (!hasUiAnchors()) {
+    if (uiRetryCount < UI_RETRY_LIMIT) {
+      uiRetryCount += 1;
+      window.setTimeout(initUiRoot, UI_RETRY_DELAY_MS);
+    }
+    return;
+  }
   uiInitialized = true;
+  uiRetryCount = 0;
   if (typeof window !== "undefined") {
     window.__CUBIXLES_UI_READY__ = true;
   }
