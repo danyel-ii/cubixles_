@@ -14,7 +14,8 @@ import { getCachedJson } from "./cache";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const MAX_TRANSFER_PAGES = 3;
-const DEFAULT_CHAIN_ID = process.env.CUBIXLES_CHAIN_ID ?? "1";
+const DEFAULT_CHAIN_ID =
+  process.env.CUBIXLES_CHAIN_ID ?? process.env.BASE_CHAIN_ID ?? "1";
 const DEFAULT_METADATA_TTL = 86400;
 
 const NETWORK_LABELS: Record<string, string> = {
@@ -82,6 +83,15 @@ type ExternalNftMetadata = {
 let transferCache: AlchemyAssetTransfer[] | null = null;
 const liveCubeCache: Record<string, Promise<MintedCube | null>> = {};
 
+function readEnvValue(name: string): string | undefined {
+  const value = process.env[name];
+  if (!value) {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 function normalizeTokenId(value?: string | null): string | null {
   if (!value) {
     return null;
@@ -111,6 +121,24 @@ function parseChainId(value: unknown): number | undefined {
     return Number.isFinite(parsed) ? parsed : undefined;
   }
   return undefined;
+}
+
+function resolveContractAddress(): string | undefined {
+  const chainId = parseChainId(DEFAULT_CHAIN_ID);
+  if (chainId === 8453) {
+    const baseContract = readEnvValue("CUBIXLES_BASE_CONTRACT_ADDRESS");
+    if (baseContract) {
+      return baseContract;
+    }
+  }
+  return (
+    readEnvValue("CUBIXLES_CONTRACT_ADDRESS") ??
+    readEnvValue("CUBIXLES_CONTRACT")
+  );
+}
+
+function resolveAlchemyApiKey(): string | undefined {
+  return readEnvValue("ALCHEMY_API_KEY") ?? readEnvValue("ALCHEMY_KEY");
 }
 
 function truncateMiddle(value: string, start = 6, end = 4) {
@@ -750,7 +778,7 @@ async function fetchMintTransfers(): Promise<AlchemyAssetTransfer[]> {
   }
 
   const rpcUrl = process.env.MAINNET_RPC_URL;
-  const contractAddress = process.env.CUBIXLES_CONTRACT_ADDRESS;
+  const contractAddress = resolveContractAddress();
   if (!rpcUrl || !contractAddress) {
     return [];
   }
@@ -823,13 +851,13 @@ async function fetchMintTransfer(tokenId: string): Promise<AlchemyAssetTransfer 
 }
 
 async function fetchMetadata(tokenId: string): Promise<AlchemyNftMetadataResponse | null> {
-  const apiKey = process.env.ALCHEMY_API_KEY;
-  const contractAddress = process.env.CUBIXLES_CONTRACT_ADDRESS;
+  const apiKey = resolveAlchemyApiKey();
+  const contractAddress = resolveContractAddress();
   if (!apiKey || !contractAddress) {
     return null;
   }
 
-  const base = getAlchemyBase(parseChainId(process.env.CUBIXLES_CHAIN_ID));
+  const base = getAlchemyBase(parseChainId(DEFAULT_CHAIN_ID));
   const url = new URL(`${base}/nft/v2/${apiKey}/getNFTMetadata`);
   url.searchParams.set("contractAddress", contractAddress);
   url.searchParams.set("tokenId", tokenId);
@@ -850,7 +878,7 @@ async function fetchExternalMetadata(
   tokenId?: string,
   chainId?: number
 ): Promise<ExternalNftMetadata | null> {
-  const apiKey = process.env.ALCHEMY_API_KEY;
+  const apiKey = resolveAlchemyApiKey();
   if (!apiKey || !contractAddress || !tokenId) {
     return null;
   }
