@@ -37,7 +37,7 @@ const FLOATING_TILES = [
     y: "10vh",
     delay: "0s",
     duration: "9s",
-    drift: "10px",
+    drift: "28px",
   },
   {
     href: "https://less.ripe.wtf/",
@@ -47,7 +47,7 @@ const FLOATING_TILES = [
     y: "38vh",
     delay: "1.2s",
     duration: "11s",
-    drift: "14px",
+    drift: "34px",
   },
   {
     href: "https://studybook.eth.link",
@@ -57,7 +57,7 @@ const FLOATING_TILES = [
     y: "68vh",
     delay: "0.6s",
     duration: "10s",
-    drift: "12px",
+    drift: "30px",
   },
 ];
 
