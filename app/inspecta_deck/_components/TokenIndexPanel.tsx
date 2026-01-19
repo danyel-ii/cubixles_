@@ -302,8 +302,13 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debounced;
 }
 
-export default function TokenIndexPanel() {
-  const [activeChainId, setActiveChainId] = useState(1);
+type TokenIndexPanelProps = {
+  defaultChainId?: number;
+};
+
+export default function TokenIndexPanel({ defaultChainId = 1 }: TokenIndexPanelProps) {
+  const normalizedDefaultChainId = defaultChainId === 8453 ? 8453 : 1;
+  const [activeChainId, setActiveChainId] = useState(normalizedDefaultChainId);
   const [mode, setMode] = useState<TokenListMode>("page");
   const [tokens, setTokens] = useState<TokenListItem[]>([]);
   const [pageKey, setPageKey] = useState<string | null>(null);

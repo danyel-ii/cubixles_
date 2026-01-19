@@ -9,7 +9,8 @@ import { buildGatewayUrls } from "../_client/src/shared/uri-policy.js";
 const DEFAULT_CHAIN_ID = 1;
 const DEFAULT_PAGE_SIZE = 8;
 const DEFAULT_MAX_PAGES = 25;
-const LOADER_DURATION_MS = 2000;
+const LOADER_VISIBLE_MS = 2400;
+const LOADER_FADE_MS = 2000;
 const FLOATING_TILE_SIZE = 36;
 
 const FLOATING_TILE_COLORS = [
@@ -837,12 +838,19 @@ function TokenIndex() {
 }
 
 export function DeckPage() {
-  const [showLoader, setShowLoader] = useState(true);
+  const [loaderPhase, setLoaderPhase] = useState("visible");
   const floatingTileRefs = useRef([]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setShowLoader(false), LOADER_DURATION_MS);
-    return () => window.clearTimeout(timer);
+    const fadeTimer = window.setTimeout(() => setLoaderPhase("fade"), LOADER_VISIBLE_MS);
+    const hideTimer = window.setTimeout(
+      () => setLoaderPhase("hidden"),
+      LOADER_VISIBLE_MS + LOADER_FADE_MS
+    );
+    return () => {
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(hideTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -932,8 +940,11 @@ export function DeckPage() {
         </a>
       ))}
       <main className="landing-page landing-home">
-        {showLoader ? (
-          <div className="landing-loader" aria-hidden="true">
+        {loaderPhase !== "hidden" ? (
+          <div
+            className={`landing-loader${loaderPhase === "fade" ? " is-fading" : ""}`}
+            aria-hidden="true"
+          >
             <div
               className="landing-loader-art"
               style={{

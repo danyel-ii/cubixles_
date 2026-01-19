@@ -4,17 +4,25 @@ import { useEffect, useState } from "react";
 
 import { withBasePath } from "../_lib/basePath";
 
-const LOADER_DURATION_MS = 2000;
+const LOADER_VISIBLE_MS = 2400;
+const LOADER_FADE_MS = 2000;
 
 export default function LandingLoaderOverlay() {
-  const [active, setActive] = useState(true);
+  const [phase, setPhase] = useState<"visible" | "fade" | "hidden">("visible");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setActive(false), LOADER_DURATION_MS);
-    return () => window.clearTimeout(timer);
+    const fadeTimer = window.setTimeout(() => setPhase("fade"), LOADER_VISIBLE_MS);
+    const hideTimer = window.setTimeout(
+      () => setPhase("hidden"),
+      LOADER_VISIBLE_MS + LOADER_FADE_MS
+    );
+    return () => {
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(hideTimer);
+    };
   }, []);
 
-  if (!active) {
+  if (phase === "hidden") {
     return null;
   }
 
@@ -22,7 +30,10 @@ export default function LandingLoaderOverlay() {
   const loaderMobileUrl = withBasePath("/assets/loader_mobile.jpg");
 
   return (
-    <div className="landing-loader" aria-hidden="true">
+    <div
+      className={`landing-loader${phase === "fade" ? " is-fading" : ""}`}
+      aria-hidden="true"
+    >
       <div
         className="landing-loader-art"
         style={

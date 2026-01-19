@@ -42,6 +42,12 @@
   background: #000000;
   z-index: 400;
   overflow: hidden;
+  opacity: 1;
+  transition: opacity 2000ms ease;
+}
+
+.landing-loader.is-fading {
+  opacity: 0;
 }
 
 .landing-loader-art {
@@ -150,7 +156,7 @@
 }
 
 .landing-home .landing-title {
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: -0.02em;
 }
 
@@ -287,7 +293,7 @@
 }
 
 .landing-home .token-index-error {
-  color: var(--neo-accent);
+  color: var(--neo-on-primary);
 }
 
 .landing-home .token-index-carousel::-webkit-scrollbar-track {
