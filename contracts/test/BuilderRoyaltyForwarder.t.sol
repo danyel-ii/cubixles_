@@ -128,7 +128,7 @@ contract BuilderRoyaltyForwarderTest is Test {
         _sendValue(forwarder, 1 ether, "");
         _sendValue(forwarder, 1 ether, hex"01");
 
-        assertEq(owner.balance, 2 ether);
+        assertEq(forwarder.pending(owner), 2 ether);
     }
 
     function testDistributeSplitsAndRemainder() public {
@@ -152,9 +152,9 @@ contract BuilderRoyaltyForwarderTest is Test {
 
         _sendValue(forwarder, 10 ether, "");
 
-        assertEq(recipientA.balance, 2 ether);
-        assertEq(recipientB.balance, 3 ether);
-        assertEq(owner.balance, 5 ether);
+        assertEq(forwarder.pending(recipientA), 2 ether);
+        assertEq(forwarder.pending(recipientB), 3 ether);
+        assertEq(forwarder.pending(owner), 5 ether);
     }
 
     function testDistributeSkipsZeroShare() public {
@@ -178,9 +178,9 @@ contract BuilderRoyaltyForwarderTest is Test {
 
         _sendValue(forwarder, 100 wei, "");
 
-        assertEq(recipientA.balance, 0);
-        assertEq(recipientB.balance, 10);
-        assertEq(owner.balance, 90);
+        assertEq(forwarder.pending(recipientA), 0);
+        assertEq(forwarder.pending(recipientB), 10);
+        assertEq(forwarder.pending(owner), 90);
     }
 
     function testWithdrawPendingPaths() public {
