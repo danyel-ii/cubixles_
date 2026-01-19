@@ -3391,9 +3391,11 @@ body.is-minted .preview-bar {
   }
 
   .paper-palette {
-    right: 20px;
-    top: auto;
-    bottom: calc(20px + 220px);
+    left: 20px;
+    right: auto;
+    top: calc(var(--paper-header-bottom, 220px) + 12px);
+    bottom: auto;
+    width: calc(50% - 10px);
   }
 
   .paper-hud {
@@ -3403,9 +3405,11 @@ body.is-minted .preview-bar {
   }
 
   .paper-fee-hud {
+    left: auto;
     right: 20px;
-    top: auto;
-    bottom: calc(20px + 360px);
+    top: calc(var(--paper-header-bottom, 220px) + 12px);
+    bottom: auto;
+    width: calc(50% - 10px);
   }
 
   .paper-qr {

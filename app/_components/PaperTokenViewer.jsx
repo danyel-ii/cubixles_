@@ -206,6 +206,7 @@ export default function PaperTokenViewer({
   showDiffusion = true,
 }) {
   const viewerRef = useRef(null);
+  const headerRef = useRef(null);
   const frameRef = useRef(null);
   const rotationRef = useRef({ x: 0, y: 0 });
   const dragRef = useRef({
@@ -215,6 +216,7 @@ export default function PaperTokenViewer({
     startRotX: 0,
     startRotY: 0,
     scale: 1,
+    invertY: 1,
     moved: false,
     lastMoveDistance: 0,
     lastDragAt: 0,
@@ -415,6 +417,18 @@ export default function PaperTokenViewer({
     }
   }, [inspectedIndices]);
 
+  const updateHeaderOffset = useCallback(() => {
+    const viewer = viewerRef.current;
+    const header = headerRef.current;
+    if (!viewer || !header) {
+      return;
+    }
+    const viewerRect = viewer.getBoundingClientRect();
+    const headerRect = header.getBoundingClientRect();
+    const offset = Math.max(0, headerRect.bottom - viewerRect.top);
+    viewer.style.setProperty("--paper-header-bottom", `${offset}px`);
+  }, []);
+
   const updateInspectorLayout = useCallback(() => {
     const indices = inspectedIndicesRef.current;
     if (!indices.length) {
@@ -610,6 +624,7 @@ export default function PaperTokenViewer({
     dragRef.current.startRotX = rotationRef.current.x;
     dragRef.current.startRotY = rotationRef.current.y;
     dragRef.current.scale = isTouch ? 0.6 : 1;
+    dragRef.current.invertY = isTouch ? -1 : 1;
     dragRef.current.moved = false;
     dragRef.current.lastMoveDistance = 0;
   }, []);
@@ -635,7 +650,12 @@ export default function PaperTokenViewer({
         dragRef.current.moved = true;
       }
       const scale = dragRef.current.scale || 1;
-      const nextX = clamp(dragRef.current.startRotX + dy * 0.35 * scale, -80, 80);
+      const invertY = dragRef.current.invertY ?? 1;
+      const nextX = clamp(
+        dragRef.current.startRotX + dy * 0.35 * scale * invertY,
+        -80,
+        80
+      );
       const nextY = dragRef.current.startRotY + dx * 0.45 * scale;
       rotationRef.current = { x: nextX, y: nextY };
       scheduleUpdate();
@@ -792,10 +812,13 @@ export default function PaperTokenViewer({
     if (typeof window === "undefined") {
       return;
     }
-    const handleResize = () => updateInspectorLayout();
+    const handleResize = () => {
+      updateInspectorLayout();
+      updateHeaderOffset();
+    };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [updateInspectorLayout]);
+  }, [updateInspectorLayout, updateHeaderOffset]);
 
   const handleFaceInspect = useCallback(
     (index) => {
@@ -836,6 +859,11 @@ export default function PaperTokenViewer({
     return next.replace(/\b\d{20,}\b/g, (match) => truncateMiddle(match));
   }, [cube?.description, cube?.tokenId, requestedTokenId, truncatedTokenId]);
   const isMismatch = cube?.tokenId !== requestedTokenId;
+
+  useLayoutEffect(() => {
+    updateHeaderOffset();
+  }, [allowExport, cube?.tokenId, displayDescription, updateHeaderOffset]);
+
   const diffusionLabel =
     diffusionAverage?.hex ||
     (diffusionStatus === "loading" ? "Calculating..." : "n/a");
@@ -1145,7 +1173,7 @@ export default function PaperTokenViewer({
           : null),
       }}
     >
-      <header className="paper-header">
+      <header ref={headerRef} className="paper-header">
         <p className="paper-eyebrow">Token viewer 02</p>
         <h1 className="paper-title" title={cube.tokenId}>
           <CubixlesLogo className="cubixles-logo-inline" />
