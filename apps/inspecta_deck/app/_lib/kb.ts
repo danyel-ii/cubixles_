@@ -151,14 +151,16 @@ export async function hybridSearch(
   }
 
   if (maxKeywordScore > 0) {
-    for (const [id, score] of keywordScores.entries()) {
+    const keywordEntries = Array.from(keywordScores.entries());
+    for (const [id, score] of keywordEntries) {
       const normalized = score / maxKeywordScore;
       combinedScores.set(id, (combinedScores.get(id) ?? 0) + normalized * 0.3);
     }
   }
 
   const scored: ScoredKbEntry[] = [];
-  for (const [id, score] of combinedScores.entries()) {
+  const combinedEntries = Array.from(combinedScores.entries());
+  for (const [id, score] of combinedEntries) {
     const entry = entryById.get(id);
     if (!entry) {
       continue;

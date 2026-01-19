@@ -7,27 +7,14 @@
       "permanent": true
     },
     {
-      "source": "/landing_page/",
-      "destination": "/landing_page",
-      "permanent": true
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/inspecta_deck",
-      "destination": "https://provenance-viewer.vercel.app/inspecta_deck"
-    },
-    {
-      "source": "/inspecta_deck/:path*",
-      "destination": "https://provenance-viewer.vercel.app/inspecta_deck/:path*"
-    },
-    {
       "source": "/landing_page",
-      "destination": "https://provenance-viewer.vercel.app/inspecta_deck"
+      "destination": "/inspecta_deck",
+      "permanent": false
     },
     {
       "source": "/landing_page/:path*",
-      "destination": "https://provenance-viewer.vercel.app/inspecta_deck/:path*"
+      "destination": "/inspecta_deck/:path*",
+      "permanent": false
     }
   ]
 }
