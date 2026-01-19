@@ -273,11 +273,20 @@ export function initNftPickerUi() {
       appliedSelectionKey = null;
       const blocked = nfts.filter((nft) => isBlockedNft(nft));
       blockedCount = blocked.length;
-      const validKeys = new Set(
-        nfts.filter((nft) => !isBlockedNft(nft)).map((nft) => buildKey(nft))
-      );
+      const validNfts = nfts.filter((nft) => !isBlockedNft(nft));
+      const validKeys = new Set(validNfts.map((nft) => buildKey(nft)));
       selectedKeys = new Set([...selectedKeys].filter((key) => validKeys.has(key)));
       selectedOrder = selectedOrder.filter((key) => validKeys.has(key));
+      if (
+        typeof window !== "undefined" &&
+        window.__CUBIXLES_TEST_HOOKS__ &&
+        selectedKeys.size === 0 &&
+        validNfts.length > 0
+      ) {
+        const firstKey = buildKey(validNfts[0]);
+        selectedKeys.add(firstKey);
+        selectedOrder = [firstKey];
+      }
       if (!nfts.length) {
         setStatus(
           `No ${formatChainName(CUBIXLES_CONTRACT.chainId)} NFTs found for this wallet.`

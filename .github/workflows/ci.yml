@@ -101,15 +101,20 @@ jobs:
 
   slither:
     runs-on: ubuntu-latest
+    env:
+      FOUNDRY_DISABLE_NIGHTLY_WARNING: "1"
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: crytic/slither-action@v0.3.0
+      - uses: foundry-rs/foundry-toolchain@v1
         with:
-          target: contracts
-          slither-config: contracts/slither.config.json
+          version: nightly
+      - name: Install slither
+        run: python3 -m pip install --upgrade pip && python3 -m pip install slither-analyzer==0.11.4
+      - name: Slither
+        run: slither contracts --config-file contracts/slither.config.json
 
   npm-tests:
     runs-on: ubuntu-latest
