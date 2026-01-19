@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import CubixlesLogo from "../_components/CubixlesLogo.jsx";
 import CubixlesText from "../_components/CubixlesText.jsx";
@@ -14,6 +14,7 @@ const NOTES_COLUMNS = 25;
 const NOTES_ROWS = 32;
 const NOTES_SEED = 13579;
 const LOGO_SEED = 24680;
+const FLOATING_TILE_SIZE = 36;
 
 const NOTES_COLORS = ["#000000", "#FFFFFF", "#D00000"];
 const FLOATING_TILE_COLORS = [
@@ -33,31 +34,16 @@ const FLOATING_TILES = [
     href: "https://nodefoundation.com/",
     label: "Open Node Foundation",
     colors: FLOATING_TILE_COLORS,
-    x: "6vw",
-    y: "10vh",
-    delay: "0s",
-    duration: "9s",
-    drift: "28px",
   },
   {
     href: "https://less.ripe.wtf/",
     label: "Open less.ripe.wtf",
     colors: FLOATING_TILE_COLORS,
-    x: "14vw",
-    y: "38vh",
-    delay: "1.2s",
-    duration: "11s",
-    drift: "34px",
   },
   {
     href: "https://studybook.eth.link",
     label: "Open Studybook",
     colors: FLOATING_TILE_COLORS,
-    x: "8vw",
-    y: "68vh",
-    delay: "0.6s",
-    duration: "10s",
-    drift: "30px",
   },
 ];
 
@@ -82,6 +68,10 @@ function mulberry32(seed) {
     x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
     return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+function randomBetween(min, max) {
+  return min + Math.random() * (max - min);
 }
 
 function buildNotesTiles() {
@@ -1066,6 +1056,7 @@ function TokenIndex() {
 export function DeckPage() {
   const notesTiles = useMemo(() => buildNotesTiles(), []);
   const logoStyle = useMemo(() => buildLogoStyle(), []);
+  const floatingTileRefs = useRef([]);
 
   useEffect(() => {
     const body = document.body;
@@ -1080,24 +1071,69 @@ export function DeckPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const tiles = floatingTileRefs.current.filter(Boolean);
+    if (!tiles.length) {
+      return;
+    }
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    const states = tiles.map(() => ({
+      x: randomBetween(0, Math.max(0, width - FLOATING_TILE_SIZE)),
+      y: randomBetween(0, Math.max(0, height - FLOATING_TILE_SIZE)),
+      vx: randomBetween(-0.7, 0.7),
+      vy: randomBetween(-0.7, 0.7),
+      rotation: randomBetween(-12, 12),
+      vRotation: randomBetween(-0.12, 0.12),
+    }));
+    let rafId = null;
+    const step = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      tiles.forEach((tile, index) => {
+        const state = states[index];
+        if (!state) {
+          return;
+        }
+        state.x += state.vx;
+        state.y += state.vy;
+        state.rotation += state.vRotation;
+        if (state.x > width + FLOATING_TILE_SIZE) state.x = -FLOATING_TILE_SIZE;
+        if (state.x < -FLOATING_TILE_SIZE) state.x = width + FLOATING_TILE_SIZE;
+        if (state.y > height + FLOATING_TILE_SIZE) state.y = -FLOATING_TILE_SIZE;
+        if (state.y < -FLOATING_TILE_SIZE) state.y = height + FLOATING_TILE_SIZE;
+        tile.style.transform = `translate3d(${state.x}px, ${state.y}px, 0) rotate(${state.rotation}deg)`;
+      });
+      rafId = window.requestAnimationFrame(step);
+    };
+    const onResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+    };
+    window.addEventListener("resize", onResize);
+    rafId = window.requestAnimationFrame(step);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, []);
+
   return (
     <>
       <NotesOverlayMotion />
       <PaletteSync />
-      {FLOATING_TILES.map((tile) => (
+      {FLOATING_TILES.map((tile, index) => (
         <a
           key={tile.href}
+          ref={(node) => {
+            floatingTileRefs.current[index] = node;
+          }}
           className="floating-tile"
           href={tile.href}
           target="_blank"
           rel="noreferrer"
-          style={{
-            "--float-x": tile.x,
-            "--float-y": tile.y,
-            "--float-delay": tile.delay,
-            "--float-duration": tile.duration,
-            "--float-drift": tile.drift,
-          }}
         >
           <span className="sr-only">{tile.label}</span>
           {tile.colors.map((color, index) => (
