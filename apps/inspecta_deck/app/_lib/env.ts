@@ -108,7 +108,7 @@ function resolveContractAddress(chainIdOverride?: number): string {
     }
   }
   const direct =
-    readEnv("CUBIXLES_CONTRACT") ?? readEnv("CUBIXLES_CONTRACT_ADDRESS");
+    readEnv("CUBIXLES_CONTRACT_ADDRESS") ?? readEnv("CUBIXLES_CONTRACT");
   if (direct) {
     const extracted = extractAddress(direct);
     if (extracted) {
@@ -120,8 +120,8 @@ function resolveContractAddress(chainIdOverride?: number): string {
     return fallback;
   }
   return requireEnv(
-    ["CUBIXLES_CONTRACT", "CUBIXLES_CONTRACT_ADDRESS"],
-    "CUBIXLES_CONTRACT"
+    ["CUBIXLES_CONTRACT_ADDRESS", "CUBIXLES_CONTRACT"],
+    "CUBIXLES_CONTRACT_ADDRESS"
   );
 }
 
