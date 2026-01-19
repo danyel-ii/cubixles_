@@ -334,7 +334,11 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   const mintButton = page.locator("#mint-submit");
   await expect(mintButton).toHaveCount(1, { timeout: 10000 });
   // Avoid Playwright actionability instability in CI from animated layout shifts.
-  await mintButton.evaluate((button) => {
+  await page.evaluate(() => {
+    const button = document.querySelector("#mint-submit");
+    if (!button) {
+      throw new Error("Mint submit button missing.");
+    }
     if (button instanceof HTMLButtonElement) {
       button.disabled = false;
     }
