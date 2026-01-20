@@ -4,8 +4,9 @@ import { getClientIp, makeRequestId } from "../../../src/server/request.js";
 import { logRequest } from "../../../src/server/log.js";
 import { safeFetch, getHostAllowlist } from "../../../src/server/safe-fetch.js";
 import { IPFS_GATEWAYS } from "../../../src/shared/uri-policy.js";
+import { readEnvNumber } from "../../../src/server/env.js";
 
-const MAX_IPFS_BYTES = 2 * 1024 * 1024;
+const MAX_IPFS_BYTES = readEnvNumber("IPFS_PROXY_MAX_BYTES", 8 * 1024 * 1024);
 const DEFAULT_ALLOWED_HOSTS = IPFS_GATEWAYS.map((gateway) => new URL(gateway).hostname);
 
 function looksLikeJson(text) {
