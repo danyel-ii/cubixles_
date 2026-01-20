@@ -711,7 +711,7 @@ contract CubixlesMinter is ERC721, ERC2981, Ownable, ReentrancyGuard {
         address resaleSplitter_,
         uint96 resaleRoyaltyBps,
         PaletteConfig memory palette
-    ) private view {
+    ) private pure {
         if (resaleSplitter_ == address(0)) {
             revert ResaleSplitterRequired();
         }

@@ -286,6 +286,11 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
     /// @notice Update the payout address for owner mint proceeds.
     /// @param payout Address that receives the owner share (zero uses owner()).
     function setOwnerPayout(address payout) external onlyOwner {
+        if (payout == address(0)) {
+            ownerPayout = address(0);
+            emit OwnerPayoutUpdated(address(0));
+            return;
+        }
         ownerPayout = payout;
         emit OwnerPayoutUpdated(payout);
     }
@@ -489,7 +494,7 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
     // slither-disable-start reentrancy-eth
     function _distributePayouts(
         uint256 mintPrice,
-        uint256[] calldata floorsWei,
+        uint256[] calldata,
         address[] memory receivers,
         address ownerAddr
     ) internal {

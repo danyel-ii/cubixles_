@@ -142,7 +142,7 @@ contract CubixlesMinterTest is Test {
         return ((value + step - 1) / step) * step;
     }
 
-    function _buildTokenURI(uint256 paletteIndex) internal view returns (string memory) {
+    function _buildTokenURI(uint256 paletteIndex) internal pure returns (string memory) {
         return string.concat(TOKEN_URI_PREFIX, vm.toString(paletteIndex));
     }
 
@@ -329,7 +329,7 @@ contract CubixlesMinterTest is Test {
         );
     }
 
-    function testMintCapIsTenThousand() public {
+    function testMintCapIsTenThousand() public view {
         assertEq(minter.MAX_MINTS(), 10_000);
         assertEq(minter.MAX_MINTS(), minter.PALETTE_SIZE());
     }
@@ -472,7 +472,7 @@ contract CubixlesMinterTest is Test {
         assertEq(minter.minterByTokenId(tokenId), minterAddr);
     }
 
-    function testRoyaltyInfoDefaults() public {
+    function testRoyaltyInfoDefaults() public view {
         (address receiver, uint256 amount) = minter.royaltyInfo(1, 1 ether);
         assertEq(receiver, resaleSplitter);
         assertEq(amount, 0.05 ether);
@@ -824,7 +824,7 @@ contract CubixlesMinterTest is Test {
         assertEq(previewA, previewB);
     }
 
-    function testCurrentMintPriceSupplyZero() public {
+    function testCurrentMintPriceSupplyZero() public view {
         uint256 price = minter.currentMintPrice();
         assertEq(price, _roundUp(BASE_PRICE * 4, PRICE_STEP));
     }
@@ -1312,7 +1312,7 @@ contract CubixlesMinterTest is Test {
         assertEq(amount, 0.075 ether);
     }
 
-    function testSupportsInterfaceIncludesRoyalty() public {
+    function testSupportsInterfaceIncludesRoyalty() public view {
         assertTrue(minter.supportsInterface(type(IERC2981).interfaceId));
         assertTrue(minter.supportsInterface(type(IERC721).interfaceId));
     }

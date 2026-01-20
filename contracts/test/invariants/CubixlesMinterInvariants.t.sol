@@ -125,15 +125,15 @@ contract CubixlesMinterInvariants is StdInvariant, Test {
         targetContract(address(handler));
     }
 
-    function invariant_ownerBalanceMatchesMintCount() public {
+    function invariant_ownerBalanceMatchesMintCount() public view {
         assertEq(resaleSplitter.balance, handler.mintCount() * handler.mintPrice());
     }
 
-    function invariant_balanceMatchesMintCount() public {
+    function invariant_balanceMatchesMintCount() public view {
         assertEq(minter.balanceOf(address(handler)), handler.mintCount());
     }
 
-    function invariant_royaltyInfoReceiver() public {
+    function invariant_royaltyInfoReceiver() public view {
         (address receiver, uint256 amount) = minter.royaltyInfo(1, 1 ether);
         assertEq(receiver, resaleSplitter);
         assertEq(amount, 0.05 ether);

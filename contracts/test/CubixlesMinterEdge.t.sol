@@ -132,7 +132,7 @@ contract CubixlesMinterEdgeTest is Test {
         _advanceToReveal(minterAddr);
     }
 
-    function _buildTokenURI(uint256 paletteIndex) internal view returns (string memory) {
+    function _buildTokenURI(uint256 paletteIndex) internal pure returns (string memory) {
         return string.concat(TOKEN_URI_PREFIX, vm.toString(paletteIndex));
     }
 
