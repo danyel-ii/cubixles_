@@ -1274,7 +1274,7 @@ body.cube-fade-in .landing-home .landing-cube-icon {
 .dig-overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -39,7 +39,7 @@ export default function LandingExperience() {
               target="_blank"
               rel="noreferrer"
             >
-              Mint your own
+              Bootleg a cube
             </a>
             <DigItOverlay />
           </div>

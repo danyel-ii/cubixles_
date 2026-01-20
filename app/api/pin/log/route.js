@@ -4,6 +4,22 @@ import { getClientIp, makeRequestId } from "../../../../src/server/request.js";
 import { logRequest } from "../../../../src/server/log.js";
 import { getPinLog } from "../../../../src/server/pin-log.js";
 
+const PIN_LOG_TOKEN =
+  process.env.CUBIXLES_PIN_LOG_TOKEN || process.env.PIN_LOG_TOKEN || "";
+
+function getAuthToken(request) {
+  const header = request.headers.get("authorization") || "";
+  if (header.toLowerCase().startsWith("bearer ")) {
+    return header.slice(7).trim();
+  }
+  const direct = request.headers.get("x-pin-log-token");
+  if (direct) {
+    return direct.trim();
+  }
+  const url = new URL(request.url);
+  return url.searchParams.get("token")?.trim() || "";
+}
+
 export async function GET(request) {
   const requestId = makeRequestId();
   const ip = getClientIp(request);
@@ -11,6 +27,14 @@ export async function GET(request) {
   if (!limit.ok) {
     logRequest({ route: "/api/pin/log", status: 429, requestId, bodySize: 0 });
     return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
+  }
+
+  if (PIN_LOG_TOKEN) {
+    const token = getAuthToken(request);
+    if (!token || token !== PIN_LOG_TOKEN) {
+      logRequest({ route: "/api/pin/log", status: 401, requestId, bodySize: 0 });
+      return NextResponse.json({ error: "Unauthorized", requestId }, { status: 401 });
+    }
   }
 
   const url = new URL(request.url);

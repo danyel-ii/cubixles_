@@ -12,6 +12,7 @@ import { verifyNonce, verifySignature } from "../../../../src/server/auth.js";
 import { recordMetric } from "../../../../src/server/metrics.js";
 import { readEnvBool } from "../../../../src/server/env.js";
 import { recordMintAttempt, recordPinFailure } from "../../../../src/server/alerts.js";
+import { enforceOriginAllowlist } from "../../../../src/server/origin.js";
 
 const MAX_BYTES = 50 * 1024;
 
@@ -35,6 +36,15 @@ export async function POST(request) {
   if (!ipLimit.ok) {
     logRequest({ route: "/api/pin/metadata", status: 429, requestId, bodySize });
     return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
+  }
+
+  const originCheck = enforceOriginAllowlist(request);
+  if (!originCheck.ok) {
+    logRequest({ route: "/api/pin/metadata", status: originCheck.status, requestId, bodySize });
+    return NextResponse.json(
+      { error: originCheck.error || "Origin not allowed", requestId },
+      { status: originCheck.status }
+    );
   }
 
   try {

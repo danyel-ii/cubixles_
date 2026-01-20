@@ -19,6 +19,7 @@ import {
 import { hashPayload, getCachedCid, setCachedCid, pinFile } from "../../../../src/server/pinata.js";
 import { recordMetric } from "../../../../src/server/metrics.js";
 import { readEnvBool } from "../../../../src/server/env.js";
+import { enforceOriginAllowlist } from "../../../../src/server/origin.js";
 
 const MAX_BYTES = 12 * 1024;
 const PAPERCLIP_QR_SIZE = 512;
@@ -46,6 +47,20 @@ export async function POST(request) {
   if (!ipLimit.ok) {
     logRequest({ route: "/api/pin/builder-assets", status: 429, requestId, bodySize });
     return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
+  }
+
+  const originCheck = enforceOriginAllowlist(request);
+  if (!originCheck.ok) {
+    logRequest({
+      route: "/api/pin/builder-assets",
+      status: originCheck.status,
+      requestId,
+      bodySize,
+    });
+    return NextResponse.json(
+      { error: originCheck.error || "Origin not allowed", requestId },
+      { status: originCheck.status }
+    );
   }
 
   try {

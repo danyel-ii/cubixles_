@@ -18,6 +18,7 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "GET,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
   "Cross-Origin-Resource-Policy": "cross-origin",
+  "X-Content-Type-Options": "nosniff",
   "Cache-Control": "public, max-age=3600, s-maxage=86400",
 };
 
@@ -37,6 +38,18 @@ function buildProxyResponse(response) {
     status: response.status,
     headers,
   });
+}
+
+function isAllowedImageContentType(contentType) {
+  if (!contentType) {
+    return true;
+  }
+  const normalized = contentType.toLowerCase();
+  return (
+    normalized.startsWith("image/") ||
+    normalized.startsWith("application/octet-stream") ||
+    normalized.startsWith("binary/octet-stream")
+  );
 }
 
 export async function OPTIONS() {
@@ -81,6 +94,10 @@ export async function GET(request) {
             allowlist,
             maxBytes: MAX_IMAGE_BYTES,
           });
+          const contentType = response.headers.get("content-type") || "";
+          if (!isAllowedImageContentType(contentType)) {
+            continue;
+          }
           logRequest({
             route: "/api/image-proxy",
             status: response.status,
@@ -101,6 +118,11 @@ export async function GET(request) {
       allowlist,
       maxBytes: MAX_IMAGE_BYTES,
     });
+    const contentType = response.headers.get("content-type") || "";
+    if (!isAllowedImageContentType(contentType)) {
+      logRequest({ route: "/api/image-proxy", status: 415, requestId, bodySize: 0 });
+      return buildError("Unsupported content type.", 415);
+    }
     logRequest({
       route: "/api/image-proxy",
       status: response.status,

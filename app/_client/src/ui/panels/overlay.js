@@ -42,6 +42,12 @@ export function initOverlay() {
   }
 
   enterButton.addEventListener("click", (event) => {
+    if (enterButton instanceof HTMLAnchorElement) {
+      const href = enterButton.getAttribute("href");
+      if (href && href !== "#") {
+        return;
+      }
+    }
     event.preventDefault();
     dismiss();
   });

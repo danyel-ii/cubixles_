@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getAddress } from "ethers";
 import { requireEnv, readEnvBool } from "../../../src/server/env.js";
 import { checkRateLimit } from "../../../src/server/ratelimit.js";
 import { getClientIp, makeRequestId } from "../../../src/server/request.js";
@@ -16,6 +17,60 @@ const ALLOWED_PATHS = new Set([
   "getNFTMetadata",
   "getFloorPrice",
 ]);
+
+function parseAddressList(raw) {
+  if (!raw || typeof raw !== "string") {
+    return [];
+  }
+  return raw
+    .split(/[,\s]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function normalizeAddress(value) {
+  if (!value || typeof value !== "string") {
+    return null;
+  }
+  try {
+    return getAddress(value.trim());
+  } catch {
+    return null;
+  }
+}
+
+function getRpcAllowlist() {
+  const raw =
+    process.env.NFT_RPC_ALLOWED_CONTRACTS ||
+    process.env.CUBIXLES_RPC_ALLOWED_CONTRACTS ||
+    "";
+  const defaults = [
+    process.env.CUBIXLES_CONTRACT_ADDRESS,
+    process.env.CUBIXLES_LESS_TOKEN,
+    process.env.LESS_TOKEN_CONTRACT_ADDRESS,
+  ];
+  const combined = [...defaults, ...parseAddressList(raw)];
+  const normalized = combined.map(normalizeAddress).filter(Boolean);
+  return new Set(normalized);
+}
+
+function ensureRpcAllowlist(calls) {
+  const allowlist = getRpcAllowlist();
+  if (!allowlist.size) {
+    return { ok: true };
+  }
+  for (const call of calls) {
+    const normalized = normalizeAddress(call?.to);
+    if (!normalized || !allowlist.has(normalized)) {
+      return {
+        ok: false,
+        error: "RPC contract not allowlisted",
+        detail: call?.to,
+      };
+    }
+  }
+  return { ok: true };
+}
 
 function getAlchemyKey() {
   return requireEnv("ALCHEMY_API_KEY");
@@ -151,6 +206,17 @@ async function handleRequest(request) {
       }
       if (calls.length > 20) {
         return NextResponse.json({ error: "Too many calls", requestId }, { status: 400 });
+      }
+      const allowCheck = ensureRpcAllowlist(calls);
+      if (!allowCheck.ok) {
+        return NextResponse.json(
+          {
+            error: allowCheck.error || "RPC contract not allowlisted",
+            detail: allowCheck.detail,
+            requestId,
+          },
+          { status: 403 }
+        );
       }
       const payload = calls.map((call, index) => ({
         jsonrpc: "2.0",

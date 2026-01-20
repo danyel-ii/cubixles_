@@ -54,6 +54,8 @@ export async function GET(request) {
       });
       const headers = new Headers(response.headers);
       headers.set("Access-Control-Allow-Origin", "*");
+      headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+      headers.set("X-Content-Type-Options", "nosniff");
       headers.set("Cache-Control", "public, max-age=300");
       headers.delete("content-encoding");
       headers.delete("content-length");

@@ -22,6 +22,7 @@ import {
   readJsonWithLimit,
 } from "../../../../src/server/validate.js";
 import { getBuilderContractAddress } from "../../../../src/server/builder-config.js";
+import { enforceOriginAllowlist } from "../../../../src/server/origin.js";
 
 const MAX_BODY_BYTES = 10 * 1024;
 const MIN_FLOOR_WEI = 1_000_000_000_000_000n;
@@ -122,6 +123,15 @@ export async function POST(request) {
   if (!limit.ok) {
     logRequest({ route: "/api/builder/quote", status: 429, requestId, bodySize: 0 });
     return NextResponse.json({ error: "Rate limit exceeded", requestId }, { status: 429 });
+  }
+
+  const originCheck = enforceOriginAllowlist(request);
+  if (!originCheck.ok) {
+    logRequest({ route: "/api/builder/quote", status: originCheck.status, requestId, bodySize: 0 });
+    return NextResponse.json(
+      { error: originCheck.error || "Origin not allowed", requestId },
+      { status: originCheck.status }
+    );
   }
 
   let body = {};
