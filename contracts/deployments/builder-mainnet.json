@@ -1,4 +1,6 @@
 {
-  "address": "0xd75aeCC34Fc380feEAD38224Cd80F436552902fe",
-  "chainId": 1
+  "address": "0x99a982113B77b03D0873650D3A8C6908D02C0b3e",
+  "chainId": 1,
+  "ownerPayout": "0x0000000000000000000000000000000000000000",
+  "royaltyForwarderImpl": "0x7905F2810C19e1b1f2D2e8c3Dc28D51D5F20e329"
 }
