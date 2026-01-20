@@ -19,6 +19,50 @@ export default function AppShell({ mode = "mint" }) {
   const searchParams = useSearchParams();
   const skipOverlay = readBoolParam(searchParams, "skipOverlay");
   const overlayHidden = isBuilder || skipOverlay;
+  const mintConfirmTitle = isBuilder ? "Builder mint flow" : "Mint flow";
+  const mintConfirmSub = isBuilder
+    ? "Expect a couple of signatures and a final on-chain mint:"
+    : "Expect a mix of wallet prompts and short waits:";
+  const mintConfirmSteps = isBuilder ? (
+    <>
+      <li>Review the signed builder quote (no wallet prompt).</li>
+      <li>
+        Sign the builder asset pin request{" "}
+        <span className="mint-confirm-fee">(signature only)</span>.
+      </li>
+      <li>
+        Sign the builder metadata pin request{" "}
+        <span className="mint-confirm-fee">(signature only)</span>.
+      </li>
+      <li>
+        Confirm the builder mint transaction{" "}
+        <span className="mint-confirm-fee">(mint fee + network fee)</span>.
+      </li>
+      <li className="mint-confirm-wait">Wait for mint confirmation.</li>
+    </>
+  ) : (
+    <>
+      <li>
+        Confirm the commit transaction{" "}
+        <span className="mint-confirm-fee">(only network fee)</span>.
+      </li>
+      <li className="mint-confirm-wait">Wait for the reveal block to open.</li>
+      <li>
+        Sign the metadata pin request{" "}
+        <span className="mint-confirm-fee">(signature only)</span>.
+      </li>
+      <li>
+        Confirm the metadata commit transaction{" "}
+        <span className="mint-confirm-fee">(only network fee)</span>.
+      </li>
+      <li className="mint-confirm-wait">Wait for metadata confirmation.</li>
+      <li>
+        Confirm the final mint transaction{" "}
+        <span className="mint-confirm-fee">(mint fee + network fee)</span>.
+      </li>
+      <li className="mint-confirm-wait">Wait for mint confirmation.</li>
+    </>
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -223,36 +267,14 @@ export default function AppShell({ mode = "mint" }) {
         <div className="mint-confirm-card">
           <div className="mint-confirm-head">
             <div id="mint-confirm-title" className="mint-confirm-title">
-              Mint flow
+              {mintConfirmTitle}
             </div>
             <button id="mint-confirm-close" className="mint-confirm-close" type="button">
               Not yet
             </button>
           </div>
-          <div className="mint-confirm-sub">
-            Expect a mix of wallet prompts and short waits:
-          </div>
-          <ol className="mint-confirm-steps">
-            <li>
-              Confirm the commit transaction{" "}
-              <span className="mint-confirm-fee">(only network fee)</span>.
-            </li>
-            <li className="mint-confirm-wait">Wait for the reveal block to open.</li>
-            <li>
-              Sign the metadata pin request{" "}
-              <span className="mint-confirm-fee">(signature only)</span>.
-            </li>
-            <li>
-              Confirm the metadata commit transaction{" "}
-              <span className="mint-confirm-fee">(only network fee)</span>.
-            </li>
-            <li className="mint-confirm-wait">Wait for metadata confirmation.</li>
-            <li>
-              Confirm the final mint transaction{" "}
-              <span className="mint-confirm-fee">(mint fee + network fee)</span>.
-            </li>
-            <li className="mint-confirm-wait">Wait for mint confirmation.</li>
-          </ol>
+          <div className="mint-confirm-sub">{mintConfirmSub}</div>
+          <ol className="mint-confirm-steps">{mintConfirmSteps}</ol>
           <div className="mint-confirm-actions">
             <button
               id="mint-confirm-continue"

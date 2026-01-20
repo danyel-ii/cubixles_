@@ -115,6 +115,10 @@ export function initBuilderMintUi() {
   const floorSummaryEl = document.getElementById("mint-floor-summary");
   const floorListEl = document.getElementById("mint-floor-list");
   const errorEl = document.getElementById("builder-error");
+  const commitProgressEl = document.getElementById("commit-progress");
+  const mintConfirm = document.getElementById("mint-confirm");
+  const mintConfirmClose = document.getElementById("mint-confirm-close");
+  const mintConfirmContinue = document.getElementById("mint-confirm-continue");
 
   if (!statusEl || !mintButton || !amountInput) {
     return;
@@ -131,6 +135,26 @@ export function initBuilderMintUi() {
     statusEl.textContent = message;
     statusEl.classList.toggle("is-error", tone === "error");
     statusEl.classList.toggle("is-success", tone === "success");
+  }
+
+  function setCommitProgress(visible) {
+    if (!commitProgressEl) {
+      return;
+    }
+    commitProgressEl.classList.toggle("is-visible", visible);
+  }
+
+  function setMintConfirmVisible(visible) {
+    if (!mintConfirm) {
+      return;
+    }
+    mintConfirm.classList.toggle("is-hidden", !visible);
+    if (typeof document !== "undefined") {
+      document.body.classList.toggle("mint-confirm-open", visible);
+    }
+    if (visible && mintConfirmContinue) {
+      mintConfirmContinue.focus();
+    }
   }
 
   function setError(message) {
@@ -305,6 +329,7 @@ export function initBuilderMintUi() {
 
     isMinting = true;
     setDisabled(true);
+    setCommitProgress(true);
     setStatus("Preparing builder mint...");
     setError("");
 
@@ -424,10 +449,39 @@ export function initBuilderMintUi() {
     } finally {
       isMinting = false;
       setDisabled(false);
+      setCommitProgress(false);
     }
   }
 
+  function showMintConfirm() {
+    if (!mintConfirm) {
+      return false;
+    }
+    setMintConfirmVisible(true);
+    return true;
+  }
+
+  if (mintConfirmClose) {
+    mintConfirmClose.addEventListener("click", () => setMintConfirmVisible(false));
+  }
+  if (mintConfirm) {
+    mintConfirm.addEventListener("click", (event) => {
+      if (event.target === mintConfirm) {
+        setMintConfirmVisible(false);
+      }
+    });
+  }
+  if (mintConfirmContinue) {
+    mintConfirmContinue.addEventListener("click", () => {
+      setMintConfirmVisible(false);
+      void handleMint();
+    });
+  }
+
   mintButton.addEventListener("click", () => {
+    if (showMintConfirm()) {
+      return;
+    }
     void handleMint();
   });
 

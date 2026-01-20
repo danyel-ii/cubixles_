@@ -24,8 +24,9 @@
 .floating-tile{animation:none}
 .landing-home .notes-overlay.flock{z-index:0}
 .landing-home .notes-overlay.dock{z-index:0}
-.landing-loader{position:fixed;inset:0;background:#000;z-index:400;overflow:hidden;opacity:1;transition:opacity 2000ms ease}.landing-loader.is-fading{opacity:0}
+.landing-loader{position:fixed;inset:0;background:#000;z-index:400;overflow:hidden;opacity:1;transition:opacity 2000ms ease;animation:landingLoaderFade 4400ms ease forwards}.landing-loader.is-fading{opacity:0}
 .landing-loader-art{--loader-image:url("/inspecta_deck/assets/loader.png");--loader-image-mobile:url("/inspecta_deck/assets/loader_mobile.jpg");position:absolute;inset:0;background-image:var(--loader-image);background-size:cover;background-position:center;background-repeat:no-repeat}
 @media (max-width:700px){.landing-loader-art{background-image:var(--loader-image-mobile)}}
+@keyframes landingLoaderFade{0%,54.5%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden;pointer-events:none}}
 
 .dig-overlay{z-index:10000}.dig-overlay-panel{z-index:10001}
