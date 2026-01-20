@@ -108,14 +108,11 @@ export default function AppShell({ mode = "mint" }) {
           </div>
           <div className="overlay-actions">
             <a id="overlay-build" className="overlay-button overlay-button--dig" href="/build">
-              Dig it
+              Mint
             </a>
             <a id="overlay-inspect" className="overlay-button is-ghost" href="/shaolin_deck">
               Inspect
             </a>
-            <button id="overlay-about" className="overlay-button is-ghost" type="button">
-              Dug it
-            </button>
             <a
               id="enter-btn"
               className="overlay-button is-ghost overlay-button--bootleg"

@@ -1316,7 +1316,7 @@
 .dig-overlay {
   position: fixed;
   inset: 0;
-  z-index: 5000;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1334,7 +1334,7 @@
 
 .dig-overlay-panel {
   position: relative;
-  z-index: 5001;
+  z-index: 10001;
   width: min(92vw, 760px);
   max-height: 86vh;
   overflow-y: auto;

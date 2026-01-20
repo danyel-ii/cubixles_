@@ -28,4 +28,4 @@
 .landing-loader-art{--loader-image:url("/inspecta_deck/assets/loader.png");--loader-image-mobile:url("/inspecta_deck/assets/loader_mobile.jpg");position:absolute;inset:0;background-image:var(--loader-image);background-size:cover;background-position:center;background-repeat:no-repeat}
 @media (max-width:700px){.landing-loader-art{background-image:var(--loader-image-mobile)}}
 
-.dig-overlay{z-index:5000}.dig-overlay-panel{z-index:5001}
+.dig-overlay{z-index:10000}.dig-overlay-panel{z-index:10001}

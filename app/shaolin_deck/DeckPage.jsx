@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import CubixlesLogo from "../_components/CubixlesLogo.jsx";
 import CubixlesText from "../_components/CubixlesText.jsx";
@@ -247,6 +248,7 @@ function ImageCandidate({
 function DigOverlay() {
   const [open, setOpen] = useState(false);
   const headingId = useId();
+  const portalTarget = typeof document === "undefined" ? null : document.body;
 
   useEffect(() => {
     if (!open) {
@@ -275,83 +277,87 @@ function DigOverlay() {
       >
         Dig it
       </button>
-      {open ? (
-        <div
-          className="dig-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={headingId}
-        >
-          <button
-            type="button"
-            className="dig-overlay-backdrop"
-            aria-label="Close overlay"
-            onClick={() => setOpen(false)}
-          ></button>
-          <div className="dig-overlay-panel">
-            <div className="dig-overlay-header">
-              <h2 className="dig-overlay-title" id={headingId}>
-                Contextualized Rarity as Inversion
-              </h2>
+      {open && portalTarget
+        ? createPortal(
+            <div
+              className="dig-overlay"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={headingId}
+            >
               <button
                 type="button"
-                className="dig-overlay-close"
+                className="dig-overlay-backdrop"
+                aria-label="Close overlay"
                 onClick={() => setOpen(false)}
-              >
-                Close
-              </button>
-            </div>
-            <div className="dig-overlay-body">
-              <p>
-                NFT-native digital art forces a reconsideration of rarity. In a medium where images
-                are infinitely replicable and traits are algorithmically enumerable, scarcity at the
-                level of form is largely synthetic.
-              </p>
-              <p>
-                Cubixles starts from a different premise: the only element that is conceptually rare
-                in NFT space is contextualized provenance.
-              </p>
-              <div className="dig-overlay-staccato">
-                <span>Images can be copied.</span>
-                <span>Styles can be forked.</span>
-                <span>Traits can be regenerated.</span>
+              ></button>
+              <div className="dig-overlay-panel">
+                <div className="dig-overlay-header">
+                  <h2 className="dig-overlay-title" id={headingId}>
+                    Contextualized Rarity as Inversion
+                  </h2>
+                  <button
+                    type="button"
+                    className="dig-overlay-close"
+                    onClick={() => setOpen(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="dig-overlay-body">
+                  <p>
+                    NFT-native digital art forces a reconsideration of rarity. In a medium where
+                    images are infinitely replicable and traits are algorithmically enumerable,
+                    scarcity at the level of form is largely synthetic.
+                  </p>
+                  <p>
+                    Cubixles starts from a different premise: the only element that is conceptually
+                    rare in NFT space is contextualized provenance.
+                  </p>
+                  <div className="dig-overlay-staccato">
+                    <span>Images can be copied.</span>
+                    <span>Styles can be forked.</span>
+                    <span>Traits can be regenerated.</span>
+                  </div>
+                  <p>
+                    But the specific, verifiable context of ownership relations - who owned what,
+                    when, and how those works were brought into relation - is irreducible.
+                  </p>
+                  <p>Cubixles consolidates this insight into three aligned layers:</p>
+                  <dl className="dig-overlay-layers">
+                    <div>
+                      <dt>Principle</dt>
+                      <dd>
+                        Rarity in NFTs does not emerge from visual uniqueness, but from
+                        contextualized lineage - the historically specific configuration of
+                        ownership and reference.
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Primitive</dt>
+                      <dd>
+                        Provenance itself becomes the creator market primitive: a composable,
+                        ownership-verified relation between tokens.
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Mechanism</dt>
+                      <dd>
+                        The minting process binds the verifiable provenance of NFTs a user already
+                        owns into a new token, making contextual rarity executable and material.
+                      </dd>
+                    </div>
+                  </dl>
+                  <p>
+                    In this framework, rarity is no longer a property of images or traits. It is a
+                    property of relations.
+                  </p>
+                </div>
               </div>
-              <p>
-                But the specific, verifiable context of ownership relations - who owned what, when,
-                and how those works were brought into relation - is irreducible.
-              </p>
-              <p>Cubixles consolidates this insight into three aligned layers:</p>
-              <dl className="dig-overlay-layers">
-                <div>
-                  <dt>Principle</dt>
-                  <dd>
-                    Rarity in NFTs does not emerge from visual uniqueness, but from contextualized
-                    lineage - the historically specific configuration of ownership and reference.
-                  </dd>
-                </div>
-                <div>
-                  <dt>Primitive</dt>
-                  <dd>
-                    Provenance itself becomes the creator market primitive: a composable,
-                    ownership-verified relation between tokens.
-                  </dd>
-                </div>
-                <div>
-                  <dt>Mechanism</dt>
-                  <dd>
-                    The minting process binds the verifiable provenance of NFTs a user already owns
-                    into a new token, making contextual rarity executable and material.
-                  </dd>
-                </div>
-              </dl>
-              <p>
-                In this framework, rarity is no longer a property of images or traits. It is a
-                property of relations.
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            </div>,
+            portalTarget
+          )
+        : null}
     </>
   );
 }
