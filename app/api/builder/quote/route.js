@@ -25,9 +25,9 @@ import { getBuilderContractAddress } from "../../../../src/server/builder-config
 import { enforceOriginAllowlist } from "../../../../src/server/origin.js";
 
 const MAX_BODY_BYTES = 10 * 1024;
-const MIN_FLOOR_WEI = 1_000_000_000_000_000n;
-const BASE_MINT_PRICE_WEI = 4_400_000_000_000_000n;
-const PRICE_BPS = 700n;
+const MIN_FLOOR_WEI = 10_000_000_000_000_000n;
+const BASE_MINT_PRICE_WEI = 5_500_000_000_000_000n;
+const PRICE_BPS = 500n;
 const BPS = 10_000n;
 const REF_TYPEHASH = keccak256(
   toUtf8Bytes("NftRef(address contractAddress,uint256 tokenId)")
@@ -178,7 +178,7 @@ export async function POST(request) {
     );
     const rawFloorsWei = await Promise.all(floorPromises);
     const floorsWei = rawFloorsWei.map((floor) =>
-      floor === 0n ? MIN_FLOOR_WEI : floor
+      floor < MIN_FLOOR_WEI ? MIN_FLOOR_WEI : floor
     );
     let totalFloorWei = 0n;
     for (const floor of floorsWei) {
