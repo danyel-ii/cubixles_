@@ -34,7 +34,7 @@ export default function LandingExperience() {
               Browse token list
             </Link>
             <a
-              href="/"
+              href="https://www.cubixles.xyz/?skipIntro=1&skipOverlay=1"
               className="landing-button platinum"
               target="_blank"
               rel="noreferrer"

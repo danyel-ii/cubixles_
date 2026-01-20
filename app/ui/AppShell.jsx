@@ -1,9 +1,24 @@
 "use client";
 
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+
+function readBoolParam(params, key) {
+  if (!params?.has(key)) {
+    return false;
+  }
+  const value = params.get(key);
+  if (value === null || value === "") {
+    return true;
+  }
+  return value !== "0" && value.toLowerCase() !== "false";
+}
 
 export default function AppShell({ mode = "mint" }) {
   const isBuilder = mode === "builder";
+  const searchParams = useSearchParams();
+  const skipOverlay = readBoolParam(searchParams, "skipOverlay");
+  const overlayHidden = isBuilder || skipOverlay;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -20,7 +35,7 @@ export default function AppShell({ mode = "mint" }) {
   return (
     <>
       <div id="intro-shield" className="intro-shield" aria-hidden="true"></div>
-      <div id="overlay" className={`overlay${isBuilder ? " is-hidden" : ""}`}>
+      <div id="overlay" className={`overlay${overlayHidden ? " is-hidden" : ""}`}>
         <div className="overlay-card">
           <div className="overlay-title is-logotype" aria-label="cubixles_">
             <span className="logo-mark" aria-hidden="true">

@@ -476,6 +476,7 @@ body.is-intro #paperclip-panel {
 
 .overlay-button--bootleg {
   font-family: "Adrip1", var(--font-body);
+  font-size: 13px;
 }
 
 .overlay-section {

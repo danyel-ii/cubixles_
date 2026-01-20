@@ -307,7 +307,9 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   });
   await page.waitForFunction(
     () => {
-      if (document.querySelector(".nft-card.is-selected")) {
+      const selectionText =
+        document.querySelector("#nft-selection")?.textContent ?? "";
+      if (/Selected\\s+1\\s+\\/\\s+6/i.test(selectionText)) {
         return true;
       }
       const card = document.querySelector(".nft-card");
@@ -325,7 +327,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
     null,
     { timeout: 20000 }
   );
-  await expect(page.locator(".nft-card.is-selected")).toHaveCount(1, {
+  await expect(page.locator("#nft-selection")).toContainText(/Selected 1 \/ 6/i, {
     timeout: 10000,
   });
   await expect(page.locator("#mint-status")).toContainText(/Ready to mint/i, {

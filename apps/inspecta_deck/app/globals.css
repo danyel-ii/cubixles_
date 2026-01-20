@@ -1274,7 +1274,7 @@ body.cube-fade-in .landing-home .landing-cube-icon {
 .dig-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: 5000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1292,7 +1292,7 @@ body.cube-fade-in .landing-home .landing-cube-icon {
 
 .dig-overlay-panel {
   position: relative;
-  z-index: 1;
+  z-index: 5001;
   width: min(92vw, 760px);
   max-height: 86vh;
   overflow-y: auto;

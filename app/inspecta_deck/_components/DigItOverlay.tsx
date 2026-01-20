@@ -35,7 +35,7 @@ export default function DigItOverlay() {
         className="landing-button secondary landing-button-dig"
         onClick={() => setIsOpen(true)}
       >
-        Dig it
+        About
       </button>
       {isOpen && (
         <div className="dig-overlay" role="dialog" aria-modal="true" aria-labelledby={titleId}>

@@ -262,6 +262,7 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         Address.sendValue(payable(recipient), amount);
     }
 
+    // slither-disable-next-line reentrancy-events
     function _swapAndDistribute(uint256 ethToSwap, SwapToken swapToken) private {
         if (ethToSwap == 0) {
             return;
@@ -333,14 +334,16 @@ contract RoyaltySplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
 
         if (amount0 < 0) {
-            uint256 amount0Abs = SafeCast.toUint256(int256(-amount0));
-            uint256 paid = POOL_MANAGER.settle{ value: amount0Abs }();
-            if (paid != amount0Abs) {
-                revert SettleMismatch(amount0Abs, paid);
+            int256 amount0Abs = -int256(amount0);
+            uint256 amount0AbsU = SafeCast.toUint256(amount0Abs);
+            uint256 paid = POOL_MANAGER.settle{ value: amount0AbsU }();
+            if (paid != amount0AbsU) {
+                revert SettleMismatch(amount0AbsU, paid);
             }
         }
         if (amount1 > 0) {
-            uint256 output = SafeCast.toUint256(int256(amount1));
+            int256 amount1Signed = int256(amount1);
+            uint256 output = SafeCast.toUint256(amount1Signed);
             POOL_MANAGER.take(key.currency1, owner(), output);
         }
     }
