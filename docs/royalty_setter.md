@@ -32,3 +32,9 @@ This primer explains how resale royalties are handled onchain and who can config
 3. Future secondary sales route royalties to the forwarder, which accrues 60% to Alice
    and 40% to Bob (with any remainder going to the forwarder owner).
 4. Recipients can withdraw accrued ETH via `withdrawPending()`.
+
+## Deployment note (mainnet)
+- 2026-01-20: Builder minter broadcast on Ethereum mainnet.
+- Builder minter: `0x99a982113B77b03D0873650D3A8C6908D02C0b3e`
+- Royalty forwarder implementation: `0x7905F2810C19e1b1f2D2e8c3Dc28D51D5F20e329`
+- Deployment tx: `0xce1aea70c3702b2a1d72af47fa011703e53881e51c2a32de0745b795a274ebd6`
