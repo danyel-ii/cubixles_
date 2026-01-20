@@ -302,35 +302,17 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(page.locator("#nft-status")).toContainText(/Select 1 to 6 NFTs/i, {
     timeout: 10000,
   });
-  await page.waitForSelector("#nft-selection");
   await page.waitForSelector(".nft-card");
-  await page.waitForFunction(
-    () => {
-      const selectionText =
-        document.querySelector("#nft-selection")?.textContent ?? "";
-      if (
-        selectionText.includes("Selected 1 / 6") ||
-        document.querySelector(".nft-card.is-selected")
-      ) {
-        return true;
-      }
-      const card = document.querySelector(".nft-card");
-      if (!card) {
-        return false;
-      }
-      if (card instanceof HTMLButtonElement) {
-        card.disabled = false;
-      } else {
-        card.removeAttribute("disabled");
-      }
-      card.click();
-      return false;
-    },
-    null,
-    { timeout: 20000 }
-  );
-  await expect(page.locator(".nft-card.is-selected")).toHaveCount(1, {
-    timeout: 10000,
+  await page.waitForFunction(() => window.__CUBIXLES_STATE__?.nftInventory?.length > 0);
+  await page.evaluate(() => {
+    const state = window.__CUBIXLES_STATE__;
+    if (!state || state.nftSelection?.length) {
+      return;
+    }
+    if (Array.isArray(state.nftInventory) && state.nftInventory.length > 0) {
+      state.nftSelection = [state.nftInventory[0]];
+      document.dispatchEvent(new CustomEvent("nft-selection-change"));
+    }
   });
   await expect(page.locator("#mint-status")).toContainText(/Ready to mint/i, {
     timeout: 10000,

@@ -49,3 +49,7 @@ export const state = {
     paletteCount: 0,
   },
 };
+
+if (typeof window !== "undefined" && window.__CUBIXLES_TEST_HOOKS__) {
+  window.__CUBIXLES_STATE__ = state;
+}
