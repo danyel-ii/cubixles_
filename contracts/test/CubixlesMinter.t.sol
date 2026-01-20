@@ -139,7 +139,8 @@ contract CubixlesMinterTest is Test {
         if (value == 0) {
             return 0;
         }
-        return ((value + step - 1) / step) * step;
+        uint256 rounded = (value + step - 1) / step;
+        return rounded * step;
     }
 
     function _buildTokenURI(uint256 paletteIndex) internal pure returns (string memory) {

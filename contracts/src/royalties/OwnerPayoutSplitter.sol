@@ -12,6 +12,7 @@ import { BalanceDelta, BalanceDeltaLibrary } from "@uniswap/v4-core/src/types/Ba
 import { TickMath } from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import { StateLibrary } from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /// @title IWETH
 /// @notice Minimal WETH interface for balance, transfer, and unwrap.
@@ -268,7 +269,7 @@ contract OwnerPayoutSplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         if (limit < TickMath.MIN_SQRT_PRICE + 1) {
             return TickMath.MIN_SQRT_PRICE + 1;
         }
-        return uint160(limit);
+        return SafeCast.toUint160(limit);
     }
 
     function _sqrtPriceLimit(PoolKey memory key) private view returns (uint160) {
@@ -290,7 +291,7 @@ contract OwnerPayoutSplitter is Ownable, ReentrancyGuard, IUnlockCallback {
             key,
             IPoolManager.SwapParams({
                 zeroForOne: true,
-                amountSpecified: -int256(amountIn),
+                amountSpecified: -SafeCast.toInt256(amountIn),
                 sqrtPriceLimitX96: sqrtPriceLimitX96
             }),
             bytes("")
@@ -305,13 +306,14 @@ contract OwnerPayoutSplitter is Ownable, ReentrancyGuard, IUnlockCallback {
         }
 
         if (amount0 < 0) {
-            uint256 paid = POOL_MANAGER.settle{ value: uint256(uint128(-amount0)) }();
-            if (paid != uint256(uint128(-amount0))) {
-                revert SettleMismatch(uint256(uint128(-amount0)), paid);
+            uint256 amount0Abs = SafeCast.toUint256(int256(-amount0));
+            uint256 paid = POOL_MANAGER.settle{ value: amount0Abs }();
+            if (paid != amount0Abs) {
+                revert SettleMismatch(amount0Abs, paid);
             }
         }
         if (amount1 > 0) {
-            uint256 output = uint256(uint128(amount1));
+            uint256 output = SafeCast.toUint256(int256(amount1));
             POOL_MANAGER.take(key.currency1, owner(), output);
         }
     }
