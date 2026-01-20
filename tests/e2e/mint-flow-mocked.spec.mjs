@@ -309,7 +309,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
     () => {
       const selectionText =
         document.querySelector("#nft-selection")?.textContent ?? "";
-      if (/Selected\\s+1\\s+\\/\\s+6/i.test(selectionText)) {
+      if (selectionText.includes("Selected 1 / 6")) {
         return true;
       }
       const card = document.querySelector(".nft-card");
