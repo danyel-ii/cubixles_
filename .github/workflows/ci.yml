@@ -106,7 +106,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: crytic/slither-action@v0.3.0
+      - uses: crytic/slither-action@v0.4.2
         with:
           target: contracts
           slither-config: contracts/slither.config.json
