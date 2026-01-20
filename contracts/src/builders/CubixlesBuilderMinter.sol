@@ -75,14 +75,14 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
     /// @notice Expected token id does not match.
     error ExpectedTokenIdMismatch(uint256 expected, uint256 actual);
 
-    /// @notice Minimum floor price per face when floor data is missing (0.001 ETH).
-    uint256 public constant MIN_FLOOR_WEI = 1_000_000_000_000_000;
-    /// @notice Base mint price in wei (0.0044 ETH).
-    uint256 public constant BASE_MINT_PRICE_WEI = 4_400_000_000_000_000;
-    /// @notice Mint price factor in basis points (7%).
-    uint16 public constant PRICE_BPS = 700;
-    /// @notice Royalty share per face in basis points (12%).
-    uint16 public constant BUILDER_BPS = 1_200;
+    /// @notice Minimum floor price per face when floor data is missing (0.01 ETH).
+    uint256 public constant MIN_FLOOR_WEI = 10_000_000_000_000_000;
+    /// @notice Base mint price in wei (0.0055 ETH).
+    uint256 public constant BASE_MINT_PRICE_WEI = 5_500_000_000_000_000;
+    /// @notice Mint price factor in basis points (5%).
+    uint16 public constant PRICE_BPS = 500;
+    /// @notice Royalty share per face in basis points (8.5%).
+    uint16 public constant BUILDER_BPS = 850;
     /// @notice Resale royalty in basis points (10%).
     uint96 public constant RESALE_ROYALTY_BPS = 1_000;
     /// @notice Basis points denominator.
@@ -537,7 +537,7 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
     ) internal pure returns (uint256 total) {
         for (uint256 i = 0; i < floorsWei.length; i += 1) {
             uint256 floor = floorsWei[i];
-            if (floor == 0) {
+            if (floor < MIN_FLOOR_WEI) {
                 floor = MIN_FLOOR_WEI;
             }
             total += floor;

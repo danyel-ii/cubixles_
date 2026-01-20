@@ -302,14 +302,16 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(page.locator("#nft-status")).toContainText(/Select 1 to 6 NFTs/i, {
     timeout: 10000,
   });
-  await expect(page.locator("#nft-selection")).toContainText(/Selected (0|1) \/ 6/i, {
-    timeout: 10000,
-  });
+  await page.waitForSelector("#nft-selection");
+  await page.waitForSelector(".nft-card");
   await page.waitForFunction(
     () => {
       const selectionText =
         document.querySelector("#nft-selection")?.textContent ?? "";
-      if (selectionText.includes("Selected 1 / 6")) {
+      if (
+        selectionText.includes("Selected 1 / 6") ||
+        document.querySelector(".nft-card.is-selected")
+      ) {
         return true;
       }
       const card = document.querySelector(".nft-card");
@@ -327,7 +329,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
     null,
     { timeout: 20000 }
   );
-  await expect(page.locator("#nft-selection")).toContainText(/Selected 1 \/ 6/i, {
+  await expect(page.locator(".nft-card.is-selected")).toHaveCount(1, {
     timeout: 10000,
   });
   await expect(page.locator("#mint-status")).toContainText(/Ready to mint/i, {

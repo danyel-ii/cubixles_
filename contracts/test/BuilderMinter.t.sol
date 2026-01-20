@@ -123,7 +123,8 @@ contract BuilderMinterTest is Test {
     {
         uint256 totalFloor = 0;
         for (uint256 i = 0; i < floorsWei.length; i += 1) {
-            uint256 floor = floorsWei[i] == 0 ? minter.MIN_FLOOR_WEI() : floorsWei[i];
+            uint256 floor =
+                floorsWei[i] < minter.MIN_FLOOR_WEI() ? minter.MIN_FLOOR_WEI() : floorsWei[i];
             totalFloor += floor;
         }
         mintPrice =
