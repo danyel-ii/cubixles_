@@ -12,6 +12,8 @@ const PREVIEW_STORAGE_KEY = "cubixles:m2-preview";
 const FACE_ORDER = ["+Z", "-Z", "+X", "-X", "+Y", "-Y"];
 const DEFAULT_DESCRIPTION = "";
 const MIN_FLOOR_ETH = 0.001;
+const BASE_MINT_PRICE_ETH = 0.0044;
+const PRICE_RATE = 0.07;
 
 function formatMintedAt(value) {
   if (!value) {
@@ -37,13 +39,15 @@ function buildFaces(entries, floorMap) {
       ? entry.contractAddress.toLowerCase()
       : null;
     const snapshot = contractKey ? floorMap.get(contractKey) : null;
+    const floorValue = typeof snapshot?.floorEth === "number" ? snapshot.floorEth : 0;
+    const floorEth = floorValue > 0 ? floorValue : MIN_FLOOR_ETH;
     return {
       faceId,
       title: label,
       collection: label,
       tokenId: String(entry.tokenId || ""),
       contractAddress: entry.contractAddress,
-      floorEth: snapshot?.floorEth ?? null,
+      floorEth,
       floorRetrievedAt: snapshot?.retrievedAt ?? null,
       ownerNote: "",
       description: "",
@@ -83,15 +87,11 @@ function buildPricingSummary(entries, floorMap) {
       ? entry.contractAddress.toLowerCase()
       : null;
     const snapshot = contractKey ? floorMap.get(contractKey) : null;
-    return typeof snapshot?.floorEth === "number" ? snapshot.floorEth : 0;
+    const floorValue = typeof snapshot?.floorEth === "number" ? snapshot.floorEth : 0;
+    return floorValue > 0 ? floorValue : MIN_FLOOR_ETH;
   });
   const currentSum = floors.reduce((sum, floor) => sum + floor, 0);
-  const paddedCount = Math.max(0, 6 - entries.length);
-  const totalFloor = floors.reduce(
-    (sum, floor) => sum + (floor > 0 ? floor : MIN_FLOOR_ETH),
-    0
-  );
-  const mintPrice = (totalFloor + paddedCount * MIN_FLOOR_ETH) * 0.1;
+  const mintPrice = BASE_MINT_PRICE_ETH + currentSum * PRICE_RATE;
   return { currentSum, mintPrice };
 }
 

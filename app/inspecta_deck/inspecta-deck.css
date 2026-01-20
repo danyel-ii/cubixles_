@@ -14,6 +14,10 @@
   font-family: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
   margin: 0;
   min-height: 100vh;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: #030305;
   color: #f7f7fa;
 }
@@ -1205,7 +1209,7 @@
 }
 
 .cubixles-logo-link::before {
-  content: "bangert bootlegged tokens";
+  content: "banger bootlegged tokens";
   position: absolute;
   left: 0;
   top: 50%;
@@ -1312,7 +1316,7 @@
 .dig-overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 500;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1337,6 +1341,7 @@
   border-radius: 28px 88px 28px 88px;
   padding: clamp(22px, 3vw, 38px);
   color: #1b1916;
+  transform: translateY(-2%);
   background:
     radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.9), transparent 45%),
     radial-gradient(circle at 80% 0%, rgba(250, 242, 230, 0.8), transparent 40%),

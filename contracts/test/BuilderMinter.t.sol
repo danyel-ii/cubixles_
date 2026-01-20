@@ -121,12 +121,14 @@ contract BuilderMinterTest is Test {
             uint256 mintPrice
         )
     {
-        uint256 totalFloor = (minter.MAX_REFERENCES() - refs.length) * minter.MIN_FLOOR_WEI();
+        uint256 totalFloor = 0;
         for (uint256 i = 0; i < floorsWei.length; i += 1) {
             uint256 floor = floorsWei[i] == 0 ? minter.MIN_FLOOR_WEI() : floorsWei[i];
             totalFloor += floor;
         }
-        mintPrice = (totalFloor * minter.PRICE_BPS()) / minter.BPS();
+        mintPrice =
+            minter.BASE_MINT_PRICE_WEI() +
+            (totalFloor * minter.PRICE_BPS()) / minter.BPS();
         quote = CubixlesBuilderMinter.BuilderQuote({
             totalFloorWei: totalFloor,
             chainId: block.chainid,
@@ -212,7 +214,7 @@ contract BuilderMinterTest is Test {
         assertEq(owner.balance - ownerStart, price - share);
     }
 
-    function testBuilderMintZeroFloorSkipsRoyalty() public {
+    function testBuilderMintZeroFloorUsesFallback() public {
         CubixlesBuilderMinter.NftRef[] memory refs = _mintRefs();
         uint256[] memory floorsWei = new uint256[](2);
         floorsWei[0] = 0;
@@ -232,9 +234,9 @@ contract BuilderMinterTest is Test {
         vm.prank(minterAddr);
         minter.mintBuilders{ value: price }(refs, floorsWei, quote, signature);
 
-        assertEq(receiverA.balance - receiverAStart, 0);
+        assertEq(receiverA.balance - receiverAStart, share);
         assertEq(receiverB.balance - receiverBStart, share);
-        assertEq(owner.balance - ownerStart, price - share);
+        assertEq(owner.balance - ownerStart, price - (share * refs.length));
     }
 
     function testBuilderMintRejectsInvalidPrice() public {
@@ -319,10 +321,7 @@ contract BuilderMinterTest is Test {
         uint256[] memory floorsWei = new uint256[](2);
         floorsWei[0] = 1 ether;
         floorsWei[1] = 1 ether;
-        uint256 totalFloor =
-            (minter.MAX_REFERENCES() - refs.length) * minter.MIN_FLOOR_WEI() +
-            floorsWei[0] +
-            floorsWei[1];
+        uint256 totalFloor = floorsWei[0] + floorsWei[1];
         CubixlesBuilderMinter.BuilderQuote memory quote = CubixlesBuilderMinter.BuilderQuote({
             totalFloorWei: totalFloor,
             chainId: block.chainid,
@@ -330,7 +329,9 @@ contract BuilderMinterTest is Test {
             nonce: 4
         });
         bytes memory signature = _signQuote(refs, floorsWei, quote, quoteSignerKey);
-        uint256 price = (totalFloor * minter.PRICE_BPS()) / minter.BPS();
+        uint256 price =
+            minter.BASE_MINT_PRICE_WEI() +
+            (totalFloor * minter.PRICE_BPS()) / minter.BPS();
 
         vm.deal(minterAddr, price);
         vm.startPrank(minterAddr);

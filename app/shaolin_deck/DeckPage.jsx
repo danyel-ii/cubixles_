@@ -957,9 +957,9 @@ export function DeckPage() {
         <section className="landing-header">
           <div className="landing-intro">
             <h1 className="landing-title">
-              <a href="https://www.cubixles.xyz" className="cubixles-logo-link">
-                <CubixlesLogo />
-              </a>
+            <a href="/" className="cubixles-logo-link">
+              <CubixlesLogo />
+            </a>
             </h1>
             <p className="landing-subhead">
               Provenance as building blocks, NFTs as materials, and citations as structure.
@@ -969,7 +969,7 @@ export function DeckPage() {
                 Browse token list
               </a>
               <a
-                href="https://www.cubixles.xyz"
+                href="/"
                 className="landing-button platinum"
                 target="_blank"
                 rel="noreferrer"

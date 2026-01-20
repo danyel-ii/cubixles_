@@ -36,6 +36,10 @@ export default function AppShell({ mode = "mint" }) {
             <span className="sr-only">cubixles_</span> is an ERC721 linked to interactive p5.js
             artwork whose provenance is tethered to NFTs you already own.
           </div>
+          <p className="overlay-text">
+            cubixles_ are an experiment with defining, exercising and expanding the productive
+            rights that can be mapped onto NFT ownership and curation.
+          </p>
           <div className="overlay-section">
             <div className="overlay-section-title">How it works</div>
             <ol className="overlay-steps">
@@ -70,36 +74,38 @@ export default function AppShell({ mode = "mint" }) {
             <div className="overlay-section-title">Mint price</div>
             {isBuilder ? (
               <p className="overlay-text">
-                Feingehalt is set to 10% of snapshot floor totals (0.001 ETH min per face). Each
-                mint deploys a royalty forwarder controlled by the minter for future split updates.
+                Builder mint price is 0.0044 ETH + 7% of snapshot floor totals (0.001 ETH fallback
+                per face). Each referenced NFT receives 12% of the total mint price, and each mint
+                deploys a royalty forwarder controlled by the minter for future split updates.
               </p>
             ) : (
-              <p className="overlay-text">
-                Mint cost depends on network: mainnet tracks{" "}
-                <a
-                  className="ui-link"
-                  href="https://less.ripe.wtf/about"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  $LESS
-                </a>{" "}
-                supply, Base uses an immutable linear step (0.0012 ETH base + 0.000036 ETH per
-                mint).
-              </p>
+              <>
+                <p className="overlay-text">
+                  Regular mints (builder contract) price at 0.0044 ETH + 7% of snapshot floor
+                  totals (0.001 ETH fallback per face). Each referenced NFT receives 12% of the
+                  total mint price.
+                </p>
+                <p className="overlay-text">
+                  Bootlegs use an alternative pricing model.
+                </p>
+              </>
             )}
           </div>
           <div className="overlay-actions">
-            <a id="overlay-build" className="overlay-button is-ghost is-glow" href="/build">
+            <a id="overlay-build" className="overlay-button overlay-button--dig" href="/build">
               Dig it
             </a>
-            <a id="overlay-inspect" className="overlay-button is-ghost" href="/shaolin_deck">
+            <a id="overlay-inspect" className="overlay-button is-ghost" href="/inspecta_deck">
               Inspect
             </a>
             <button id="overlay-about" className="overlay-button is-ghost" type="button">
               Dug it
             </button>
-            <button id="enter-btn" className="overlay-button is-ghost" type="button">
+            <button
+              id="enter-btn"
+              className="overlay-button is-ghost overlay-button--bootleg"
+              type="button"
+            >
               Bootleg it
             </button>
           </div>
@@ -146,10 +152,11 @@ export default function AppShell({ mode = "mint" }) {
               </li>
             </ul>
             <p className="overlay-text">
-              Builder mints snapshot live floor data to set the Feingehalt, deploy a per-mint
-              royalty forwarder so the minter controls future splits, and generate a wallet-seeded
-              paper clip sculpture (with QR) pinned to IPFS as the display image, plus a p5.js
-              inspector capture of the cube at mint.
+              Builder mints snapshot live floor data to set the Feingehalt, route 12% of the total
+              mint price to each referenced NFT royalty receiver, deploy a per-mint royalty
+              forwarder so the minter controls future splits, and generate a wallet-seeded paper
+              clip sculpture (with QR) pinned to IPFS as the display image, plus a p5.js inspector
+              capture of the cube at mint.
             </p>
             <p className="overlay-text">
               In this framework, rarity is no longer a property of images or traits. It is a
@@ -292,7 +299,7 @@ export default function AppShell({ mode = "mint" }) {
         </div>
         <div className="ui-sub">
           {isBuilder
-            ? "Builder mint: price is 10% of snapshot floor totals (0.001 ETH min per face)."
+            ? "Builder mint: price is 0.0044 ETH + 7% of snapshot floor totals (0.001 ETH fallback per face)."
             : "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own."}
         </div>
         <div className="ui-row">
@@ -473,9 +480,10 @@ export default function AppShell({ mode = "mint" }) {
           </div>
           {isBuilder ? (
             <p className="ui-text">
-              Builder mints set Feingehalt at 10% of snapshot floor totals (0.001 ETH min per
-              face). Each mint deploys a royalty forwarder owned by the minter so they can set
-              splits and update future royalty recipients.
+              Builder mints set Feingehalt at 0.0044 ETH + 7% of snapshot floor totals (0.001 ETH
+              fallback per face). Each referenced NFT receives 12% of the total mint price, and
+              each mint deploys a royalty forwarder owned by the minter so they can set splits and
+              update future royalty recipients.
             </p>
           ) : (
             <p className="ui-text">

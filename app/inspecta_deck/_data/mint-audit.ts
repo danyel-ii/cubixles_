@@ -86,7 +86,7 @@ export const MINT_AUDIT = {
   references: [
     {
       label: "Full minting experience",
-      url: "https://www.cubixles.xyz",
+      url: "/",
     },
     {
       label: "$LESS supply mechanics",

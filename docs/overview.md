@@ -23,4 +23,5 @@ cubixles_ is a Next.js miniapp that mints ERC-721 cubes whose faces are linked t
 
 ## Core flows
 - Legacy mint: commit + metadata commit + mint, with deterministic tokenId and palette draw.
-- Builder mint: request quote, pin builder assets + metadata, then mint with signed quote.
+- Builder mint: request quote, pin builder assets + metadata, then mint with signed quote and a
+  base + 7% floor-derived price (0.001 ETH fallback per face) that routes 12% per referenced NFT.

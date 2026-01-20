@@ -24,9 +24,9 @@ import {
 import { getBuilderContractAddress } from "../../../../src/server/builder-config.js";
 
 const MAX_BODY_BYTES = 10 * 1024;
-const MAX_REFERENCES = 6n;
 const MIN_FLOOR_WEI = 1_000_000_000_000_000n;
-const PRICE_BPS = 1_000n;
+const BASE_MINT_PRICE_WEI = 4_400_000_000_000_000n;
+const PRICE_BPS = 700n;
 const BPS = 10_000n;
 const REF_TYPEHASH = keccak256(
   toUtf8Bytes("NftRef(address contractAddress,uint256 tokenId)")
@@ -166,11 +166,12 @@ export async function POST(request) {
         return 0n;
       })
     );
-    const floorsWei = await Promise.all(floorPromises);
-
-    let totalFloorWei = (MAX_REFERENCES - BigInt(floorsWei.length)) * MIN_FLOOR_WEI;
-    const adjustedFloors = floorsWei.map((floor) => (floor === 0n ? MIN_FLOOR_WEI : floor));
-    for (const floor of adjustedFloors) {
+    const rawFloorsWei = await Promise.all(floorPromises);
+    const floorsWei = rawFloorsWei.map((floor) =>
+      floor === 0n ? MIN_FLOOR_WEI : floor
+    );
+    let totalFloorWei = 0n;
+    for (const floor of floorsWei) {
       totalFloorWei += floor;
     }
 
@@ -219,7 +220,7 @@ export async function POST(request) {
       nonce: quote.nonce,
     });
 
-    const mintPriceWei = (totalFloorWei * PRICE_BPS) / BPS;
+    const mintPriceWei = BASE_MINT_PRICE_WEI + (totalFloorWei * PRICE_BPS) / BPS;
 
     logRequest({ route: "/api/builder/quote", status: 200, requestId, bodySize });
     return NextResponse.json({

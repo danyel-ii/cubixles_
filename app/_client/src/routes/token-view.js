@@ -8,9 +8,14 @@ import { fetchMintPriceByTokenId, fetchTokenUri } from "../data/chain/cubixles-r
 import { getProvenance } from "../data/nft/indexer";
 import { getCollectionFloorSnapshot } from "../data/nft/floor.js";
 import { resolveUri, buildImageCandidates } from "../shared/utils/uri";
+import { parseIpfsUrl } from "../shared/uri-policy.js";
 import { getActiveChainId, getChainOptions, setActiveChainId } from "../config/chains.js";
 import { fetchWithGateways } from "../../../../src/shared/ipfs-fetch.js";
 import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/metadata.js";
+
+const MIN_FLOOR_ETH = 0.001;
+const BASE_MINT_PRICE_ETH = 0.0044;
+const PRICE_RATE = 0.07;
 
 function parseTokenIdFromPath() {
   const path = window.location.pathname || "";
@@ -224,7 +229,8 @@ async function resolveMetadataImageCandidates(nft) {
   }
   try {
     let response;
-    if (tokenUri.startsWith("ipfs://")) {
+    const isIpfsGateway = parseIpfsUrl(tokenUri);
+    if (tokenUri.startsWith("ipfs://") || isIpfsGateway) {
       ({ response } = await fetchWithGateways(tokenUri));
     } else {
       response = await fetch(tokenUri);
@@ -310,7 +316,7 @@ function initTokenShareDialog() {
   const mintButton = document.createElement("a");
   mintButton.id = "share-cube";
   mintButton.className = "share-cube-button";
-  mintButton.href = "https://www.cubixles.xyz";
+  mintButton.href = "/";
   mintButton.target = "_blank";
   mintButton.rel = "noreferrer";
   mintButton.textContent = "mint yours";
@@ -458,10 +464,14 @@ export async function initTokenViewRoute() {
           return result;
         })
       );
-      const liveSum = liveFloors.reduce((total, entry) => total + (entry?.floorEth || 0), 0);
+      const liveFloorSum = liveFloors.reduce((total, entry) => {
+        const floorValue = typeof entry?.floorEth === "number" ? entry.floorEth : 0;
+        return total + (floorValue > 0 ? floorValue : MIN_FLOOR_ETH);
+      }, 0);
+      const liveFeingehalt = BASE_MINT_PRICE_ETH + liveFloorSum * PRICE_RATE;
       const retrievedAt =
         liveFloors.find((entry) => entry?.retrievedAt)?.retrievedAt ?? null;
-      renderFeingehalt(floorPanel, liveSum, retrievedAt);
+      renderFeingehalt(floorPanel, liveFeingehalt, retrievedAt);
     } catch (error) {
       renderFeingehalt(floorPanel, 0, null);
     }

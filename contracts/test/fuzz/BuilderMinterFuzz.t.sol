@@ -94,12 +94,14 @@ contract BuilderMinterFuzzTest is Test {
             uint256 mintPrice
         )
     {
-        uint256 totalFloor = (minter.MAX_REFERENCES() - refs.length) * minter.MIN_FLOOR_WEI();
+        uint256 totalFloor = 0;
         for (uint256 i = 0; i < floorsWei.length; i += 1) {
             uint256 floor = floorsWei[i] == 0 ? minter.MIN_FLOOR_WEI() : floorsWei[i];
             totalFloor += floor;
         }
-        mintPrice = (totalFloor * minter.PRICE_BPS()) / minter.BPS();
+        mintPrice =
+            minter.BASE_MINT_PRICE_WEI() +
+            (totalFloor * minter.PRICE_BPS()) / minter.BPS();
         quote = CubixlesBuilderMinter.BuilderQuote({
             totalFloorWei: totalFloor,
             chainId: block.chainid,

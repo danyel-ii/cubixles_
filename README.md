@@ -4,7 +4,7 @@ cubixles_ is a Next.js miniapp for minting ERC-721 cubes whose faces are linked 
 
 ## Highlights
 - Legacy mints use commit-reveal and LESS/linear pricing.
-- Builder mints use signed floor quotes and deploy a per-mint royalty forwarder owned by the minter.
+- Builder mints use signed floor quotes (0.0044 ETH + 7% of floor totals, 0.001 ETH fallback) and deploy a per-mint royalty forwarder owned by the minter.
 - Token viewers live at `/m/<tokenId>` (legacy) and `/m2/<tokenId>` (builder).
 - Metadata and generated assets are pinned to IPFS.
 
@@ -19,6 +19,8 @@ cubixles_ is a Next.js miniapp for minting ERC-721 cubes whose faces are linked 
 - `docs/contracts.md`
 - `docs/security.md`
 - `docs/operations.md`
+- `docs/transactions_flow.md`
+- `docs/royalty_setter.md`
 - `technical-review.md`
 
 ## Support

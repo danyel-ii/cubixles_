@@ -3,6 +3,7 @@
 ## Contract set
 - `contracts/src/cubixles/CubixlesMinter.sol` (legacy minter)
 - `contracts/src/royalties/RoyaltySplitter.sol` (legacy royalty receiver + swapper)
+- `contracts/src/royalties/OwnerPayoutSplitter.sol` (builder owner payout swapper)
 - `contracts/src/builders/CubixlesBuilderMinter.sol` (builder minter)
 - `contracts/src/royalties/BuilderRoyaltyForwarder.sol` (per-mint royalty receiver)
 - `contracts/src/cubixles_v.1.0..sol` (v1.0 marker contract)
@@ -23,12 +24,18 @@
 - In swap-enabled mode, forwards ETH and swaps into LESS + PNKSTR via Uniswap v4 PoolManager.
 - In swap-disabled or failure mode, forwards ETH to the owner.
 
+## OwnerPayoutSplitter (builder owner share)
+- Receives the builder owner share and optionally swaps 50% of incoming ETH into PNKSTR.
+- Forwards remaining ETH + swapped PNKSTR to the owner.
+- Uses Uniswap v4 PoolManager unlock/swap; falls back to ETH on swap failure or when disabled.
+
 ## CubixlesBuilderMinter (builder)
 - ERC-721 with per-token ERC-2981 royalties.
 - Quote-based pricing: a signed EIP-712 quote supplies total floor sum and expiry.
-- Mint price = `totalFloorWei * 10%` (PRICE_BPS = 1000).
+- Mint price = `0.0044 ETH + (totalFloorWei * 7%)` (PRICE_BPS = 700).
 - References must support ERC-721 + ERC-2981 and be owned by the minter.
-- Payouts: 12% of the mint price per face goes to the referenced NFT royalty receiver (skips faces with zero floor); remainder goes to the contract owner.
+- Each face floor uses a 0.001 ETH fallback when the floor is unavailable or zero.
+- Payouts: 12% of the mint price per face goes to the referenced NFT royalty receiver; remainder routes to the owner payout address (defaults to owner).
 - `mintBuildersWithMetadata` stores `tokenURI` and `metadataHash` per token.
 
 ## BuilderRoyaltyForwarder
@@ -48,6 +55,7 @@
 ## Builder deployment plan
 - Configure builder deployment inputs:
   - `CUBIXLES_BUILDER_OWNER` (or `CUBIXLES_OWNER` fallback)
+  - `CUBIXLES_BUILDER_OWNER_PAYOUT` (optional; routes owner share to a splitter)
   - `CUBIXLES_BUILDER_QUOTE_SIGNER` (required for minting)
   - `CUBIXLES_BUILDER_ROYALTY_FORWARDER_IMPL` (optional; deploys a new implementation when unset)
   - `CUBIXLES_BUILDER_NAME`, `CUBIXLES_BUILDER_SYMBOL`, `CUBIXLES_BUILDER_BASE_URI`

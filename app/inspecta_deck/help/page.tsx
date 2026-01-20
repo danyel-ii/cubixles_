@@ -19,7 +19,7 @@ export default function HelpPage() {
       <section className="landing-header helpdesk-header">
         <div className="landing-intro">
           <h1 className="landing-title helpdesk-title">
-            <a href="https://www.cubixles.xyz" className="cubixles-logo-link">
+            <a href="/" className="cubixles-logo-link">
               <CubixlesLogo />
             </a>
             <span className="helpdesk-title-suffix">helpdesk</span>

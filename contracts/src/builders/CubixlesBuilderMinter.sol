@@ -75,10 +75,12 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
     /// @notice Expected token id does not match.
     error ExpectedTokenIdMismatch(uint256 expected, uint256 actual);
 
-    /// @notice Minimum floor price per face (0.001 ETH).
+    /// @notice Minimum floor price per face when floor data is missing (0.001 ETH).
     uint256 public constant MIN_FLOOR_WEI = 1_000_000_000_000_000;
-    /// @notice Mint price factor in basis points (10%).
-    uint16 public constant PRICE_BPS = 1_000;
+    /// @notice Base mint price in wei (0.0044 ETH).
+    uint256 public constant BASE_MINT_PRICE_WEI = 4_400_000_000_000_000;
+    /// @notice Mint price factor in basis points (7%).
+    uint16 public constant PRICE_BPS = 700;
     /// @notice Royalty share per face in basis points (12%).
     uint16 public constant BUILDER_BPS = 1_200;
     /// @notice Resale royalty in basis points (10%).
@@ -108,6 +110,8 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
     address public royaltyForwarderImpl;
     /// @notice Pending owner balance when direct payouts fail.
     uint256 public pendingOwnerBalance;
+    /// @notice Optional payout address for owner share (defaults to owner when unset).
+    address public ownerPayout;
     /// @notice Base token URI.
     string private _baseTokenURI;
     /// @notice Token URI override per token id.
@@ -151,6 +155,8 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
     event OwnerBalanceAccrued(uint256 amount);
     /// @notice Emitted when owner balance is withdrawn.
     event OwnerBalanceWithdrawn(address indexed to, uint256 amount);
+    /// @notice Emitted when the owner payout address is updated.
+    event OwnerPayoutUpdated(address indexed payout);
 
     constructor(
         string memory name_,
@@ -275,6 +281,13 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
         }
         royaltyForwarderImpl = implementation;
         emit RoyaltyForwarderUpdated(implementation);
+    }
+
+    /// @notice Update the payout address for owner mint proceeds.
+    /// @param payout Address that receives the owner share (zero uses owner()).
+    function setOwnerPayout(address payout) external onlyOwner {
+        ownerPayout = payout;
+        emit OwnerPayoutUpdated(payout);
     }
 
     /// @notice Withdraw pending owner balance to a recipient.
@@ -444,7 +457,7 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
         }
         usedNonces[quote.nonce] = true;
 
-        return Math.mulDiv(quote.totalFloorWei, PRICE_BPS, BPS);
+        return BASE_MINT_PRICE_WEI + Math.mulDiv(quote.totalFloorWei, PRICE_BPS, BPS);
     }
 
     function _resolveReceivers(
@@ -483,9 +496,6 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
         uint256 share = Math.mulDiv(mintPrice, BUILDER_BPS, BPS);
         uint256 remaining = mintPrice;
         for (uint256 i = 0; i < receivers.length; i += 1) {
-            if (floorsWei[i] == 0) {
-                continue;
-            }
             remaining -= share;
             address receiver = receivers[i];
             bool paid = _sendValue(receiver, share);
@@ -507,7 +517,8 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
         if (amount == 0) {
             return;
         }
-        bool paid = _sendValue(ownerAddr, amount);
+        address payout = ownerPayout == address(0) ? ownerAddr : ownerPayout;
+        bool paid = _sendValue(payout, amount);
         if (!paid) {
             pendingOwnerBalance += amount;
             emit OwnerBalanceAccrued(amount);
@@ -517,11 +528,13 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
 
     function _computeTotalFloorWei(
         uint256[] calldata floorsWei,
-        uint256 refCount
+        uint256
     ) internal pure returns (uint256 total) {
-        total = (MAX_REFERENCES - refCount) * MIN_FLOOR_WEI;
         for (uint256 i = 0; i < floorsWei.length; i += 1) {
-            uint256 floor = floorsWei[i] == 0 ? MIN_FLOOR_WEI : floorsWei[i];
+            uint256 floor = floorsWei[i];
+            if (floor == 0) {
+                floor = MIN_FLOOR_WEI;
+            }
             total += floor;
         }
     }

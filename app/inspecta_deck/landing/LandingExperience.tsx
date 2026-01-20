@@ -21,7 +21,7 @@ export default function LandingExperience() {
       <section className="landing-header">
         <div className="landing-intro">
           <h1 className="landing-title">
-            <a href="https://www.cubixles.xyz" className="cubixles-logo-link">
+            <a href="/" className="cubixles-logo-link">
               <CubixlesLogo />
             </a>
           </h1>
@@ -34,7 +34,7 @@ export default function LandingExperience() {
               Browse token list
             </Link>
             <a
-              href="https://www.cubixles.xyz"
+              href="/"
               className="landing-button platinum"
               target="_blank"
               rel="noreferrer"

@@ -21,5 +21,6 @@ This repository mixes onchain minting contracts with a server-assisted mint pipe
 
 ## Known constraints
 - If a referenced NFT or royalty receiver reverts, a builder mint will revert.
-- Royalty receiver contracts can reject ETH; those amounts fall back to the builder owner balance.
+- Royalty receiver contracts can reject ETH; those amounts fall back to the builder owner balance
+  if the payout address rejects funds.
 - The builder price quote is only as accurate as the floor oracle data used by the signer.

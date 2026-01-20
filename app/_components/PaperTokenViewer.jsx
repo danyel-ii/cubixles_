@@ -31,6 +31,9 @@ const FACE_ROTATIONS = {
   "-Y": { x: "64deg", y: "38deg" },
 };
 const DEFAULT_ROTATION = FACE_ROTATIONS["+Z"];
+const MIN_FLOOR_ETH = 0.001;
+const BASE_MINT_PRICE_ETH = 0.0044;
+const PRICE_RATE = 0.07;
 
 function truncateMiddle(value, start = 6, end = 4) {
   if (value.length <= start + end + 3) {
@@ -876,10 +879,11 @@ export default function PaperTokenViewer({
     }
     return faces.reduce((sum, face) => {
       const value = toNumber(face.floorEth);
-      return sum + (value ?? 0);
+      const floorValue = value != null && value > 0 ? value : MIN_FLOOR_ETH;
+      return sum + floorValue;
     }, 0);
   }, [cube?.currentFloorSumEth, faces]);
-  const currentFeingehalt = currentFloorSumEth / 10;
+  const currentFeingehalt = BASE_MINT_PRICE_ETH + currentFloorSumEth * PRICE_RATE;
   const mintedFeingehalt = toNumber(cube?.mintPriceEth) ?? currentFeingehalt;
   const deltaFeingehalt =
     mintedFeingehalt != null ? mintedFeingehalt - currentFeingehalt : null;

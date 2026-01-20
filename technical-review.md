@@ -23,6 +23,7 @@ This document covers the onchain builder minting stack implemented by `CubixlesB
 - `quoteSigner`: EOA/contract that signs EIP-712 builder quotes.
 - `royaltyForwarderImpl`: implementation address used by `Clones` for per-mint forwarders.
 - `pendingOwnerBalance`: accrual bucket when owner payouts fail.
+- `ownerPayout`: optional address that receives owner mint proceeds (defaults to `owner()`).
 - `_baseTokenURI` and `_tokenUriByTokenId`: optional token URI override.
 - `_refsByTokenId[tokenId]`: list of references stored per mint.
 - `_floorsByTokenId[tokenId]`: floor snapshots stored per mint.
@@ -31,7 +32,8 @@ This document covers the onchain builder minting stack implemented by `CubixlesB
 
 ### Constants
 - `MIN_FLOOR_WEI`: minimum floor value applied when a face floor is missing or zero.
-- `PRICE_BPS`: builder price factor (10%).
+- `BASE_MINT_PRICE_WEI`: base builder mint fee (0.0044 ETH).
+- `PRICE_BPS`: builder price factor (7%).
 - `BUILDER_BPS`: per-face payout factor (12%).
 - `RESALE_ROYALTY_BPS`: ERC-2981 resale royalty for builder tokens (10%).
 - `BPS`: basis points denominator (10_000).
@@ -45,9 +47,9 @@ Inputs: `refs`, `floorsWei`, `quote`, `signature`.
 
 Flow:
 1. Validates reference count and floors array length.
-2. Computes `expectedTotalFloorWei` by summing floors (zero floors become `MIN_FLOOR_WEI`) and adding `MIN_FLOOR_WEI` for any missing faces.
+2. Computes `expectedTotalFloorWei` by summing floors (zero floors become `MIN_FLOOR_WEI`).
 3. Verifies the EIP-712 quote (signer, chainId, expiry, nonce, total floor).
-4. Requires exact `msg.value` equal to the derived mint price (10% of total floor).
+4. Requires exact `msg.value` equal to the derived mint price (base + 7% of total floor).
 5. Resolves royalty receivers for each referenced NFT (ERC-2981) and confirms the minter owns every reference (ERC-721 `ownerOf`).
 6. Mints the ERC-721, stores refs + floor snapshots, and distributes payouts.
 7. Emits `BuilderMinted`.
@@ -72,8 +74,7 @@ Otherwise the flow matches `mintBuilders`, with the addition of `tokenURI` and m
 ## Pricing and floor math
 - Total floor includes:
   - Sum of each floor (zero is treated as `MIN_FLOOR_WEI`).
-  - A `MIN_FLOOR_WEI` pad for each missing face up to `MAX_REFERENCES`.
-- Mint price is `totalFloorWei * PRICE_BPS / BPS` (10% of total floor).
+- Mint price is `BASE_MINT_PRICE_WEI + (totalFloorWei * PRICE_BPS / BPS)`.
 
 ## Reference validation
 - Each referenced NFT must support `IERC721` and `IERC2981`.
@@ -86,9 +87,9 @@ Otherwise the flow matches `mintBuilders`, with the addition of `tokenURI` and m
 - Resale royalty rate is fixed at `RESALE_ROYALTY_BPS` (10%).
 
 ## Payout distribution
-- Each referenced NFT with a non-zero floor receives `share = mintPrice * BUILDER_BPS / BPS`.
+- Each referenced NFT receives `share = mintPrice * BUILDER_BPS / BPS`.
 - Failed sends are credited to `pendingOwnerBalance` and can be withdrawn by the contract owner.
-- Any unassigned remainder (including skipped faces) is credited to the owner.
+- Any unassigned remainder is credited to the owner payout address (defaults to `owner()`).
 
 ## Metadata and token URI handling
 - `tokenURI` returns the per-token override if set; otherwise it falls back to the ERC-721 base URI.
@@ -98,6 +99,7 @@ Otherwise the flow matches `mintBuilders`, with the addition of `tokenURI` and m
 ## Admin surface
 - `setQuoteSigner(address)` updates the EIP-712 quote signer (non-zero required).
 - `setRoyaltyForwarderImpl(address)` updates the forwarder implementation (non-zero required).
+- `setOwnerPayout(address)` sets an optional payout address for owner mint proceeds.
 - `setBaseURI(string)` updates the base URI used by ERC-721.
 - `withdrawOwnerBalance(address)` withdraws `pendingOwnerBalance` to a recipient.
 
@@ -105,7 +107,7 @@ Otherwise the flow matches `mintBuilders`, with the addition of `tokenURI` and m
 - `BuilderMinted(tokenId, minter, refCount, mintPrice)`.
 - `BuilderPayout(receiver, amount, fallbackToOwner)`.
 - `BuilderRoyaltyForwarderDeployed(tokenId, minter, forwarder)`.
-- `QuoteSignerUpdated`, `RoyaltyForwarderUpdated`, `OwnerBalanceAccrued`, `OwnerBalanceWithdrawn`.
+- `QuoteSignerUpdated`, `RoyaltyForwarderUpdated`, `OwnerPayoutUpdated`, `OwnerBalanceAccrued`, `OwnerBalanceWithdrawn`.
 
 ## BuilderRoyaltyForwarder
 - Contract: `contracts/src/royalties/BuilderRoyaltyForwarder.sol`.

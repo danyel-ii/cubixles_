@@ -26,6 +26,9 @@ contract DeployBuilderMinter is Script {
         if (cfg.quoteSigner != address(0)) {
             minter.setQuoteSigner(cfg.quoteSigner);
         }
+        if (cfg.ownerPayout != address(0)) {
+            minter.setOwnerPayout(cfg.ownerPayout);
+        }
         if (cfg.owner != msg.sender) {
             minter.transferOwnership(cfg.owner);
         }
@@ -41,13 +44,15 @@ contract DeployBuilderMinter is Script {
         string memory obj = "deployment";
         vm.serializeUint(obj, "chainId", cfg.chainId);
         vm.serializeAddress(obj, "address", address(minter));
-        string memory json = vm.serializeAddress(obj, "royaltyForwarderImpl", forwarderImpl);
+        vm.serializeAddress(obj, "royaltyForwarderImpl", forwarderImpl);
+        string memory json = vm.serializeAddress(obj, "ownerPayout", cfg.ownerPayout);
         vm.writeJson(json, path);
     }
 
     struct DeployConfig {
         uint256 chainId;
         address owner;
+        address ownerPayout;
         address quoteSigner;
         address royaltyForwarderImpl;
         string name;
@@ -58,6 +63,11 @@ contract DeployBuilderMinter is Script {
     function _loadConfig() internal view returns (DeployConfig memory cfg) {
         cfg.chainId = vm.envOr("CUBIXLES_CHAIN_ID", block.chainid);
         cfg.owner = _envOrAddress("CUBIXLES_BUILDER_OWNER", "CUBIXLES_OWNER", msg.sender);
+        cfg.ownerPayout = _envOrAddress(
+            "CUBIXLES_BUILDER_OWNER_PAYOUT",
+            "CUBIXLES_OWNER_PAYOUT",
+            address(0)
+        );
         cfg.quoteSigner = _envOrAddress(
             "CUBIXLES_BUILDER_QUOTE_SIGNER",
             "CUBIXLES_BUILDER_SIGNER",

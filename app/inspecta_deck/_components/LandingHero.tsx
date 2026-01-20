@@ -24,7 +24,7 @@ export default function LandingHero({ onFaceChange }: LandingHeroProps) {
       </div>
       <div className="landing-hero-copy">
         <h1 className="landing-title">
-          <a href="https://www.cubixles.xyz" className="cubixles-logo-link">
+          <a href="/" className="cubixles-logo-link">
             <CubixlesLogo />
           </a>
         </h1>

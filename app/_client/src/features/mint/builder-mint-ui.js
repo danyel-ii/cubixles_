@@ -8,10 +8,13 @@ import { pinBuilderAssets, pinTokenMetadata } from "./token-uri-provider.js";
 import { subscribeWallet, switchToActiveChain } from "../wallet/wallet.js";
 import { resolvePaperclipPalette } from "../paperclip/paperclip-utils.js";
 import { fetchWithGateways } from "../../../../../src/shared/ipfs-fetch.js";
+import { parseIpfsUrl } from "../../shared/uri-policy.js";
 import {
   buildPaperclipSpec,
   DEFAULT_PAPERCLIP_SIZE,
 } from "../../shared/paperclip-model.js";
+
+const MIN_FLOOR_WEI = 1_000_000_000_000_000n;
 
 function formatEthFromWei(value) {
   if (!value) {
@@ -25,10 +28,8 @@ function formatEthFromWei(value) {
 }
 
 function formatFloorLabel(floorWei) {
-  if (!floorWei || floorWei === 0n) {
-    return "0.0010 (fallback)";
-  }
-  return formatEthFromWei(floorWei);
+  const resolvedFloor = floorWei && floorWei > 0n ? floorWei : MIN_FLOOR_WEI;
+  return formatEthFromWei(resolvedFloor);
 }
 
 function parseDataJson(dataUrl) {
@@ -71,9 +72,10 @@ async function fetchNftMetadata(tokenUri) {
     return parseDataJson(tokenUri);
   }
   const resolvedUri = normalizeTokenUri(tokenUri);
+  const isIpfsGateway = parseIpfsUrl(resolvedUri);
   try {
     let response;
-    if (resolvedUri.startsWith("ipfs://")) {
+    if (resolvedUri.startsWith("ipfs://") || isIpfsGateway) {
       ({ response } = await fetchWithGateways(resolvedUri, { expectsJson: true }));
     } else {
       response = await fetch(resolvedUri);

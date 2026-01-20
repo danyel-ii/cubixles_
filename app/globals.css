@@ -11,6 +11,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Adrip1";
+  src: url("/assets/fonts/adrip1.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
   --paper: #ffffff;
@@ -454,6 +462,20 @@ body.is-intro #paperclip-panel {
   color: var(--neo-cyan-ink);
   border: 3px solid var(--line);
   box-shadow: var(--shadow-tight);
+}
+
+.overlay-button--dig {
+  background: var(--neo-yellow);
+  color: var(--neo-yellow-ink);
+  box-shadow: var(--shadow-tight), 0 0 12px rgba(var(--neo-yellow-rgb), 0.35);
+}
+
+.overlay-button--dig:hover {
+  box-shadow: 0 0 12px rgba(var(--neo-yellow-rgb), 0.35);
+}
+
+.overlay-button--bootleg {
+  font-family: "Adrip1", var(--font-body);
 }
 
 .overlay-section {
