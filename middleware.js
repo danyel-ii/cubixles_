@@ -25,7 +25,7 @@ function buildCsp({
   allowInline,
 }) {
   const scriptSrc = ["'self'", "https://cdn.jsdelivr.net", "https://vercel.live"];
-  if (isProd && nonce) {
+  if (isProd && nonce && !allowInline) {
     scriptSrc.push(`'nonce-${nonce}'`);
   }
   if (!isProd || allowInline) {
