@@ -312,7 +312,7 @@ export function createLandingSketch(p5: any, options: SketchOptions) {
     lastInteraction = p5.millis();
   };
 
-  p5.mouseDragged = () => {
+  const handleDrag = () => {
     if (!dragging) {
       return false;
     }
@@ -325,12 +325,17 @@ export function createLandingSketch(p5: any, options: SketchOptions) {
     return false;
   };
 
+  p5.mouseDragged = () => handleDrag();
+
   p5.mouseReleased = () => {
     dragging = false;
   };
 
   p5.touchStarted = p5.mousePressed;
-  p5.touchMoved = p5.mouseDragged;
+  p5.touchMoved = () => {
+    handleDrag();
+    return true;
+  };
   p5.touchEnded = p5.mouseReleased;
 
   p5.draw = () => {

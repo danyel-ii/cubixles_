@@ -529,18 +529,28 @@ function PaletteSync() {
   return null;
 }
 
-function TokenIndex() {
+function TokenIndex({ initialTokenList }) {
+  const initialTokens = Array.isArray(initialTokenList?.tokens)
+    ? initialTokenList.tokens
+    : [];
+  const initialPageKey =
+    typeof initialTokenList?.pageKey === "string" ? initialTokenList.pageKey : null;
+  const initialPages =
+    typeof initialTokenList?.pages === "number" ? initialTokenList.pages : 1;
+  const initialTruncated = Boolean(initialTokenList?.truncated);
+  const initialError =
+    typeof initialTokenList?.error === "string" ? initialTokenList.error : null;
   const [chainId, setChainId] = useState(DEFAULT_CHAIN_ID);
   const [paginationMode, setPaginationMode] = useState("page");
-  const [tokens, setTokens] = useState([]);
-  const [pageKey, setPageKey] = useState(null);
-  const [pages, setPages] = useState(1);
-  const [truncated, setTruncated] = useState(false);
+  const [tokens, setTokens] = useState(initialTokens);
+  const [pageKey, setPageKey] = useState(initialPageKey);
+  const [pages, setPages] = useState(initialPages);
+  const [truncated, setTruncated] = useState(initialTruncated);
   const [pageSizeInput, setPageSizeInput] = useState(DEFAULT_PAGE_SIZE);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [maxPages, setMaxPages] = useState(DEFAULT_MAX_PAGES);
-  const [status, setStatus] = useState("idle");
-  const [error, setError] = useState(null);
+  const [status, setStatus] = useState(initialError ? "error" : "idle");
+  const [error, setError] = useState(initialError);
   const [refreshTick, setRefreshTick] = useState(0);
   const [highlightIndex, setHighlightIndex] = useState(0);
   const [hoverIndex, setHoverIndex] = useState(null);
@@ -783,8 +793,8 @@ function TokenIndex() {
       </div>
       <p className="token-index-status">{statusMessage}</p>
       {error ? <p className="token-index-error">Error: {error}</p> : null}
-      <div className="token-index-carousel">
-        {tokenEntries.map((entry, index) => {
+          <div className="token-index-carousel">
+            {tokenEntries.map((entry, index) => {
           const { token, feingehaltDisplay } = entry;
           const tokenId = String(token.tokenId || "");
           const shortId = truncateMiddle(tokenId);
@@ -843,7 +853,7 @@ function TokenIndex() {
   );
 }
 
-export function DeckPage() {
+export function DeckPage({ initialTokenList }) {
   const [loaderPhase, setLoaderPhase] = useState("visible");
   const floatingTileRefs = useRef([]);
 
@@ -988,7 +998,7 @@ export function DeckPage() {
           <LandingCubeIcon />
         </section>
         <section id="token-list" className="landing-token-list">
-          <TokenIndex />
+          <TokenIndex initialTokenList={initialTokenList} />
         </section>
         <footer className="landing-watermark">
           hat's off to{" "}
