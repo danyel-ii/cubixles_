@@ -282,6 +282,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
     });
   });
 
+  const nftResponsePromise = page.waitForResponse("**/api/nfts");
   await page.goto("/?skipIntro=1");
   await page.waitForFunction(() => window.__CUBIXLES_MAIN_IMPORTED__ === true);
   await page.waitForFunction(
@@ -303,6 +304,7 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
     timeout: 10000,
   });
   await page.waitForSelector(".nft-card");
+  await nftResponsePromise;
   await page.waitForFunction(() => window.__CUBIXLES_STATE__?.nftInventory?.length > 0);
   await page.evaluate(() => {
     const state = window.__CUBIXLES_STATE__;
