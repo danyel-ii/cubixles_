@@ -1,6 +1,6 @@
 import { BrowserProvider, Contract, formatEther } from "ethers";
 import { BUILDER_CONTRACT } from "../../config/builder-contracts";
-import { formatChainName, subscribeActiveChain } from "../../config/chains.js";
+import { formatChainName, getChainConfig, subscribeActiveChain } from "../../config/chains.js";
 import { buildBuilderTokenViewUrl } from "../../config/links.js";
 import { state } from "../../app/app-state.js";
 import { buildBuilderMetadata } from "./builder-metadata.js";
@@ -119,6 +119,10 @@ export function initBuilderMintUi() {
   const mintConfirm = document.getElementById("mint-confirm");
   const mintConfirmClose = document.getElementById("mint-confirm-close");
   const mintConfirmContinue = document.getElementById("mint-confirm-continue");
+  const mintSuccess = document.getElementById("builder-mint-success");
+  const mintSuccessLink = document.getElementById("builder-mint-success-link");
+  const mintSuccessForwarder = document.getElementById("builder-mint-success-forwarder-call");
+  const mintSuccessClose = document.getElementById("builder-mint-success-close");
 
   if (!statusEl || !mintButton || !amountInput) {
     return;
@@ -144,6 +148,16 @@ export function initBuilderMintUi() {
     commitProgressEl.classList.toggle("is-visible", visible);
   }
 
+  function setMintSuccessVisible(visible) {
+    if (!mintSuccess) {
+      return;
+    }
+    mintSuccess.classList.toggle("is-hidden", !visible);
+    if (typeof document !== "undefined") {
+      document.body.classList.toggle("mint-confirm-open", visible);
+    }
+  }
+
   function setMintConfirmVisible(visible) {
     if (!mintConfirm) {
       return;
@@ -155,6 +169,43 @@ export function initBuilderMintUi() {
     if (visible && mintConfirmContinue) {
       mintConfirmContinue.focus();
     }
+  }
+
+  function buildTxUrl(hash) {
+    if (!hash) {
+      return "";
+    }
+    const chain = getChainConfig(BUILDER_CONTRACT.chainId);
+    const explorer = chain?.explorer || "";
+    return explorer ? `${explorer}/tx/${hash}` : "";
+  }
+
+  function triggerConfetti() {
+    const root = document.getElementById("confetti-root");
+    if (!root) {
+      return;
+    }
+    const burst = document.createElement("div");
+    burst.className = "eth-confetti";
+    const pieces = 18;
+    for (let i = 0; i < pieces; i += 1) {
+      const piece = document.createElement("div");
+      piece.className = "eth-confetti-piece";
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 140 + Math.random() * 120;
+      const offsetX = Math.cos(angle) * distance;
+      const offsetY = 80 + Math.random() * 180;
+      const rotation = Math.random() * 360;
+      piece.style.setProperty("--confetti-x", `${offsetX.toFixed(1)}px`);
+      piece.style.setProperty("--confetti-y", `${offsetY.toFixed(1)}px`);
+      piece.style.setProperty("--confetti-rot", `${rotation.toFixed(1)}deg`);
+      piece.style.animationDelay = `${(Math.random() * 0.15).toFixed(2)}s`;
+      burst.appendChild(piece);
+    }
+    root.appendChild(burst);
+    window.setTimeout(() => {
+      burst.remove();
+    }, 1600);
   }
 
   function setError(message) {
@@ -442,6 +493,16 @@ export function initBuilderMintUi() {
       setStatus("Builder mint submitted.");
       await tx.wait();
       setStatus("Builder mint confirmed.", "success");
+      const txUrl = buildTxUrl(tx.hash);
+      if (mintSuccessLink) {
+        mintSuccessLink.href = txUrl || "#";
+        mintSuccessLink.style.display = txUrl ? "" : "none";
+      }
+      if (mintSuccessForwarder) {
+        mintSuccessForwarder.textContent = `royaltyForwarderByTokenId(${tokenId})`;
+      }
+      setMintSuccessVisible(true);
+      triggerConfetti();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Mint failed.";
       setError(message);
@@ -468,6 +529,16 @@ export function initBuilderMintUi() {
     mintConfirm.addEventListener("click", (event) => {
       if (event.target === mintConfirm) {
         setMintConfirmVisible(false);
+      }
+    });
+  }
+  if (mintSuccessClose) {
+    mintSuccessClose.addEventListener("click", () => setMintSuccessVisible(false));
+  }
+  if (mintSuccess) {
+    mintSuccess.addEventListener("click", (event) => {
+      if (event.target === mintSuccess) {
+        setMintSuccessVisible(false);
       }
     });
   }

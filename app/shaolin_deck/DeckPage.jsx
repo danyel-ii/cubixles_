@@ -10,7 +10,7 @@ import { buildGatewayUrls } from "../_client/src/shared/uri-policy.js";
 const DEFAULT_CHAIN_ID = 1;
 const DEFAULT_PAGE_SIZE = 8;
 const DEFAULT_MAX_PAGES = 25;
-const LOADER_VISIBLE_MS = 2400;
+const LOADER_VISIBLE_MS = 2000;
 const LOADER_FADE_MS = 2000;
 const FLOATING_TILE_SIZE = 36;
 

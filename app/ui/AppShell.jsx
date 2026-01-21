@@ -89,63 +89,88 @@ export default function AppShell({ mode = "mint" }) {
             <span className="sr-only">cubixles_</span>
           </div>
           <div className="overlay-sub">
-            A{" "}
-            <span className="logo-mark logo-mark-inline" aria-hidden="true">
-              {"\uE000"}
-            </span>
-            <span className="sr-only">cubixles_</span> is an ERC721 linked to interactive p5.js
-            artwork whose provenance is tethered to NFTs you already own.
+            <CubixlesText text="cubixles_ is an ERC-721 experiment in defining and exercising productive rights in NFT ownership:" />
           </div>
           <p className="overlay-text">
-            <CubixlesText text="[cubixles_ is an experiment with defining, exercising and expanding the productive rights that can be mapped onto NFT ownership and curation.]" />
+            ownership as the right to compose, curate, and externalize context without transferring
+            or encumbering the originals.
+          </p>
+          <p className="overlay-text">
+            Each cubixle is an ERC-721 whose artistic identity is defined by, and whose provenance
+            is anchored to, an ownership-verified configuration of existing NFTs you already own.
           </p>
           <div className="overlay-section">
             <div className="overlay-section-title">How it works</div>
             <ol className="overlay-steps">
               <li>Connect your wallet.</li>
-              <li>Select 1-6 NFTs from your wallet.</li>
+              <li>Select 1–6 NFTs you own.</li>
               <li>We snapshot key metadata (and collection floors when available).</li>
-              <li>We publish the interactive artwork + metadata and Feingehalt to IPFS.</li>
-              <li>
-                {isBuilder
-                  ? "You sign the mint transaction on Ethereum Mainnet."
-                  : "You sign the mint transaction on the selected network."}
-              </li>
+              <li>The interactive artwork and metadata are pinned to IPFS.</li>
+              <li>You sign the mint transaction on the selected network.</li>
             </ol>
           </div>
           <div className="overlay-section">
             <div className="overlay-section-title">What gets minted</div>
             {isBuilder ? (
-              <p className="overlay-text">
-                An ERC-721 with metadata pinned to IPFS, a paper clip sculpture image, a QR render
-                derived from it, a per-mint royalty contract owned by the minter, and an{" "}
-                <span className="overlay-em">external_url</span> pointing to the interactive cube.
-              </p>
+              <>
+                <p className="overlay-text">An ERC-721 with:</p>
+                <ul className="overlay-steps">
+                  <li>hosted metadata (including control over a per-token royalty forwarding contract), and</li>
+                  <li>
+                    an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
+                    interactive cube.
+                  </li>
+                </ul>
+                <p className="overlay-text">
+                  The referenced NFTs remain fully independent assets. The cubixle does not contain,
+                  escrow, or substitute them—it records their configuration.
+                </p>
+              </>
             ) : (
-              <p className="overlay-text">
-                An ERC-721 with hosted metadata and an{" "}
-                <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
-                interactive cube.
-              </p>
+              <>
+                <p className="overlay-text">An ERC-721 with:</p>
+                <ul className="overlay-steps">
+                  <li>hosted metadata pinned during the mint flow, and</li>
+                  <li>
+                    an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
+                    interactive cube.
+                  </li>
+                </ul>
+                <p className="overlay-text">
+                  The referenced NFTs remain fully independent assets. The cubixle does not contain,
+                  escrow, or substitute them—it records their configuration.
+                </p>
+              </>
             )}
           </div>
           <div className="overlay-section">
-            <div className="overlay-section-title">Mint price</div>
+            <div className="overlay-section-title">Mint pricing</div>
             {isBuilder ? (
-              <p className="overlay-text">
-                Builder mint price is 0.0055 ETH + 5% of snapshot floor totals (0.01 ETH fallback
-                per face). Each referenced NFT receives 8.5% of the total mint price, and each mint
-                deploys a royalty forwarder controlled by the minter for future split updates.
-              </p>
+              <>
+                <p className="overlay-text">
+                  <span className="overlay-em">Builder mints</span>
+                </p>
+                <p className="overlay-text">
+                  0.0055 ETH + 5% of snapshot floor totals (0.01 ETH fallback per face).
+                </p>
+                <ul className="overlay-steps">
+                  <li>Each referenced NFT receives 8.5% of the total mint price.</li>
+                  <li>Remaining value routes to the builder payout address.</li>
+                  <li>Builder mints deploy a per-token royalty forwarder owned by the minter.</li>
+                </ul>
+                <p className="overlay-text">
+                  <span className="overlay-em">Bootlegger mints</span>
+                </p>
+                <p className="overlay-text">Use an alternative pricing and royalty model.</p>
+              </>
             ) : (
               <>
                 <p className="overlay-text">
-                  Regular mints (builder contract) price at 0.0055 ETH + 5% of snapshot floor
-                  totals (0.01 ETH fallback per face). Each referenced NFT receives 8.5% of the
-                  total mint price.
+                  Legacy mints follow the CubixlesMinter pricing model (LESS supply-based pricing
+                  on mainnet, linear step pricing on Base, or fixed pricing when configured).
                 </p>
                 <p className="overlay-text">
-                  Bootlegs use an alternative pricing model.
+                  Resale royalties default to 5% and route to the shared RoyaltySplitter.
                 </p>
               </>
             )}
@@ -286,6 +311,52 @@ export default function AppShell({ mode = "mint" }) {
           </div>
         </div>
       </div>
+      {isBuilder ? (
+        <div
+          id="builder-mint-success"
+          className="mint-confirm is-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="builder-mint-success-title"
+        >
+          <div className="mint-confirm-card">
+            <div className="mint-confirm-head">
+              <div id="builder-mint-success-title" className="mint-confirm-title">
+                Builder mint confirmed
+              </div>
+              <button
+                id="builder-mint-success-close"
+                className="mint-confirm-close"
+                type="button"
+              >
+                Close
+              </button>
+            </div>
+            <div className="mint-confirm-sub">Your builder cubixle is minted.</div>
+            <ol className="mint-confirm-steps">
+              <li>
+                <a
+                  id="builder-mint-success-link"
+                  className="ui-link"
+                  href="#"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View transaction on Etherscan
+                </a>
+              </li>
+              <li>
+                Call{" "}
+                <code
+                  id="builder-mint-success-forwarder-call"
+                  className="mint-confirm-code"
+                ></code>{" "}
+                on CubixlesBuilderMinter to find your royalty forwarder.
+              </li>
+            </ol>
+          </div>
+        </div>
+      ) : null}
       {!isBuilder ? (
         <>
           <div id="eth-hud" className="eth-hud" aria-hidden="true">
