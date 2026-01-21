@@ -182,6 +182,9 @@ export default function AppShell({ mode = "mint" }) {
             <a id="overlay-inspect" className="overlay-button is-ghost" href="/shaolin_deck">
               Inspect
             </a>
+            <a id="overlay-royalties" className="overlay-button is-ghost" href="/royalties">
+              Royalties
+            </a>
             <a
               id="enter-btn"
               className="overlay-button is-ghost overlay-button--bootleg"
