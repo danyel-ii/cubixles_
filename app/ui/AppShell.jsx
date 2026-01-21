@@ -92,8 +92,7 @@ export default function AppShell({ mode = "mint" }) {
             <CubixlesText text="cubixles_ is an ERC-721 experiment in defining and exercising productive rights in NFT ownership:" />
           </div>
           <p className="overlay-text">
-            ownership as the right to compose, curate, and externalize context without transferring
-            or encumbering the originals.
+            <CubixlesText text="In cubixles_, ownership functions as the right to compose, curate, and externalize context without transferring or encumbering the originals." />
           </p>
           <p className="overlay-text">
             Each cubixle is an ERC-721 whose artistic identity is defined by, and whose provenance
@@ -115,15 +114,15 @@ export default function AppShell({ mode = "mint" }) {
               <>
                 <p className="overlay-text">An ERC-721 with:</p>
                 <ul className="overlay-steps">
-                  <li>hosted metadata (including control over a per-token royalty forwarding contract), and</li>
+                  <li>hosted metadata pinned during the mint flow, and</li>
                   <li>
                     an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
-                    interactive cube.
+                    interactive cube,
                   </li>
+                  <li>and your right to set future royalties in the splitter contract.</li>
                 </ul>
                 <p className="overlay-text">
-                  The referenced NFTs remain fully independent assets. The cubixle does not contain,
-                  escrow, or substitute them—it records their configuration.
+                  <CubixlesText text="The referenced NFTs remain fully independent assets. The cubixle does not contain, escrow, or substitute them -- cubixles_ record their configuration." />
                 </p>
               </>
             ) : (
@@ -137,8 +136,7 @@ export default function AppShell({ mode = "mint" }) {
                   </li>
                 </ul>
                 <p className="overlay-text">
-                  The referenced NFTs remain fully independent assets. The cubixle does not contain,
-                  escrow, or substitute them—it records their configuration.
+                  <CubixlesText text="The referenced NFTs remain fully independent assets. The cubixle does not contain, escrow, or substitute them -- cubixles_ record their configuration." />
                 </p>
               </>
             )}

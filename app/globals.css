@@ -422,8 +422,9 @@ body.is-intro #paperclip-panel {
 
 .overlay-sub {
   margin-top: 10px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--ink-muted);
+  line-height: 1.4;
 }
 
 .overlay-button {
