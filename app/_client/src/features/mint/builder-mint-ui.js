@@ -1,4 +1,4 @@
-import { BrowserProvider, Contract, formatEther } from "ethers";
+import { BrowserProvider, Contract, JsonRpcProvider, formatEther } from "ethers";
 import { BUILDER_CONTRACT } from "../../config/builder-contracts";
 import { formatChainName, getChainConfig, subscribeActiveChain } from "../../config/chains.js";
 import { buildBuilderTokenViewUrl } from "../../config/links.js";
@@ -170,6 +170,7 @@ export function initBuilderMintUi() {
   let isMinting = false;
   let quoteInFlight = false;
   let currentQuote = null;
+  let readProviderPromise = null;
 
   amountInput.readOnly = true;
 
@@ -269,6 +270,65 @@ export function initBuilderMintUi() {
     if (mintPriceEl) {
       mintPriceEl.textContent = "Mint price: -";
     }
+  }
+
+  async function getReadProvider() {
+    const chain = getChainConfig(BUILDER_CONTRACT.chainId);
+    const rpcUrls = chain?.rpcUrls ?? [];
+    if (rpcUrls.length) {
+      if (readProviderPromise) {
+        return readProviderPromise;
+      }
+      readProviderPromise = (async () => {
+        for (const url of rpcUrls) {
+          const candidate = new JsonRpcProvider(url);
+          try {
+            await candidate.getBlockNumber();
+            return candidate;
+          } catch (error) {
+            continue;
+          }
+        }
+        return null;
+      })();
+      return readProviderPromise;
+    }
+    return null;
+  }
+
+  async function resolveExpectedTokenId(contract) {
+    const readProvider = await getReadProvider();
+    if (readProvider) {
+      const readContract = new Contract(
+        BUILDER_CONTRACT.address,
+        BUILDER_CONTRACT.abi,
+        readProvider
+      );
+      try {
+        return await readContract.nextTokenId();
+      } catch {
+        try {
+          return (await readContract.totalMinted()) + 1n;
+        } catch {
+          return null;
+        }
+      }
+    }
+    if (typeof contract.nextTokenId === "function") {
+      return contract.nextTokenId();
+    }
+    return (await contract.totalMinted()) + 1n;
+  }
+
+  async function waitForConfirmation(tx) {
+    if (!tx?.hash) {
+      return tx?.wait?.();
+    }
+    const readProvider = await getReadProvider();
+    if (readProvider) {
+      return readProvider.waitForTransaction(tx.hash);
+    }
+    return tx.wait();
   }
 
   function renderFloors(selection, floorsWei, totalFloorWei) {
@@ -429,8 +489,11 @@ export function initBuilderMintUi() {
       }
       const selectionMetadataPromise = fetchSelectionMetadata(selection);
       const provider = new BrowserProvider(walletState.provider);
-      const network = await provider.getNetwork();
-      const walletChainId = Number(network.chainId);
+      let walletChainId = Number(walletState.chainId);
+      if (!Number.isFinite(walletChainId)) {
+        const network = await provider.getNetwork();
+        walletChainId = Number(network.chainId);
+      }
       if (walletChainId !== BUILDER_CONTRACT.chainId) {
         setStatus(
           `Approve network switch to ${formatChainName(
@@ -452,9 +515,10 @@ export function initBuilderMintUi() {
       const totalFloorWei = currentQuote.totalFloorWei ?? 0n;
       const floorsWei = currentQuote.floorsWei ?? [];
       const mintPriceWei = currentQuote.mintPriceWei ?? 0n;
-      const expectedTokenId = typeof contract.nextTokenId === "function"
-        ? await contract.nextTokenId()
-        : (await contract.totalMinted()) + 1n;
+      const expectedTokenId = await resolveExpectedTokenId(contract);
+      if (expectedTokenId === null) {
+        throw new Error("Unable to resolve builder token id.");
+      }
       const tokenId = expectedTokenId.toString();
       const externalUrl = buildBuilderTokenViewUrl(tokenId);
       const paperclipPalette = resolvePaperclipPalette();
@@ -529,7 +593,7 @@ export function initBuilderMintUi() {
         { value: mintPriceWei }
       );
       setStatus("Builder mint submitted.");
-      await tx.wait();
+      await waitForConfirmation(tx);
       setStatus("Builder mint confirmed.", "success");
       const txUrl = buildTxUrl(tx.hash);
       if (mintSuccessLink) {
@@ -601,6 +665,7 @@ export function initBuilderMintUi() {
   });
 
   subscribeActiveChain(() => {
+    readProviderPromise = null;
     void refreshQuote();
   });
 
