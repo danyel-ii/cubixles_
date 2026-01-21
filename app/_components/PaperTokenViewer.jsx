@@ -1074,6 +1074,10 @@ export default function PaperTokenViewer({
       ? `<p class=\"paper-subhead\">${escapeHtml(displayDescription)}</p>`
       : "";
 
+    const exportScriptUrl = (() => {
+      const origin = window?.location?.origin;
+      return origin ? `${origin}/assets/paper-token-viewer.js` : "/assets/paper-token-viewer.js";
+    })();
     const html = `<!doctype html>
       <html lang=\"en\">
       <head>
@@ -1083,7 +1087,7 @@ export default function PaperTokenViewer({
         <style>${exportStyles}</style>
       </head>
       <body>
-        <main class=\"paper-viewer\">
+        <main class=\"paper-viewer\" data-rot-x=\"0\" data-rot-y=\"0\">
           <header class=\"paper-header\">
             <p class=\"paper-eyebrow\">Token viewer 02</p>
             <h1 class=\"paper-title\">cubixles_ Token ${escapeHtml(truncatedTokenId)}</h1>
@@ -1096,55 +1100,7 @@ export default function PaperTokenViewer({
             </div>
           </div>
         </main>
-        <script>
-          (() => {
-            const viewer = document.querySelector(".paper-viewer");
-            const cubeLink = document.querySelector(".paper-cube-link");
-            if (!viewer || !cubeLink) {
-              return;
-            }
-            let active = false;
-            let startX = 0;
-            let startY = 0;
-            let startRotX = 0;
-            let startRotY = 0;
-            let rotX = 0;
-            let rotY = 0;
-            const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-            const updateVars = () => {
-              viewer.style.setProperty("--cube-user-x", rotX + "deg");
-              viewer.style.setProperty("--cube-user-y", rotY + "deg");
-            };
-            const onMove = (event) => {
-              if (!active) {
-                return;
-              }
-              const dx = event.clientX - startX;
-              const dy = event.clientY - startY;
-              rotX = clamp(startRotX + dy * 0.35, -80, 80);
-              rotY = startRotY + dx * 0.45;
-              updateVars();
-            };
-            cubeLink.addEventListener("pointerdown", (event) => {
-              active = true;
-              startX = event.clientX;
-              startY = event.clientY;
-              startRotX = rotX;
-              startRotY = rotY;
-              if (cubeLink.setPointerCapture) {
-                cubeLink.setPointerCapture(event.pointerId);
-              }
-            });
-            window.addEventListener("pointermove", onMove, { passive: true });
-            window.addEventListener("pointerup", () => {
-              active = false;
-            });
-            window.addEventListener("pointercancel", () => {
-              active = false;
-            });
-            updateVars();
-          })();
-        </script>
+        <script src=\"${exportScriptUrl}\"></script>
       </body>
       </html>`;
 
