@@ -165,11 +165,12 @@ export default function AppShell({ mode = "mint" }) {
             ) : (
               <>
                 <p className="overlay-text">
-                  Legacy mints follow the CubixlesMinter pricing model (LESS supply-based pricing
-                  on mainnet, linear step pricing on Base, or fixed pricing when configured).
+                  <span className="overlay-em">Builder mints</span> cost 0.0055 ETH + 5% of the
+                  snapshot floor total (0.01 ETH fallback per face).
                 </p>
                 <p className="overlay-text">
-                  Resale royalties default to 5% and route to the shared RoyaltySplitter.
+                  <span className="overlay-em">Bootlegger mints</span> follow a legacy pricing
+                  system that depends on the active network.
                 </p>
               </>
             )}

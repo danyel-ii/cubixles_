@@ -277,15 +277,13 @@ export function initNftPickerUi() {
       const validKeys = new Set(validNfts.map((nft) => buildKey(nft)));
       selectedKeys = new Set([...selectedKeys].filter((key) => validKeys.has(key)));
       selectedOrder = selectedOrder.filter((key) => validKeys.has(key));
-      if (
-        typeof window !== "undefined" &&
-        window.__CUBIXLES_TEST_HOOKS__ &&
-        selectedKeys.size === 0 &&
-        validNfts.length > 0
-      ) {
-        const firstKey = buildKey(validNfts[0]);
-        selectedKeys.add(firstKey);
-        selectedOrder = [firstKey];
+      if (typeof window !== "undefined" && window.__CUBIXLES_TEST_HOOKS__) {
+        const candidate = validNfts[0] || nfts[0];
+        if (selectedKeys.size === 0 && candidate) {
+          const firstKey = buildKey(candidate);
+          selectedKeys.add(firstKey);
+          selectedOrder = [firstKey];
+        }
       }
       if (!nfts.length) {
         setStatus(
