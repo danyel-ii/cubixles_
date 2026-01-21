@@ -305,16 +305,9 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   });
   await page.waitForSelector(".nft-card");
   await nftResponsePromise;
-  await page.waitForFunction(() => window.__CUBIXLES_STATE__?.nftInventory?.length > 0);
-  await page.evaluate(() => {
-    const state = window.__CUBIXLES_STATE__;
-    if (!state || state.nftSelection?.length) {
-      return;
-    }
-    if (Array.isArray(state.nftInventory) && state.nftInventory.length > 0) {
-      state.nftSelection = [state.nftInventory[0]];
-      document.dispatchEvent(new CustomEvent("nft-selection-change"));
-    }
+  await page.locator(".nft-card:not([disabled])").first().click();
+  await expect(page.locator("#nft-selection")).toContainText(/Selected 1 \/ 6/i, {
+    timeout: 10000,
   });
   await expect(page.locator("#mint-status")).toContainText(/Ready to mint/i, {
     timeout: 10000,
