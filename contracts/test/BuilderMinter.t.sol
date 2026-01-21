@@ -439,7 +439,7 @@ contract BuilderMinterTest is Test {
         vm.stopPrank();
     }
 
-    function testBuilderMintRequiresERC2981() public {
+    function testBuilderMintMissingERC2981RoutesToOwner() public {
         vm.startPrank(minterAddr);
         uint256 tokenId = nftNoRoyalty.mint(minterAddr);
         vm.stopPrank();
@@ -458,15 +458,12 @@ contract BuilderMinterTest is Test {
             uint256 price
         ) = _buildQuote(refs, floorsWei, 1);
         vm.deal(minterAddr, price);
+        uint256 ownerStart = owner.balance;
         vm.startPrank(minterAddr);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CubixlesBuilderMinter.ReferenceNotERC2981.selector,
-                address(nftNoRoyalty)
-            )
-        );
         minter.mintBuilders{ value: price }(refs, floorsWei, quote, signature);
         vm.stopPrank();
+        assertEq(owner.balance - ownerStart, price);
+        assertEq(minter.ownerOf(1), minterAddr);
     }
 
     function testBuilderMintRejectsOwnerOfRevert() public {
@@ -529,7 +526,7 @@ contract BuilderMinterTest is Test {
         vm.stopPrank();
     }
 
-    function testBuilderMintRejectsRoyaltyInfoRevert() public {
+    function testBuilderMintRoyaltyInfoRevertFallsBackToOwner() public {
         vm.startPrank(minterAddr);
         uint256 tokenId = nftRoyaltyRevert.mint(minterAddr);
         vm.stopPrank();
@@ -548,19 +545,15 @@ contract BuilderMinterTest is Test {
             uint256 price
         ) = _buildQuote(refs, floorsWei, 1);
         vm.deal(minterAddr, price);
+        uint256 ownerStart = owner.balance;
         vm.startPrank(minterAddr);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CubixlesBuilderMinter.RoyaltyInfoFailed.selector,
-                address(nftRoyaltyRevert),
-                tokenId
-            )
-        );
         minter.mintBuilders{ value: price }(refs, floorsWei, quote, signature);
         vm.stopPrank();
+        assertEq(owner.balance - ownerStart, price);
+        assertEq(minter.ownerOf(1), minterAddr);
     }
 
-    function testBuilderMintRejectsZeroRoyaltyReceiver() public {
+    function testBuilderMintZeroRoyaltyReceiverFallsBackToOwner() public {
         CubixlesBuilderMinter.NftRef[] memory refs = new CubixlesBuilderMinter.NftRef[](1);
         refs[0] = CubixlesBuilderMinter.NftRef({
             contractAddress: address(nftRoyaltyZero),
@@ -575,16 +568,12 @@ contract BuilderMinterTest is Test {
             uint256 price
         ) = _buildQuote(refs, floorsWei, 1);
         vm.deal(minterAddr, price);
+        uint256 ownerStart = owner.balance;
         vm.startPrank(minterAddr);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                CubixlesBuilderMinter.RoyaltyReceiverRequired.selector,
-                address(nftRoyaltyZero),
-                refs[0].tokenId
-            )
-        );
         minter.mintBuilders{ value: price }(refs, floorsWei, quote, signature);
         vm.stopPrank();
+        assertEq(owner.balance - ownerStart, price);
+        assertEq(minter.ownerOf(1), minterAddr);
     }
 
     function testBuilderMintRejectsInvalidRefCount() public {

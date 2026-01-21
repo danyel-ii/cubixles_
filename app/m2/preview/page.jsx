@@ -14,6 +14,19 @@ const DEFAULT_DESCRIPTION = "";
 const MIN_FLOOR_ETH = 0.01;
 const BASE_MINT_PRICE_ETH = 0.0055;
 const PRICE_RATE = 0.05;
+const FLOOR_TIMEOUT_MS = 6000;
+
+function withTimeout(promise, ms) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error("Floor timeout")), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timeoutId) {
+      window.clearTimeout(timeoutId);
+    }
+  });
+}
 
 function formatMintedAt(value) {
   if (!value) {
@@ -74,7 +87,10 @@ async function loadFloorMap(entries, chainId) {
       if (map.has(key)) {
         return;
       }
-      const snapshot = await getCollectionFloorSnapshot(contract, chainId);
+      const snapshot = await withTimeout(
+        getCollectionFloorSnapshot(contract, chainId),
+        FLOOR_TIMEOUT_MS
+      ).catch(() => ({ floorEth: 0, retrievedAt: null }));
       map.set(key, snapshot);
     })
   );

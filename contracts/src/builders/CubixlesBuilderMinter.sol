@@ -186,7 +186,7 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
 
         address minter = msg.sender;
         address ownerAddr = owner();
-        address[] memory receivers = _resolveReceivers(refs, minter, mintPrice);
+        address[] memory receivers = _resolveReceivers(refs, minter, mintPrice, ownerAddr);
 
         tokenId = _mintToken(minter, refs);
         mintPriceByTokenId[tokenId] = mintPrice;
@@ -233,7 +233,7 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
 
         address minter = msg.sender;
         address ownerAddr = owner();
-        address[] memory receivers = _resolveReceivers(refs, minter, mintPrice);
+        address[] memory receivers = _resolveReceivers(refs, minter, mintPrice, ownerAddr);
 
         tokenId = _mintToken(minter, refs);
         mintPriceByTokenId[tokenId] = mintPrice;
@@ -359,9 +359,6 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
         if (!_supportsInterface(nft, type(IERC721).interfaceId)) {
             revert ReferenceNotERC721(nft);
         }
-        if (!_supportsInterface(nft, type(IERC2981).interfaceId)) {
-            revert ReferenceNotERC2981(nft);
-        }
     }
 
     function _supportsInterface(address nft, bytes4 interfaceId) internal view returns (bool) {
@@ -387,19 +384,20 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
     function _getRoyaltyReceiver(
         address nft,
         uint256 tokenId,
-        uint256 salePrice
+        uint256 salePrice,
+        address fallbackReceiver
     ) internal view returns (address) {
+        if (!_supportsInterface(nft, type(IERC2981).interfaceId)) {
+            return fallbackReceiver;
+        }
         // slither-disable-next-line calls-loop,unused-return
         try IERC2981(nft).royaltyInfo(tokenId, salePrice) returns (
             address receiver,
             uint256
         ) {
-            if (receiver == address(0)) {
-                revert RoyaltyReceiverRequired(nft, tokenId);
-            }
-            return receiver;
+            return receiver == address(0) ? fallbackReceiver : receiver;
         } catch {
-            revert RoyaltyInfoFailed(nft, tokenId);
+            return fallbackReceiver;
         }
     }
 
@@ -468,15 +466,22 @@ contract CubixlesBuilderMinter is ERC721, ERC2981, Ownable, ReentrancyGuard, EIP
     function _resolveReceivers(
         NftRef[] calldata refs,
         address expectedOwner,
-        uint256 mintPrice
+        uint256 mintPrice,
+        address ownerAddr
     ) internal view returns (address[] memory receivers) {
         uint256 refCount = refs.length;
+        address fallbackReceiver = ownerPayout == address(0) ? ownerAddr : ownerPayout;
         receivers = new address[](refCount);
         for (uint256 i = 0; i < refCount; i += 1) {
             NftRef calldata ref = refs[i];
             _requireInterfaces(ref.contractAddress);
             _requireOwner(ref.contractAddress, ref.tokenId, expectedOwner);
-            receivers[i] = _getRoyaltyReceiver(ref.contractAddress, ref.tokenId, mintPrice);
+            receivers[i] = _getRoyaltyReceiver(
+                ref.contractAddress,
+                ref.tokenId,
+                mintPrice,
+                fallbackReceiver
+            );
         }
     }
 

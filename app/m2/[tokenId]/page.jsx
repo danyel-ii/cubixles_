@@ -21,6 +21,7 @@ const BUILDER_ABI = [
   "function ownerOf(uint256 tokenId) view returns (address)",
   "function mintPriceByTokenId(uint256 tokenId) view returns (uint256)",
 ];
+const FLOOR_TIMEOUT_MS = 6000;
 
 const BUILDER_DEPLOYMENTS = new Map([
   [1, builderMainnet],
@@ -44,6 +45,18 @@ function formatMintedAt(value) {
     return value;
   }
   return date.toISOString().slice(0, 10);
+}
+
+function withTimeout(promise, ms) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error("Floor timeout")), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timeoutId) {
+      window.clearTimeout(timeoutId);
+    }
+  });
 }
 
 function pickLabel(nft, fallback) {
@@ -101,7 +114,10 @@ async function loadFloorMap(refs, chainId) {
       if (map.has(key)) {
         return;
       }
-      const snapshot = await getCollectionFloorSnapshot(contract, chainId);
+      const snapshot = await withTimeout(
+        getCollectionFloorSnapshot(contract, chainId),
+        FLOOR_TIMEOUT_MS
+      ).catch(() => ({ floorEth: 0, retrievedAt: null }));
       map.set(key, snapshot);
     })
   );

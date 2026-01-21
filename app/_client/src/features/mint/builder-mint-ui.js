@@ -15,6 +15,44 @@ import {
 } from "../../shared/paperclip-model.js";
 
 const MIN_FLOOR_WEI = 10_000_000_000_000_000n;
+const CUSTOM_ERROR_MESSAGES = new Map([
+  ["0x978cc55e", "Selected NFTs must be ERC-721 tokens."],
+  ["0x8f6e4356", "Selected NFTs must support ERC-2981 royalties."],
+  ["0xf60a24d5", "You must own each selected NFT to mint."],
+  ["0xe7821d82", "Builder quote expired. Refresh and try again."],
+  ["0x971f3101", "Builder quote already used. Refresh and try again."],
+  ["0xf4a7ccd1", "Builder quote is for a different network."],
+  ["0x2519a581", "Mint price mismatch. Refresh the builder quote."],
+]);
+
+function extractErrorData(error) {
+  if (!error || typeof error !== "object") {
+    return null;
+  }
+  const candidates = [
+    error.data,
+    error.info?.error?.data,
+    error.info?.data,
+    error.error?.data,
+    error.error?.error?.data,
+    error.cause?.data,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.startsWith("0x")) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
+function decodeBuilderError(error) {
+  const data = extractErrorData(error);
+  if (!data) {
+    return null;
+  }
+  const selector = data.slice(0, 10).toLowerCase();
+  return CUSTOM_ERROR_MESSAGES.get(selector) || null;
+}
 
 function formatEthFromWei(value) {
   if (!value) {
@@ -504,7 +542,8 @@ export function initBuilderMintUi() {
       setMintSuccessVisible(true);
       triggerConfetti();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Mint failed.";
+      const decoded = decodeBuilderError(error);
+      const message = decoded || (error instanceof Error ? error.message : "Mint failed.");
       setError(message);
       setStatus(message, "error");
     } finally {
