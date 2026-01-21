@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { checkRateLimit } from "../../../../src/server/ratelimit.js";
 import { getClientIp, makeRequestId } from "../../../../src/server/request.js";
 import { logRequest } from "../../../../src/server/log.js";
-import { pinRequestSchema, readJsonWithLimit, formatZodError } from "../../../../src/server/validate.js";
+import {
+  pinRequestSchema,
+  readJsonWithLimit,
+  formatZodError,
+  findUnsafeMarkup,
+} from "../../../../src/server/validate.js";
 import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/metadata.js";
 import { canonicalJson } from "../../../../src/server/json.js";
 import { generateCubeGif } from "../../../../src/server/cube-gif.js";
@@ -113,6 +118,14 @@ export async function POST(request) {
       recordMetric("mint.pin.metadata_invalid");
       return NextResponse.json(
         { error: formatZodError(metadataParsed.error), requestId },
+        { status: 400 }
+      );
+    }
+    const unsafe = findUnsafeMarkup(payload);
+    if (unsafe) {
+      recordMetric("mint.pin.metadata_unsafe");
+      return NextResponse.json(
+        { error: `Unsafe metadata content (${unsafe.reason})`, requestId },
         { status: 400 }
       );
     }

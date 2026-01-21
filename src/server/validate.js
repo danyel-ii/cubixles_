@@ -65,6 +65,47 @@ export const builderQuoteRequestSchema = z.object({
     .max(6),
 });
 
+const UNSAFE_PATTERNS = [
+  { label: "script_tag", regex: /<\s*script\b/i },
+  { label: "style_tag", regex: /<\s*style\b/i },
+  { label: "inline_handler", regex: /\bon\w+\s*=/i },
+  { label: "javascript_url", regex: /\bjavascript:/i },
+  {
+    label: "wallet_logic",
+    regex: /\b(window\.ethereum|ethereum\.request|walletconnect|web3)\b/i,
+  },
+];
+
+function scanStrings(value, onString) {
+  if (typeof value === "string") {
+    onString(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((entry) => scanStrings(entry, onString));
+    return;
+  }
+  if (value && typeof value === "object") {
+    Object.values(value).forEach((entry) => scanStrings(entry, onString));
+  }
+}
+
+export function findUnsafeMarkup(payload) {
+  let hit = null;
+  scanStrings(payload, (text) => {
+    if (hit) {
+      return;
+    }
+    for (const pattern of UNSAFE_PATTERNS) {
+      if (pattern.regex.test(text)) {
+        hit = { reason: pattern.label, sample: text.slice(0, 80) };
+        break;
+      }
+    }
+  });
+  return hit;
+}
+
 export async function readJsonWithLimit(request, maxBytes) {
   const text = await request.text();
   const size = Buffer.byteLength(text, "utf8");

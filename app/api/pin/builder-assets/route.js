@@ -7,6 +7,7 @@ import {
   builderAssetRequestSchema,
   readJsonWithLimit,
   formatZodError,
+  findUnsafeMarkup,
 } from "../../../../src/server/validate.js";
 import { verifyNonce, verifySignature } from "../../../../src/server/auth.js";
 import { generateQrBuffer, renderBuilderCard } from "../../../../src/server/builder-assets.js";
@@ -77,6 +78,14 @@ export async function POST(request) {
     }
 
     const { address, nonce, signature, payload, chainId } = parsed.data;
+    const unsafe = findUnsafeMarkup(payload);
+    if (unsafe) {
+      recordMetric("mint.pin.assets_unsafe");
+      return NextResponse.json(
+        { error: `Unsafe asset payload (${unsafe.reason})`, requestId },
+        { status: 400 }
+      );
+    }
     const viewerUrl = payload.viewerUrl;
     const tokenId = String(payload.tokenId);
     const paperclipPayload = payload.paperclip ?? null;
