@@ -1,4 +1,5 @@
 # cubixles_ Contracts
+Last updated: 2026-01-21
 
 ## Contract set
 - `contracts/src/cubixles/CubixlesMinter.sol` (legacy minter)

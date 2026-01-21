@@ -1,4 +1,5 @@
 # Resale Royalty Setter Guide
+Last updated: 2026-01-21
 
 This primer explains how resale royalties are handled onchain and who can configure them.
 

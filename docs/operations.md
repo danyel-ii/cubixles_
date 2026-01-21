@@ -1,4 +1,5 @@
 # cubixles_ Operations
+Last updated: 2026-01-21
 
 ## Governance
 - Maintainer: danyel-ii.
@@ -12,4 +13,5 @@
 ## Dependencies
 - Contracts use OpenZeppelin and Uniswap v4 primitives.
 - Frontend uses Next.js + p5.js with ethers.js for wallet interactions.
+- Client code never stores private keys or constructs raw transaction blobs; wallet signing stays in the provider.
 - Foundry is the Solidity build/test toolchain.

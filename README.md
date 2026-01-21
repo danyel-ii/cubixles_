@@ -1,4 +1,5 @@
 # cubixles_
+Last updated: 2026-01-21
 
 cubixles_ is a Next.js miniapp for minting ERC-721 cubes whose faces are linked to NFTs the minter already owns. It ships a legacy mint flow and a builder mint flow, each with its own pricing and royalty mechanics.
 
@@ -21,7 +22,6 @@ cubixles_ is a Next.js miniapp for minting ERC-721 cubes whose faces are linked 
 - `docs/operations.md`
 - `docs/transactions_flow.md`
 - `docs/royalty_setter.md`
-- `technical-review.md`
 
 ## Support
 See `SUPPORT.md` for defect reporting and help channels.

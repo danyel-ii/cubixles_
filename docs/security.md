@@ -1,4 +1,5 @@
 # cubixles_ Security Overview
+Last updated: 2026-01-21
 
 This repository mixes onchain minting contracts with a server-assisted mint pipeline. The security model assumes untrusted NFT references, untrusted metadata URLs, and untrusted client inputs.
 
@@ -11,6 +12,8 @@ This repository mixes onchain minting contracts with a server-assisted mint pipe
 ## Offchain risk model
 - Pinning endpoints require a signed nonce, are rate limited, and enforce payload size caps
   (e.g. `PIN_METADATA_MAX_BYTES`, default 50 KB).
+- Pinning rejects metadata/asset payloads containing scripts, styles, inline event handlers,
+  `javascript:` URLs, or wallet logic markers.
 - Quote signing is centralized and must be protected like a key management system.
 - IPFS and metadata fetches are constrained by allowlists and size limits to reduce SSRF risk.
   - Allowlists can be extended via `TOKEN_METADATA_ALLOWED_HOSTS`, `BUILDER_METADATA_ALLOWED_HOSTS`,

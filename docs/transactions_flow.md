@@ -1,4 +1,5 @@
 # Mint Transaction Flow
+Last updated: 2026-01-21
 
 This primer describes how ETH is routed during minting, including swaps and owner payouts.
 
