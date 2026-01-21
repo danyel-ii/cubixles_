@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import CubixlesText from "../_components/CubixlesText.jsx";
 
 function readBoolParam(params, key) {
   if (!params?.has(key)) {
@@ -96,8 +97,7 @@ export default function AppShell({ mode = "mint" }) {
             artwork whose provenance is tethered to NFTs you already own.
           </div>
           <p className="overlay-text">
-            cubixles_ are an experiment with defining, exercising and expanding the productive
-            rights that can be mapped onto NFT ownership and curation.
+            <CubixlesText text="[cubixles_ is an experiment with defining, exercising and expanding the productive rights that can be mapped onto NFT ownership and curation.]" />
           </p>
           <div className="overlay-section">
             <div className="overlay-section-title">How it works</div>
@@ -332,9 +332,11 @@ export default function AppShell({ mode = "mint" }) {
           <span className="sr-only">cubixles_</span>
         </div>
         <div className="ui-sub">
-          {isBuilder
-            ? "Builder mint: price is 0.0055 ETH + 5% of snapshot floor totals (0.01 ETH fallback per face)."
-            : "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own."}
+          {isBuilder ? (
+            "Builder mint: price is 0.0055 ETH + 5% of snapshot floor totals (0.01 ETH fallback per face)."
+          ) : (
+            <CubixlesText text="Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own." />
+          )}
         </div>
         <div className="ui-row">
           <button id="wallet-connect" className="ui-button ui-button--hook" type="button">

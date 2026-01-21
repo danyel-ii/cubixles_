@@ -102,6 +102,7 @@ export function middleware(request) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("content-security-policy", csp);
   requestHeaders.set("content-security-policy-report-only", reportOnlyCsp);
+  requestHeaders.set("x-nonce", nonce);
 
   const response = NextResponse.next({
     request: {
@@ -110,6 +111,7 @@ export function middleware(request) {
   });
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set("Content-Security-Policy-Report-Only", reportOnlyCsp);
+  response.headers.set("x-nonce", nonce);
   response.headers.set("Reporting-Endpoints", `${CSP_REPORT_GROUP}="${reportUrl}"`);
   response.headers.set("Report-To", buildReportTo(reportUrl));
   return response;
