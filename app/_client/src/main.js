@@ -35,58 +35,27 @@ let p5LoadPromise;
 
 function loadP5Library() {
   if (typeof window === "undefined" || typeof document === "undefined") {
-    return Promise.resolve();
+    return Promise.resolve(null);
   }
   if (window.__CUBIXLES_P5_PROMISE__) {
     return window.__CUBIXLES_P5_PROMISE__;
   }
-  if (window._setupDone && typeof window.p5 === "function") {
-    return Promise.resolve();
-  }
-  if (typeof window.p5 === "function") {
-    return Promise.resolve();
-  }
-  if (window.__CUBIXLES_P5_LOADING__) {
-    return p5LoadPromise || Promise.resolve();
-  }
   if (p5LoadPromise) {
     return p5LoadPromise;
   }
-  p5LoadPromise = new Promise((resolve, reject) => {
-    const existingScripts = Array.from(
-      document.querySelectorAll('script[src*="p5"]')
-    );
-    const existing = document.getElementById("p5-lib") || existingScripts[0];
-    if (existing) {
-      if (existingScripts.length > 1) {
-        existingScripts.slice(1).forEach((script) => script.remove());
+  p5LoadPromise = import("p5")
+    .then((module) => {
+      const P5 = module?.default ?? module;
+      if (typeof P5 === "function") {
+        window.__CUBIXLES_P5__ = P5;
+        window.p5 = P5;
       }
-      const poll = () => {
-        if (typeof window.p5 === "function") {
-          resolve();
-          return;
-        }
-        setTimeout(poll, 50);
-      };
-      poll();
-      return;
-    }
-    window.__CUBIXLES_P5_LOADING__ = true;
-    const script = document.createElement("script");
-    script.id = "p5-lib";
-    script.src = "https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.min.js";
-    script.async = true;
-    window.__CUBIXLES_P5_SCRIPT__ = script;
-    script.onload = () => {
-      window.__CUBIXLES_P5_LOADING__ = false;
-      resolve();
-    };
-    script.onerror = () => {
-      window.__CUBIXLES_P5_LOADING__ = false;
-      reject(new Error("Failed to load p5.js"));
-    };
-    document.head.appendChild(script);
-  });
+      return P5 ?? null;
+    })
+    .catch((error) => {
+      console.warn("p5.js failed to load:", error);
+      return null;
+    });
   window.__CUBIXLES_P5_PROMISE__ = p5LoadPromise;
   return p5LoadPromise;
 }
@@ -95,34 +64,13 @@ function ensureP5Instance() {
   if (typeof window === "undefined") {
     return;
   }
-  if (window.__CUBIXLES_P5_INSTANCE__ || window.__CUBIXLES_P5__ || window._setupDone) {
-    return;
-  }
   if (window.__CUBIXLES_P5_INIT__) {
     return;
   }
   window.__CUBIXLES_P5_INIT__ = true;
   loadP5Library()
-    .then(() => {
-      if (
-        window.__CUBIXLES_P5_INSTANCE__ ||
-        window.__CUBIXLES_P5__ ||
-        window._setupDone ||
-        typeof window.p5 !== "function"
-      ) {
-        window.__CUBIXLES_P5_INIT__ = false;
-        return;
-      }
-      const instance = window.p5?.instance;
-      if (instance) {
-        window.__CUBIXLES_P5_INSTANCE__ = instance;
-        window.__CUBIXLES_P5__ = instance;
-      }
+    .finally(() => {
       window.__CUBIXLES_P5_INIT__ = false;
-    })
-    .catch((error) => {
-      window.__CUBIXLES_P5_INIT__ = false;
-      console.warn("p5.js failed to load:", error);
     });
 }
 

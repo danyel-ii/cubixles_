@@ -9,49 +9,30 @@ type LandingSketchProps = {
   onRotationChange?: (rotationX: number, rotationY: number) => void;
 };
 
-const P5_SRC = "https://cdn.jsdelivr.net/npm/p5@1.9.2/lib/p5.min.js";
-
 function loadP5Library(): Promise<any> {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return Promise.reject(new Error("p5 unavailable on the server"));
   }
-  if (typeof window.p5 === "function") {
-    return Promise.resolve(window.p5);
+  if (typeof window.__CUBIXLES_P5__ === "function") {
+    return Promise.resolve(window.__CUBIXLES_P5__);
   }
   const sharedPromise = (window as Window & { __CUBIXLES_P5_PROMISE__?: Promise<void> })
     .__CUBIXLES_P5_PROMISE__;
   if (sharedPromise) {
-    return sharedPromise.then(() => window.p5);
+    return sharedPromise.then(() => window.__CUBIXLES_P5__);
   }
-  const existingScript = document.getElementById("p5-lib");
-  const existing = existingScript || document.querySelector('script[src*="p5"]');
-  if (existing) {
-    return new Promise((resolve) => {
-      const poll = () => {
-        if (typeof window.p5 === "function") {
-          resolve(window.p5);
-          return;
-        }
-        window.setTimeout(poll, 50);
-      };
-      poll();
-    });
-  }
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.id = "p5-lib";
-    script.src = P5_SRC;
-    script.async = true;
-    script.onload = () => {
-      if (typeof window.p5 === "function") {
-        resolve(window.p5);
-      } else {
-        reject(new Error("p5 loaded but did not register"));
-      }
-    };
-    script.onerror = () => reject(new Error("Failed to load p5.js"));
-    document.head.appendChild(script);
+  const promise = import("p5").then((module) => {
+    const P5 = module?.default ?? module;
+    if (typeof P5 === "function") {
+      (window as Window & { __CUBIXLES_P5__?: any }).__CUBIXLES_P5__ = P5;
+      window.p5 = P5;
+      return P5;
+    }
+    throw new Error("p5 loaded but did not register");
   });
+  (window as Window & { __CUBIXLES_P5_PROMISE__?: Promise<void> }).__CUBIXLES_P5_PROMISE__ =
+    promise;
+  return promise;
 }
 
 export default function LandingSketch({
