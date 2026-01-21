@@ -14,7 +14,7 @@ import { readEnvBool, readEnvNumber } from "../../../../src/server/env.js";
 import { recordMintAttempt, recordPinFailure } from "../../../../src/server/alerts.js";
 import { enforceOriginAllowlist } from "../../../../src/server/origin.js";
 
-const MAX_BYTES = readEnvNumber("PIN_METADATA_MAX_BYTES", 512 * 1024);
+const MAX_BYTES = readEnvNumber("PIN_METADATA_MAX_BYTES", 50 * 1024);
 
 export const runtime = "nodejs";
 

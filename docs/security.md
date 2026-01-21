@@ -9,10 +9,12 @@ This repository mixes onchain minting contracts with a server-assisted mint pipe
 - Quote-based pricing is enforced via EIP-712 signatures and chainId validation.
 
 ## Offchain risk model
-- Pinning endpoints require a signed nonce and are rate limited.
+- Pinning endpoints require a signed nonce, are rate limited, and enforce payload size caps
+  (e.g. `PIN_METADATA_MAX_BYTES`, default 50 KB).
 - Quote signing is centralized and must be protected like a key management system.
 - IPFS and metadata fetches are constrained by allowlists and size limits to reduce SSRF risk.
-  - Allowlists can be extended via `TOKEN_METADATA_ALLOWED_HOSTS` and `BUILDER_METADATA_ALLOWED_HOSTS`.
+  - Allowlists can be extended via `TOKEN_METADATA_ALLOWED_HOSTS`, `BUILDER_METADATA_ALLOWED_HOSTS`,
+    `METADATA_ALLOWED_HOSTS`, `IPFS_GATEWAY_ALLOWLIST`, and `IMAGE_PROXY_ALLOWED_HOSTS`.
 
 ## Key assumptions
 - The quote signer and pinning credentials are secure and rotated when needed.
@@ -21,6 +23,6 @@ This repository mixes onchain minting contracts with a server-assisted mint pipe
 
 ## Known constraints
 - If a referenced NFT or royalty receiver reverts, a builder mint will revert.
-- Royalty receiver contracts can reject ETH; those amounts fall back to the builder owner balance
-  if the payout address rejects funds.
+- Royalty receiver contracts can reject ETH; those amounts are redirected to the owner payout
+  address, and if that transfer fails they accrue to `pendingOwnerBalance`.
 - The builder price quote is only as accurate as the floor oracle data used by the signer.
