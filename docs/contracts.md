@@ -32,10 +32,10 @@
 ## CubixlesBuilderMinter (builder)
 - ERC-721 with per-token ERC-2981 royalties.
 - Quote-based pricing: a signed EIP-712 quote supplies total floor sum and expiry.
-- Mint price = `0.0044 ETH + (totalFloorWei * 7%)` (PRICE_BPS = 700).
+- Mint price = `0.0055 ETH + (totalFloorWei * 5%)` (PRICE_BPS = 500).
 - References must support ERC-721 + ERC-2981 and be owned by the minter.
-- Each face floor uses a 0.001 ETH fallback when the floor is unavailable or zero.
-- Payouts: 12% of the mint price per face goes to the referenced NFT royalty receiver; remainder routes to the owner payout address (defaults to owner).
+- Each face floor uses a 0.01 ETH fallback when the floor is unavailable or zero.
+- Payouts: 8.5% of the mint price per referenced NFT goes to the referenced NFT royalty receiver; remainder routes to the owner payout address (defaults to owner).
 - `mintBuildersWithMetadata` stores `tokenURI` and `metadataHash` per token.
 
 ## BuilderRoyaltyForwarder

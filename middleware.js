@@ -15,12 +15,20 @@ function createNonce() {
   return btoa(binary);
 }
 
-function buildCsp({ nonce, frameAncestors, isProd, reportUri, reportTo, includeUpgrade }) {
+function buildCsp({
+  nonce,
+  frameAncestors,
+  isProd,
+  reportUri,
+  reportTo,
+  includeUpgrade,
+  allowInline,
+}) {
   const scriptSrc = ["'self'", "https://cdn.jsdelivr.net", "https://vercel.live"];
   if (isProd && nonce) {
     scriptSrc.push(`'nonce-${nonce}'`);
   }
-  if (!isProd) {
+  if (!isProd || allowInline) {
     scriptSrc.push("'unsafe-eval'", "'unsafe-inline'");
   }
   const scriptSrcElem = [...scriptSrc];
@@ -73,10 +81,12 @@ export function middleware(request) {
   const reportUrl = new URL(reportUri, request.nextUrl.origin).toString();
   const isProd =
     process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "preview";
+  const allowInline = request.nextUrl.pathname.startsWith("/m2/preview");
   const csp = buildCsp({
     nonce,
     frameAncestors,
     isProd,
+    allowInline,
     includeUpgrade: true,
   });
   const reportOnlyCsp = buildCsp({
@@ -85,6 +95,7 @@ export function middleware(request) {
     isProd,
     reportUri,
     reportTo: CSP_REPORT_GROUP,
+    allowInline,
     includeUpgrade: false,
   });
 

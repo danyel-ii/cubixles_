@@ -31,10 +31,10 @@ This document covers the onchain builder minting stack implemented by `CubixlesB
 - `usedNonces[nonce]`: anti-replay guard for signed quotes.
 
 ### Constants
-- `MIN_FLOOR_WEI`: minimum floor value applied when a face floor is missing or zero.
-- `BASE_MINT_PRICE_WEI`: base builder mint fee (0.0044 ETH).
-- `PRICE_BPS`: builder price factor (7%).
-- `BUILDER_BPS`: per-face payout factor (12%).
+- `MIN_FLOOR_WEI`: minimum floor value applied when a face floor is missing or zero (0.01 ETH).
+- `BASE_MINT_PRICE_WEI`: base builder mint fee (0.0055 ETH).
+- `PRICE_BPS`: builder price factor (5%).
+- `BUILDER_BPS`: per-face payout factor (8.5%).
 - `RESALE_ROYALTY_BPS`: ERC-2981 resale royalty for builder tokens (10%).
 - `BPS`: basis points denominator (10_000).
 - `MAX_REFERENCES`: upper bound on faces (6).
@@ -49,7 +49,7 @@ Flow:
 1. Validates reference count and floors array length.
 2. Computes `expectedTotalFloorWei` by summing floors (zero floors become `MIN_FLOOR_WEI`).
 3. Verifies the EIP-712 quote (signer, chainId, expiry, nonce, total floor).
-4. Requires exact `msg.value` equal to the derived mint price (base + 7% of total floor).
+4. Requires exact `msg.value` equal to the derived mint price (base + 5% of total floor).
 5. Resolves royalty receivers for each referenced NFT (ERC-2981) and confirms the minter owns every reference (ERC-721 `ownerOf`).
 6. Mints the ERC-721, stores refs + floor snapshots, and distributes payouts.
 7. Emits `BuilderMinted`.
@@ -87,7 +87,7 @@ Otherwise the flow matches `mintBuilders`, with the addition of `tokenURI` and m
 - Resale royalty rate is fixed at `RESALE_ROYALTY_BPS` (10%).
 
 ## Payout distribution
-- Each referenced NFT receives `share = mintPrice * BUILDER_BPS / BPS`.
+- Each referenced NFT receives `share = mintPrice * BUILDER_BPS / BPS` (8.5%).
 - Failed sends are credited to `pendingOwnerBalance` and can be withdrawn by the contract owner.
 - Any unassigned remainder is credited to the owner payout address (defaults to `owner()`).
 

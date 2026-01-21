@@ -13,9 +13,9 @@ import { getActiveChainId, getChainOptions, setActiveChainId } from "../config/c
 import { fetchWithGateways } from "../../../../src/shared/ipfs-fetch.js";
 import { metadataSchema, extractRefs } from "../../../../src/shared/schemas/metadata.js";
 
-const MIN_FLOOR_ETH = 0.001;
-const BASE_MINT_PRICE_ETH = 0.0044;
-const PRICE_RATE = 0.07;
+const MIN_FLOOR_ETH = 0.01;
+const BASE_MINT_PRICE_ETH = 0.0055;
+const PRICE_RATE = 0.05;
 
 function parseTokenIdFromPath() {
   const path = window.location.pathname || "";

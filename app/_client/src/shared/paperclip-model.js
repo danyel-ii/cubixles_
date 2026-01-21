@@ -1,6 +1,6 @@
 const FALLBACK_PALETTE = ["#D40000", "#FFCC00", "#111111"];
 export const DEFAULT_PAPERCLIP_SIZE = 1024;
-export const PAPERCLIP_SCALE = 0.78;
+export const PAPERCLIP_SCALE = 0.98;
 
 function normalizeHex(value) {
   if (typeof value !== "string") {

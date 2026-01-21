@@ -11,9 +11,9 @@ import { applyStoredPalette } from "../../_client/src/ui/palette-theme.js";
 const PREVIEW_STORAGE_KEY = "cubixles:m2-preview";
 const FACE_ORDER = ["+Z", "-Z", "+X", "-X", "+Y", "-Y"];
 const DEFAULT_DESCRIPTION = "";
-const MIN_FLOOR_ETH = 0.001;
-const BASE_MINT_PRICE_ETH = 0.0044;
-const PRICE_RATE = 0.07;
+const MIN_FLOOR_ETH = 0.01;
+const BASE_MINT_PRICE_ETH = 0.0055;
+const PRICE_RATE = 0.05;
 
 function formatMintedAt(value) {
   if (!value) {

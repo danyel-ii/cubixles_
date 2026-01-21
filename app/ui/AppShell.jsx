@@ -133,15 +133,15 @@ export default function AppShell({ mode = "mint" }) {
             <div className="overlay-section-title">Mint price</div>
             {isBuilder ? (
               <p className="overlay-text">
-                Builder mint price is 0.0044 ETH + 7% of snapshot floor totals (0.001 ETH fallback
-                per face). Each referenced NFT receives 12% of the total mint price, and each mint
+                Builder mint price is 0.0055 ETH + 5% of snapshot floor totals (0.01 ETH fallback
+                per face). Each referenced NFT receives 8.5% of the total mint price, and each mint
                 deploys a royalty forwarder controlled by the minter for future split updates.
               </p>
             ) : (
               <>
                 <p className="overlay-text">
-                  Regular mints (builder contract) price at 0.0044 ETH + 7% of snapshot floor
-                  totals (0.001 ETH fallback per face). Each referenced NFT receives 12% of the
+                  Regular mints (builder contract) price at 0.0055 ETH + 5% of snapshot floor
+                  totals (0.01 ETH fallback per face). Each referenced NFT receives 8.5% of the
                   total mint price.
                 </p>
                 <p className="overlay-text">
@@ -208,7 +208,7 @@ export default function AppShell({ mode = "mint" }) {
               </li>
             </ul>
             <p className="overlay-text">
-              Builder mints snapshot live floor data to set the Feingehalt, route 12% of the total
+              Builder mints snapshot live floor data to set the Feingehalt, route 8.5% of the total
               mint price to each referenced NFT royalty receiver, deploy a per-mint royalty
               forwarder so the minter controls future splits, and generate a wallet-seeded paper
               clip sculpture (with QR) pinned to IPFS as the display image, plus a p5.js inspector
@@ -333,7 +333,7 @@ export default function AppShell({ mode = "mint" }) {
         </div>
         <div className="ui-sub">
           {isBuilder
-            ? "Builder mint: price is 0.0044 ETH + 7% of snapshot floor totals (0.001 ETH fallback per face)."
+            ? "Builder mint: price is 0.0055 ETH + 5% of snapshot floor totals (0.01 ETH fallback per face)."
             : "Mint cubixles_: NFTs linked to interactive p5.js artwork whose provenance is tethered to NFTs you already own."}
         </div>
         <div className="ui-row">
@@ -514,8 +514,8 @@ export default function AppShell({ mode = "mint" }) {
           </div>
           {isBuilder ? (
             <p className="ui-text">
-              Builder mints set Feingehalt at 0.0044 ETH + 7% of snapshot floor totals (0.001 ETH
-              fallback per face). Each referenced NFT receives 12% of the total mint price, and
+              Builder mints set Feingehalt at 0.0055 ETH + 5% of snapshot floor totals (0.01 ETH
+              fallback per face). Each referenced NFT receives 8.5% of the total mint price, and
               each mint deploys a royalty forwarder owned by the minter so they can set splits and
               update future royalty recipients.
             </p>

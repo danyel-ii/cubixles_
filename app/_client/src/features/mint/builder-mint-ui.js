@@ -14,7 +14,7 @@ import {
   DEFAULT_PAPERCLIP_SIZE,
 } from "../../shared/paperclip-model.js";
 
-const MIN_FLOOR_WEI = 1_000_000_000_000_000n;
+const MIN_FLOOR_WEI = 10_000_000_000_000_000n;
 
 function formatEthFromWei(value) {
   if (!value) {

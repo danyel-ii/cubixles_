@@ -31,9 +31,9 @@ const FACE_ROTATIONS = {
   "-Y": { x: "64deg", y: "38deg" },
 };
 const DEFAULT_ROTATION = FACE_ROTATIONS["+Z"];
-const MIN_FLOOR_ETH = 0.001;
-const BASE_MINT_PRICE_ETH = 0.0044;
-const PRICE_RATE = 0.07;
+const MIN_FLOOR_ETH = 0.01;
+const BASE_MINT_PRICE_ETH = 0.0055;
+const PRICE_RATE = 0.05;
 
 function truncateMiddle(value, start = 6, end = 4) {
   if (value.length <= start + end + 3) {
