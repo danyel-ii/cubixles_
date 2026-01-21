@@ -29,6 +29,7 @@ const CUSTOM_IPFS_GATEWAY = normalizeGatewayBase(
   process.env.NEXT_PUBLIC_IPFS_GATEWAY ?? process.env.IPFS_GATEWAY
 );
 const DEFAULT_IPFS_GATEWAYS = [
+  "https://alchemy.mypinata.cloud/ipfs/",
   "https://ipfs.io/ipfs/",
   "https://cloudflare-ipfs.com/ipfs/",
   "https://gateway.pinata.cloud/ipfs/",

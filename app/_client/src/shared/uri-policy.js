@@ -28,6 +28,7 @@ const CUSTOM_IPFS_GATEWAY = normalizeGatewayBase(
   readEnvValue("NEXT_PUBLIC_IPFS_GATEWAY")
 );
 const DEFAULT_IPFS_GATEWAYS = [
+  "https://alchemy.mypinata.cloud/ipfs/",
   "https://w3s.link/ipfs/",
   "https://dweb.link/ipfs/",
   "https://gateway.pinata.cloud/ipfs/",

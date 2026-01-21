@@ -114,6 +114,10 @@ export function initLeaderboardUi() {
   async function getReadProvider(provider) {
     const contract = getContractConfig();
     const chain = getChainConfig(contract.chainId);
+    const walletProvider = provider || walletState?.provider;
+    if (walletProvider) {
+      return new BrowserProvider(walletProvider);
+    }
     if (chain?.rpcUrls?.length) {
       if (readProviderPromise) {
         return readProviderPromise;

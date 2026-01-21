@@ -7,10 +7,13 @@ import { logRequest } from "../../../src/server/log.js";
 import { nftRequestSchema, readJsonWithLimit, formatZodError } from "../../../src/server/validate.js";
 import { getCache, setCache } from "../../../src/server/cache.js";
 import { recordMetric } from "../../../src/server/metrics.js";
+import { getBuilderContractAddress } from "../../../src/server/builder-config.js";
 
 const NFT_API_VERSION = "v3";
 const CACHE_TTL_MS = 60_000;
 const MAX_BODY_BYTES = 12 * 1024;
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const BUILDER_ALLOWLIST_CHAIN_IDS = [1, 8453, 11155111];
 
 const ALLOWED_PATHS = new Set([
   "getNFTsForOwner",
@@ -44,13 +47,21 @@ function getRpcAllowlist() {
     process.env.NFT_RPC_ALLOWED_CONTRACTS ||
     process.env.CUBIXLES_RPC_ALLOWED_CONTRACTS ||
     "";
+  const builderAddresses = BUILDER_ALLOWLIST_CHAIN_IDS.map((chainId) =>
+    getBuilderContractAddress(chainId)
+  );
   const defaults = [
     process.env.CUBIXLES_CONTRACT_ADDRESS,
     process.env.CUBIXLES_LESS_TOKEN,
     process.env.LESS_TOKEN_CONTRACT_ADDRESS,
+    ...builderAddresses,
   ];
-  const combined = [...defaults, ...parseAddressList(raw)];
-  const normalized = combined.map(normalizeAddress).filter(Boolean);
+  const combined = [...defaults, ...parseAddressList(raw)].filter(
+    (address) => address && address !== ZERO_ADDRESS
+  );
+  const normalized = combined
+    .map(normalizeAddress)
+    .filter((address) => address && address !== ZERO_ADDRESS);
   return new Set(normalized);
 }
 

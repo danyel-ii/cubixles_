@@ -290,6 +290,9 @@ function clearStoredCommit(chainId, address) {
 }
 
 export function initMintUi() {
+  if (typeof document !== "undefined" && document.body.classList.contains("is-builder")) {
+    return;
+  }
   const statusEl = document.getElementById("mint-status");
   const mintButton = document.getElementById("mint-submit");
   const amountInput = document.getElementById("mint-payment");
@@ -346,7 +349,7 @@ export function initMintUi() {
   let readProviderPromise = null;
 
   async function getReadProvider() {
-    if (typeof window !== "undefined" && window.__CUBIXLES_TEST_HOOKS__ && walletState?.provider) {
+    if (walletState?.provider) {
       return new BrowserProvider(walletState.provider);
     }
     const chain = getChainConfig(CUBIXLES_CONTRACT.chainId);
@@ -933,8 +936,11 @@ export function initMintUi() {
     cancelCommitButton.addEventListener("click", async () => {
       let contract = null;
       if (!walletState || walletState.status !== "connected") {
-        setStatus("Connect your wallet to cancel the commit.", "error");
-        return;
+        const connected = await ensureWalletConnected();
+        if (!connected) {
+          setStatus("Connect your wallet to cancel the commit.", "error");
+          return;
+        }
       }
       setDisabled(true);
       try {
