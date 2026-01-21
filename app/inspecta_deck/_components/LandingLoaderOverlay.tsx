@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { withBasePath } from "../_lib/basePath";
 
-const LOADER_VISIBLE_MS = 2000;
+const LOADER_VISIBLE_MS = 1600;
 const LOADER_FADE_MS = 2000;
 
 export default function LandingLoaderOverlay() {

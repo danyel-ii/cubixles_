@@ -134,6 +134,7 @@ export default function AppShell({ mode = "mint" }) {
                     an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
                     interactive cube.
                   </li>
+                  <li>the right to set the per-token royalty forwarding contract (builder mints).</li>
                 </ul>
                 <p className="overlay-text">
                   <CubixlesText text="The referenced NFTs remain fully independent assets. The cubixle does not contain, escrow, or substitute them -- cubixles_ record their configuration." />
