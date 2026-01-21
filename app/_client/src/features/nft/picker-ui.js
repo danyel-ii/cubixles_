@@ -25,8 +25,30 @@ function safeText(value, fallback) {
   return fallback;
 }
 
+function normalizeTokenType(tokenType) {
+  if (!tokenType) {
+    return "";
+  }
+  const normalized = String(tokenType).trim().toUpperCase();
+  if (normalized === "ERC721") {
+    return "ERC-721";
+  }
+  if (normalized === "ERC1155") {
+    return "ERC-1155";
+  }
+  return normalized;
+}
+
+function isErc1155(nft) {
+  return normalizeTokenType(nft?.tokenType) === "ERC-1155";
+}
+
 function getNftIssues(nft) {
   const issues = [];
+  const erc1155 = isErc1155(nft);
+  if (erc1155) {
+    issues.push("ERC-1155 (ERC-721 only)");
+  }
   const imageCandidates = buildImageCandidates(nft?.image);
   const hasImage = imageCandidates.length > 0;
   const imageUri = nft?.image?.original;
@@ -42,17 +64,25 @@ function getNftIssues(nft) {
   } else if (metadataUri && !isAllowedNftUri(metadataUri)) {
     issues.push("metadata not allowed");
   }
-  return { issues, hasImage, hasMetadata };
+  return { issues, hasImage, hasMetadata, isErc1155: erc1155 };
 }
 
 function isBlockedNft(nft) {
-  const { hasImage, hasMetadata } = getNftIssues(nft);
-  return !hasImage || !hasMetadata;
+  const { hasImage, hasMetadata, isErc1155: erc1155 } = getNftIssues(nft);
+  return erc1155 || !hasImage || !hasMetadata;
 }
 
-function formatBlockedMessage(count) {
-  const suffix = count === 1 ? "NFT" : "NFTs";
-  return `Blocked ${count} ${suffix} without resolvable images or metadata.`;
+function formatBlockedMessage(erc1155Count, mediaCount) {
+  const messages = [];
+  if (erc1155Count > 0) {
+    const suffix = erc1155Count === 1 ? "NFT" : "NFTs";
+    messages.push(`Blocked ${erc1155Count} ERC-1155 ${suffix} (ERC-721 only).`);
+  }
+  if (mediaCount > 0) {
+    const suffix = mediaCount === 1 ? "NFT" : "NFTs";
+    messages.push(`Blocked ${mediaCount} ${suffix} without resolvable images or metadata.`);
+  }
+  return messages.join(" ");
 }
 
 function formatIssueMessage(nft, issues) {
@@ -88,7 +118,8 @@ export function initNftPickerUi() {
   let appliedSelectionKey = null;
   let isWalletConnected = false;
   let activeChainId = CUBIXLES_CONTRACT.chainId;
-  let blockedCount = 0;
+  let blockedMediaCount = 0;
+  let blockedStandardCount = 0;
 
   function setStatus(message, tone = "neutral") {
     statusEl.textContent = message;
@@ -155,8 +186,8 @@ export function initNftPickerUi() {
       const key = buildKey(nft);
       const isSelected = selectedKeys.has(key);
       const isDisabled = !isSelected && selectedKeys.size >= MAX_SELECTION;
-      const { issues, hasImage, hasMetadata } = getNftIssues(nft);
-      const isBlocked = !hasImage || !hasMetadata;
+      const { issues, hasImage, hasMetadata, isErc1155: erc1155 } = getNftIssues(nft);
+      const isBlocked = erc1155 || !hasImage || !hasMetadata;
 
       const card = document.createElement("button");
       card.type = "button";
@@ -244,8 +275,8 @@ export function initNftPickerUi() {
           setStatus("Selection ready.", "success");
           return;
         }
-        if (blockedCount > 0) {
-          setStatus(formatBlockedMessage(blockedCount), "error");
+        if (blockedMediaCount > 0 || blockedStandardCount > 0) {
+          setStatus(formatBlockedMessage(blockedStandardCount, blockedMediaCount), "error");
           return;
         }
         setStatus("Select 1 to 6 NFTs to continue.");
@@ -271,8 +302,12 @@ export function initNftPickerUi() {
       state.nftInventory = nfts;
       state.nftStatus = "ready";
       appliedSelectionKey = null;
-      const blocked = nfts.filter((nft) => isBlockedNft(nft));
-      blockedCount = blocked.length;
+      const blockedMedia = nfts.filter((nft) => {
+        const { hasImage, hasMetadata } = getNftIssues(nft);
+        return !hasImage || !hasMetadata;
+      });
+      blockedMediaCount = blockedMedia.length;
+      blockedStandardCount = nfts.filter((nft) => isErc1155(nft)).length;
       const validNfts = nfts.filter((nft) => !isBlockedNft(nft));
       const validKeys = new Set(validNfts.map((nft) => buildKey(nft)));
       selectedKeys = new Set([...selectedKeys].filter((key) => validKeys.has(key)));
@@ -289,8 +324,8 @@ export function initNftPickerUi() {
         setStatus(
           `No ${formatChainName(CUBIXLES_CONTRACT.chainId)} NFTs found for this wallet.`
         );
-      } else if (blockedCount > 0) {
-        setStatus(formatBlockedMessage(blockedCount), "error");
+      } else if (blockedMediaCount > 0 || blockedStandardCount > 0) {
+        setStatus(formatBlockedMessage(blockedStandardCount, blockedMediaCount), "error");
       } else {
         setStatus("Select 1 to 6 NFTs to continue.");
       }
@@ -392,8 +427,8 @@ export function initNftPickerUi() {
     updateSelection();
     renderInventory();
     if (inventory.length) {
-      if (blockedCount > 0) {
-        setStatus(formatBlockedMessage(blockedCount), "error");
+      if (blockedMediaCount > 0 || blockedStandardCount > 0) {
+        setStatus(formatBlockedMessage(blockedStandardCount, blockedMediaCount), "error");
       } else {
         setStatus("Select 1 to 6 NFTs to continue.");
       }
@@ -463,7 +498,8 @@ export function initNftPickerUi() {
     selectedKeys = new Set();
     selectedOrder = [];
     appliedSelectionKey = null;
-    blockedCount = 0;
+    blockedMediaCount = 0;
+    blockedStandardCount = 0;
     state.nftInventory = [];
     state.nftSelection = [];
     state.nftStatus = "idle";

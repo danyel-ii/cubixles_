@@ -125,9 +125,7 @@ export async function getNftsForOwner(
     const owned = response.ownedNfts ?? [];
     owned.forEach((nft) => {
       try {
-        if (nft.tokenType && nft.tokenType !== "ERC721") {
-          return;
-        }
+        const tokenType = nft.tokenType ?? null;
         const contractAddress = normalizeAddress(nft.contract?.address);
         const tokenId = parseTokenId(nft.tokenId);
         const tokenUri = resolveUri(extractTokenUri(nft));
@@ -142,6 +140,7 @@ export async function getNftsForOwner(
           tokenUri,
           image,
           metadataAvailable,
+          tokenType,
           source: "alchemy",
         } satisfies NftItem);
       } catch (error) {
