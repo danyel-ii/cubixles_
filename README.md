@@ -1,4 +1,5 @@
 # cubixles_
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/danyel-ii/cubixles_)
 Last updated: 2026-01-21
 
 cubixles_ is a Next.js miniapp for minting ERC-721 cubes whose faces are linked to NFTs the minter already owns. It ships a legacy mint flow and a builder mint flow, each with its own pricing and royalty mechanics.

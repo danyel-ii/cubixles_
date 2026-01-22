@@ -31,3 +31,8 @@
 
 .dig-overlay{z-index:10000}.dig-overlay-panel{z-index:10001}
 html,body{height:auto;overflow:auto;-webkit-overflow-scrolling:touch}
+
+.token-index-card{filter:grayscale(.9) saturate(.2) brightness(.85);opacity:.65;transition:transform .18s ease,box-shadow .18s ease,filter .2s ease,opacity .2s ease}
+.token-index-card.is-highlighted{filter:none;opacity:1}
+.token-index-card:not(.is-highlighted) .token-index-media img{filter:grayscale(1) contrast(1.15) brightness(.72) saturate(.2);transform:none}
+.token-index-card:not(.is-highlighted) .token-index-media:after{opacity:.8}

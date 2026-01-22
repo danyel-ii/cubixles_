@@ -418,6 +418,9 @@ export function initBuilderMintUi() {
   }
 
   async function refreshQuote() {
+    if (isMinting) {
+      return;
+    }
     if (!walletState || walletState.status !== "connected") {
       setStatus("Connect your wallet to mint.");
       setDisabled(true);
@@ -529,7 +532,7 @@ export function initBuilderMintUi() {
         size: DEFAULT_PAPERCLIP_SIZE,
       });
       const paperclipQrText = externalUrl;
-      setStatus("Pinning builder assets...");
+      setStatus("Check your wallet to sign the asset pin request...");
       const assetResult = await pinBuilderAssets({
         viewerUrl: externalUrl,
         tokenId,
@@ -573,7 +576,7 @@ export function initBuilderMintUi() {
         selectedNftMetadata,
       });
 
-      setStatus("Pinning builder metadata...");
+      setStatus("Check your wallet to sign the metadata pin request...");
       const { tokenURI, metadataHash } = await pinTokenMetadata({
         metadata: metadataPayload,
         signer,
