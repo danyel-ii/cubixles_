@@ -493,9 +493,12 @@ export function initBuilderMintUi() {
       const selectionMetadataPromise = fetchSelectionMetadata(selection);
       const provider = new BrowserProvider(walletState.provider);
       let walletChainId = Number(walletState.chainId);
-      if (!Number.isFinite(walletChainId)) {
+      if (!Number.isFinite(walletChainId) || walletChainId <= 0) {
         const network = await provider.getNetwork();
         walletChainId = Number(network.chainId);
+      }
+      if (!Number.isFinite(walletChainId) || walletChainId <= 0) {
+        throw new Error("Unable to detect wallet network. Try reconnecting.");
       }
       if (walletChainId !== BUILDER_CONTRACT.chainId) {
         setStatus(
@@ -507,6 +510,15 @@ export function initBuilderMintUi() {
         const switched = await switchToActiveChain();
         if (!switched) {
           throw new Error("Network switch rejected.");
+        }
+        const refreshedNetwork = await provider.getNetwork();
+        const refreshedChainId = Number(refreshedNetwork.chainId);
+        if (refreshedChainId !== BUILDER_CONTRACT.chainId) {
+          throw new Error(
+            `Wallet on ${formatChainName(refreshedChainId)}. Switch to ${formatChainName(
+              BUILDER_CONTRACT.chainId
+            )} to mint.`
+          );
         }
       }
       const signer = await provider.getSigner();

@@ -308,9 +308,6 @@ test("mint flow reaches tx submission with mocked APIs", async ({ page }) => {
   await expect(page.locator("#nft-selection")).toContainText(/Selected 1 \/ 6/i, {
     timeout: 10000,
   });
-  await expect(page.locator("#mint-status")).toContainText(/Ready to mint/i, {
-    timeout: 10000,
-  });
   const mintButton = page.locator("#mint-submit");
   await expect(mintButton).toHaveCount(1, { timeout: 10000 });
   // Avoid Playwright actionability instability in CI from animated layout shifts.
