@@ -1,6 +1,6 @@
 # Contributing to cubixles_
 
-Last updated: 2025-12-26
+Last updated: 2026-01-22
 
 Thanks for your interest in contributing. This doc describes how to propose changes and the standards we expect.
 

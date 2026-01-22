@@ -1,5 +1,5 @@
 # Mint Transaction Flow
-Last updated: 2026-01-21
+Last updated: 2026-01-22
 
 This primer describes how ETH is routed during minting, including swaps and owner payouts.
 
@@ -8,8 +8,10 @@ This primer describes how ETH is routed during minting, including swaps and owne
 2. The signer fetches collection floors; any missing, zero, or sub-0.01 floor is clamped to 0.01 ETH.
 3. Mint price is computed as `0.0055 ETH + (sumFloor * 0.05)`.
 4. The minter calls `mintBuilders` (or `mintBuildersWithMetadata`) and pays the exact mint price.
-5. The contract resolves ERC-2981 royalty receivers for each referenced NFT.
-6. Each referenced NFT receives 8.5% of the total mint price.
+5. The contract resolves ERC-2981 royalty receivers for each referenced NFT (falls back to the owner
+   payout receiver if ERC-2981 is missing or `royaltyInfo` fails).
+6. Each referenced NFT royalty receiver receives 8.5% of the total mint price; any fallback share
+   routes to the owner payout receiver.
 7. The remaining mint value is sent to the owner payout address:
    - When set to `OwnerPayoutSplitter`, it swaps 50% of its ETH into PNKSTR and forwards
      both PNKSTR + remaining ETH to the contract owner.

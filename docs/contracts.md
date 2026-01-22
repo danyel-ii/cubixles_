@@ -1,5 +1,5 @@
 # cubixles_ Contracts
-Last updated: 2026-01-21
+Last updated: 2026-01-22
 
 ## Contract set
 - `contracts/src/cubixles/CubixlesMinter.sol` (legacy minter)
@@ -34,7 +34,8 @@ Last updated: 2026-01-21
 - ERC-721 with per-token ERC-2981 royalties.
 - Quote-based pricing: a signed EIP-712 quote supplies total floor sum and expiry.
 - Mint price = `0.0055 ETH + (totalFloorWei * 5%)` (PRICE_BPS = 500).
-- References must support ERC-721 + ERC-2981 and be owned by the minter.
+- References must support ERC-721 and be owned by the minter.
+- ERC-2981 is optional; missing or failing `royaltyInfo` falls back to the owner payout receiver.
 - Each face floor uses a 0.01 ETH clamp when the floor is unavailable, zero, or below 0.01 ETH.
 - Payouts: 8.5% of the mint price per referenced NFT goes to the referenced NFT royalty receiver; remainder routes to the owner payout address (defaults to owner).
 - `mintBuildersWithMetadata` stores `tokenURI` and `metadataHash` per token.

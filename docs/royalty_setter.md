@@ -1,5 +1,5 @@
 # Resale Royalty Setter Guide
-Last updated: 2026-01-21
+Last updated: 2026-01-22
 
 This primer explains how resale royalties are handled onchain and who can configure them.
 
@@ -24,6 +24,7 @@ This primer explains how resale royalties are handled onchain and who can config
 - Ownership of the forwarder is assigned to the minter wallet.
 - Only the forwarder owner can set splits via `setSplits(recipients, bps)`.
 - If no splits are configured, 100% accrues to the forwarder owner.
+- See [docs/setting-your-royalty.md](docs/setting-your-royalty.md) for a detailed walkthrough.
 
 ### Example: set builder resale splits
 1. Look up the forwarder for a token:
@@ -35,7 +36,6 @@ This primer explains how resale royalties are handled onchain and who can config
 4. Recipients can withdraw accrued ETH via `withdrawPending()`.
 
 ## Deployment note (mainnet)
-- 2026-01-20: Builder minter broadcast on Ethereum mainnet.
-- Builder minter: `0x99a982113B77b03D0873650D3A8C6908D02C0b3e`
-- Royalty forwarder implementation: `0x7905F2810C19e1b1f2D2e8c3Dc28D51D5F20e329`
-- Deployment tx: `0xce1aea70c3702b2a1d72af47fa011703e53881e51c2a32de0745b795a274ebd6`
+- 2026-01-22: Builder minter broadcast on Ethereum mainnet.
+- Builder minter: `0x35aD1B49C956c0236ADcD2E7051c3C4e78D4FccA`
+- Royalty forwarder implementation: `0xF16B3427aDa1a6325005f13223aeb6C0bBF09169`

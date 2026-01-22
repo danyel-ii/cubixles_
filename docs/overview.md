@@ -1,5 +1,5 @@
 # cubixles_ Overview
-Last updated: 2026-01-21
+Last updated: 2026-01-22
 
 cubixles_ is a Next.js miniapp that mints ERC-721 cubes whose faces are linked to NFTs the minter already owns. The project ships two minting tracks:
 - Legacy CubixlesMinter (commit-reveal, LESS/linear pricing).
@@ -25,5 +25,10 @@ cubixles_ is a Next.js miniapp that mints ERC-721 cubes whose faces are linked t
 ## Core flows
 - Legacy mint: commit + metadata commit + mint, with deterministic tokenId and palette draw.
 - Builder mint: request quote, pin builder assets + metadata, then mint with a signed quote and a
-  0.0055 ETH base + 5% floor-derived price (0.01 ETH floor clamp per face) that routes 8.5% per referenced NFT and
+  0.0055 ETH base + 5% floor-derived price (0.01 ETH floor clamp per face) that routes 8.5% per
+  referenced NFT royalty receiver (fallback to owner payout if ERC-2981 is missing or fails) and
   sets a per-token resale royalty forwarder (10% ERC-2981) owned by the minter.
+
+## Chain notes
+- Builder deployments are currently configured on mainnet; Base/Sepolia entries exist as placeholders
+  until deployed and wired.

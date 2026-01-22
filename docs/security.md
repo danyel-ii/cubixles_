@@ -1,5 +1,5 @@
 # cubixles_ Security Overview
-Last updated: 2026-01-21
+Last updated: 2026-01-22
 
 This repository mixes onchain minting contracts with a server-assisted mint pipeline. The security model assumes untrusted NFT references, untrusted metadata URLs, and untrusted client inputs.
 
@@ -21,11 +21,12 @@ This repository mixes onchain minting contracts with a server-assisted mint pipe
 
 ## Key assumptions
 - The quote signer and pinning credentials are secure and rotated when needed.
-- Referenced NFTs expose reliable ERC-721 ownership and ERC-2981 royalty receivers.
+- Referenced NFTs expose reliable ERC-721 ownership; ERC-2981 is optional and falls back to owner payout.
 - Offchain metadata and images are pinned to IPFS and are immutable once minted.
 
 ## Known constraints
-- If a referenced NFT or royalty receiver reverts, a builder mint will revert.
+- If a referenced NFT is not ERC-721 or `ownerOf` fails, a builder mint will revert.
+- ERC-2981 missing or `royaltyInfo` failures fall back to the owner payout receiver.
 - Royalty receiver contracts can reject ETH; those amounts are redirected to the owner payout
   address, and if that transfer fails they accrue to `pendingOwnerBalance`.
 - The builder price quote is only as accurate as the floor oracle data used by the signer.
