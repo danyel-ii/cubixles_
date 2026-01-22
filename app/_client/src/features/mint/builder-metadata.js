@@ -7,6 +7,101 @@ function safeText(value, fallback) {
   return fallback;
 }
 
+const MAX_LINKED_METADATA_BYTES = 3500;
+const MAX_LINKED_TEXT = 280;
+const MAX_LINKED_URL = 512;
+const MAX_LINKED_ATTRIBUTES = 12;
+
+function trimString(value, maxLength) {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+  return trimmed.slice(0, maxLength);
+}
+
+function sanitizeUrl(value) {
+  const trimmed = trimString(value, MAX_LINKED_URL);
+  if (!trimmed) {
+    return null;
+  }
+  if (trimmed.startsWith("data:")) {
+    return null;
+  }
+  return trimmed;
+}
+
+function sanitizeAttribute(entry) {
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+  const trait = trimString(entry.trait_type || entry.traitType || "", 64);
+  let value = entry.value;
+  if (value == null) {
+    return null;
+  }
+  if (typeof value === "string") {
+    value = trimString(value, 160);
+  } else if (typeof value === "number" || typeof value === "boolean") {
+    value = value;
+  } else {
+    value = trimString(String(value), 160);
+  }
+  if (value == null) {
+    return null;
+  }
+  const displayType = trimString(entry.display_type || entry.displayType || "", 32);
+  const next = {
+    trait_type: trait || "Trait",
+    value,
+  };
+  if (displayType) {
+    next.display_type = displayType;
+  }
+  return next;
+}
+
+function sanitizeLinkedMetadata(metadata) {
+  if (!metadata || typeof metadata !== "object") {
+    return null;
+  }
+  const safe = {
+    name: trimString(metadata.name, MAX_LINKED_TEXT) || undefined,
+    description: trimString(metadata.description, MAX_LINKED_TEXT) || undefined,
+    image: sanitizeUrl(metadata.image) || undefined,
+    image_url: sanitizeUrl(metadata.image_url) || undefined,
+    animation_url: sanitizeUrl(metadata.animation_url) || undefined,
+    external_url: sanitizeUrl(metadata.external_url) || undefined,
+  };
+  if (Array.isArray(metadata.attributes)) {
+    const attrs = metadata.attributes
+      .map((entry) => sanitizeAttribute(entry))
+      .filter(Boolean)
+      .slice(0, MAX_LINKED_ATTRIBUTES);
+    if (attrs.length) {
+      safe.attributes = attrs;
+    }
+  }
+  const size = JSON.stringify(safe).length;
+  if (size <= MAX_LINKED_METADATA_BYTES) {
+    return safe;
+  }
+  if (safe.attributes) {
+    delete safe.attributes;
+  }
+  const trimmedSize = JSON.stringify(safe).length;
+  if (trimmedSize <= MAX_LINKED_METADATA_BYTES) {
+    return safe;
+  }
+  return null;
+}
+
 function buildRefs(selection) {
   return selection.map((nft) => ({
     contractAddress: nft.contractAddress,
@@ -77,7 +172,7 @@ function buildLinkedNftMetadata(selection, selectedNftMetadata) {
         nft?.tokenUri?.original ||
         nft?.tokenUri?.resolved ||
         null,
-      metadata: entry?.metadata ?? null,
+      metadata: sanitizeLinkedMetadata(entry?.metadata),
     };
   });
 }
