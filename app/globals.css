@@ -2583,6 +2583,48 @@ body.is-minted .preview-bar {
   gap: 10px;
 }
 
+.paper-copy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(27, 23, 19, 0.6);
+  background: #f4d7a1;
+  color: var(--paper-ink);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-family: "Space Mono", "Space Grotesk", monospace;
+  font-size: 0.7rem;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--paper-ink);
+}
+
+.paper-copy-button:hover:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+.paper-copy-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.paper-copy-button[data-copied="true"] {
+  background: #e6f2d9;
+}
+
+.paper-copy-text {
+  white-space: nowrap;
+}
+
+.paper-copy-icon {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+}
+
 .paper-face-map {
   position: absolute;
   left: clamp(24px, 4vw, 64px);

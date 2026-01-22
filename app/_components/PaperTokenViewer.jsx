@@ -232,6 +232,7 @@ export default function PaperTokenViewer({
   const inspectorLineRefs = useRef([]);
   const inspectorPanelRefs = useRef([]);
   const inspectorPositionsRef = useRef(new Map());
+  const copyTimeoutRef = useRef(null);
   const inspectorDragRef = useRef({
     active: false,
     index: null,
@@ -254,6 +255,7 @@ export default function PaperTokenViewer({
   const [paletteOpen, setPaletteOpen] = useState(true);
   const [feeOpen, setFeeOpen] = useState(true);
   const [metaOpen, setMetaOpen] = useState(true);
+  const [copiedContract, setCopiedContract] = useState("");
 
   const faces = useMemo(() => {
     const byId = new Map();
@@ -345,6 +347,14 @@ export default function PaperTokenViewer({
   }, [qrAddress]);
 
   useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     setBaseRotation(DEFAULT_ROTATION);
     rotationRef.current = { x: 0, y: 0 };
     setInspectedIndices([]);
@@ -432,6 +442,58 @@ export default function PaperTokenViewer({
     const offset = Math.max(0, headerRect.bottom - viewerRect.top);
     viewer.style.setProperty("--paper-header-bottom", `${offset}px`);
   }, []);
+
+  const copyText = useCallback(async (value) => {
+    if (!value) {
+      return false;
+    }
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(value);
+        return true;
+      } catch (error) {
+        void error;
+      }
+    }
+    if (typeof document === "undefined") {
+      return false;
+    }
+    const input = document.createElement("textarea");
+    input.value = value;
+    input.setAttribute("readonly", "true");
+    input.style.position = "absolute";
+    input.style.left = "-9999px";
+    document.body.appendChild(input);
+    input.select();
+    try {
+      return document.execCommand("copy");
+    } catch (error) {
+      return false;
+    } finally {
+      document.body.removeChild(input);
+    }
+  }, []);
+
+  const handleCopyContract = useCallback(
+    async (address) => {
+      if (!address) {
+        return;
+      }
+      const ok = await copyText(address);
+      if (!ok) {
+        return;
+      }
+      const key = address.toLowerCase();
+      setCopiedContract(key);
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = window.setTimeout(() => {
+        setCopiedContract("");
+      }, 1500);
+    },
+    [copyText]
+  );
 
   const updateInspectorLayout = useCallback(() => {
     const indices = inspectedIndicesRef.current;
@@ -1162,7 +1224,7 @@ export default function PaperTokenViewer({
           ) : null}
           <a
             className="paper-export-button paper-link-button"
-            href="https://opensea.io/collection/cubixles"
+            href="https://opensea.io/collection/cubixles-builders-762180967"
             target="_blank"
             rel="noreferrer"
           >
@@ -1296,7 +1358,38 @@ export default function PaperTokenViewer({
                   </div>
                   <div>
                     <span className="paper-meta-label">Contract</span>
-                    <span>{formatAddress(inspectedFace.contractAddress)}</span>
+                    <button
+                      type="button"
+                      className="paper-copy-button"
+                      onClick={() => handleCopyContract(inspectedFace.contractAddress)}
+                      data-copied={
+                        inspectedFace.contractAddress &&
+                        copiedContract === inspectedFace.contractAddress.toLowerCase()
+                          ? "true"
+                          : "false"
+                      }
+                      title={
+                        inspectedFace.contractAddress
+                          ? copiedContract === inspectedFace.contractAddress.toLowerCase()
+                            ? "Copied"
+                            : "Copy contract address"
+                          : "Contract address unavailable"
+                      }
+                      aria-label="Copy contract address"
+                      disabled={!inspectedFace.contractAddress}
+                    >
+                      <span className="paper-copy-text">
+                        {formatAddress(inspectedFace.contractAddress)}
+                      </span>
+                      <svg
+                        className="paper-copy-icon"
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                      >
+                        <rect x="6" y="5" width="8" height="9" rx="2" />
+                        <rect x="2" y="2" width="8" height="9" rx="2" />
+                      </svg>
+                    </button>
                   </div>
                   <div>
                     <span className="paper-meta-label">Floor</span>
