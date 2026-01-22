@@ -106,6 +106,10 @@ function resolveContractAddress(chainIdOverride?: number): string {
         return extracted;
       }
     }
+    const fallback = FALLBACK_CONTRACT_BY_CHAIN[chainId];
+    if (fallback) {
+      return fallback;
+    }
   }
   const direct =
     readEnv("CUBIXLES_CONTRACT_ADDRESS") ?? readEnv("CUBIXLES_CONTRACT");
