@@ -466,6 +466,28 @@ export function initMintUi() {
 
   async function ensureWalletConnected() {
     if (walletState?.status === "connected") {
+      const provider = walletState.provider;
+      if (provider?.request) {
+        try {
+          await provider.request({ method: "eth_chainId" });
+          return true;
+        } catch (error) {
+          const message =
+            error?.message || error?.error?.message || error?.info?.error?.message || "";
+          if (/connect\\(\\) before request/i.test(message)) {
+            try {
+              await requestWalletConnection();
+            } catch (requestError) {
+              void requestError;
+            }
+            const reconnected = await waitForWalletConnection();
+            if (!reconnected) {
+              setStatus("Connect your wallet to mint.", "error");
+            }
+            return reconnected;
+          }
+        }
+      }
       return true;
     }
     setStatus("Connect your wallet to continue.");
