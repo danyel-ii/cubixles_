@@ -356,6 +356,11 @@ export default function AppShell({ mode = "mint" }) {
                 ></code>{" "}
                 on CubixlesBuilderMinter to find your royalty forwarder.
               </li>
+              <li>
+                <a className="ui-link" href="/royalties">
+                  Set your royalty splits
+                </a>
+              </li>
             </ol>
           </div>
         </div>
@@ -560,6 +565,9 @@ export default function AppShell({ mode = "mint" }) {
               rel="noreferrer"
             >
               <img src="https://static.seadn.io/logos/Logomark-Blue.png" alt="OpenSea" />
+            </a>
+            <a className="minted-link minted-link--text" href="/royalties">
+              Royalties
             </a>
           </div>
           <a

@@ -23,6 +23,7 @@ cubixles_ is a Next.js miniapp for minting ERC-721 cubes whose faces are linked 
 - `docs/operations.md`
 - `docs/transactions_flow.md`
 - `docs/royalty_setter.md`
+- [Setting Your Builder Royalty Forwarder](docs/setting-your-royalty.md)
 
 ## Support
 See `SUPPORT.md` for defect reporting and help channels.
