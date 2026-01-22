@@ -8,6 +8,8 @@ import { nftRequestSchema, readJsonWithLimit, formatZodError } from "../../../sr
 import { getCache, setCache } from "../../../src/server/cache.js";
 import { recordMetric } from "../../../src/server/metrics.js";
 import { getBuilderContractAddress } from "../../../src/server/builder-config.js";
+import baseDeployment from "../../../contracts/deployments/base.json";
+import mainnetDeployment from "../../../contracts/deployments/mainnet.json";
 
 const NFT_API_VERSION = "v3";
 const CACHE_TTL_MS = 60_000;
@@ -52,6 +54,9 @@ function getRpcAllowlist() {
   );
   const defaults = [
     process.env.CUBIXLES_CONTRACT_ADDRESS,
+    process.env.CUBIXLES_BASE_CONTRACT_ADDRESS,
+    mainnetDeployment?.address,
+    baseDeployment?.address,
     process.env.CUBIXLES_LESS_TOKEN,
     process.env.LESS_TOKEN_CONTRACT_ADDRESS,
     ...builderAddresses,
