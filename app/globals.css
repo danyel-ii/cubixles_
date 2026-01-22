@@ -184,7 +184,7 @@ body.is-intro #paperclip-panel {
   border-radius: 8px;
   background: var(--paper);
   border: 3px solid var(--line);
-  color: var(--ink-muted);
+  color: var(--neon-magenta);
   font-size: 12px;
   max-width: 260px;
   pointer-events: auto;
@@ -192,7 +192,7 @@ body.is-intro #paperclip-panel {
 }
 
 .token-view-status.is-error {
-  color: rgba(var(--status-error-rgb), 0.95);
+  color: var(--neon-magenta);
 }
 
 .token-floor-panel {
@@ -331,6 +331,11 @@ body.is-intro #paperclip-panel {
   border-color: rgba(var(--status-error-rgb), 0.6);
 }
 
+.toast-error .toast-title,
+.toast-error .toast-body {
+  color: var(--neon-magenta);
+}
+
 .toast-title {
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -356,7 +361,7 @@ body.is-intro #paperclip-panel {
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--neon-magenta);
   text-decoration: none;
 }
 
@@ -1413,6 +1418,14 @@ button.ui-button {
   font-family: var(--font-mono);
 }
 
+.mint-confirm .ui-link {
+  color: var(--neon-magenta);
+}
+
+.mint-confirm .ui-link:hover {
+  text-decoration: underline;
+}
+
 .mint-confirm-wait {
   color: var(--neon-magenta);
   font-weight: 600;
@@ -1632,7 +1645,7 @@ button.ui-button {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-family: var(--font-mono);
-  color: var(--ink-soft);
+  color: var(--neon-magenta);
 }
 
 .paperclip-canvas-wrap {
@@ -1675,7 +1688,7 @@ body.is-minted .preview-bar {
 .ui-hint {
   margin-top: 6px;
   font-size: 11px;
-  color: var(--ink-soft);
+  color: var(--neon-magenta);
   font-family: var(--font-mono);
 }
 
@@ -1735,11 +1748,11 @@ body.is-minted .preview-bar {
 }
 
 .ui-hint.is-error {
-  color: rgba(var(--status-error-rgb), 0.95);
+  color: var(--neon-magenta);
 }
 
 .ui-hint.is-success {
-  color: rgba(var(--status-success-rgb), 0.95);
+  color: var(--neon-magenta);
 }
 
 .ui-hint.is-stay {
@@ -1748,13 +1761,13 @@ body.is-minted .preview-bar {
   border-radius: 10px;
   background: rgba(var(--status-info-rgb), 0.22);
   border: 1px solid rgba(var(--status-info-rgb), 0.55);
-  color: var(--ink);
+  color: var(--neon-magenta);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .ui-hint.is-accent {
-  color: rgba(var(--status-warn-rgb), 0.92);
+  color: var(--neon-magenta);
 }
 
 .confetti-root {

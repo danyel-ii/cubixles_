@@ -134,6 +134,12 @@ function formatError(error, { iface } = {}) {
     return "Transaction cancelled in wallet.";
   }
   if (
+    code === -32002 ||
+    /request already pending|already processing/i.test(message)
+  ) {
+    return "Wallet request already pending. Open your wallet to continue.";
+  }
+  if (
     code === "INSUFFICIENT_FUNDS" ||
     code === -32000 ||
     /insufficient funds/i.test(message)
@@ -501,6 +507,49 @@ export function initMintUi() {
       setStatus("Connect your wallet to mint.", "error");
     }
     return connected;
+  }
+
+  async function getWriteContext(stepLabel) {
+    const connected = await ensureWalletConnected();
+    if (!connected) {
+      throw new Error(`Connect your wallet to ${stepLabel}.`);
+    }
+    const provider = new BrowserProvider(walletState.provider);
+    const walletNetwork = await provider.getNetwork();
+    const walletChainId = Number(walletNetwork.chainId);
+    if (!Number.isFinite(walletChainId) || walletChainId <= 0) {
+      throw new Error("Unable to detect wallet network. Try reconnecting.");
+    }
+    if (!isSupportedChainId(walletChainId)) {
+      throw new Error("Unsupported wallet network. Switch to mainnet or Base.");
+    }
+    if (walletChainId !== CUBIXLES_CONTRACT.chainId) {
+      setStatus(
+        `Approve network switch to ${formatChainName(
+          CUBIXLES_CONTRACT.chainId
+        )} in your wallet.`,
+        "error"
+      );
+      const switched = await switchToActiveChain();
+      if (!switched) {
+        throw new Error(
+          `Wallet on ${formatChainName(walletChainId)}. Switch to ${formatChainName(
+            CUBIXLES_CONTRACT.chainId
+          )} to ${stepLabel}.`
+        );
+      }
+      const refreshedNetwork = await provider.getNetwork();
+      const refreshedChainId = Number(refreshedNetwork.chainId);
+      if (refreshedChainId !== CUBIXLES_CONTRACT.chainId) {
+        throw new Error(
+          `Wallet on ${formatChainName(refreshedChainId)}. Switch to ${formatChainName(
+            CUBIXLES_CONTRACT.chainId
+          )} to ${stepLabel}.`
+        );
+      }
+      return { provider, walletChainId: refreshedChainId };
+    }
+    return { provider, walletChainId };
   }
 
   function getToastRoot() {
@@ -1047,6 +1096,7 @@ export function initMintUi() {
       return;
     }
     let contract = null;
+    let didError = false;
     isMinting = true;
     mintButton.classList.add("is-hooked");
     if (state.nftSelection.length < 1 || state.nftSelection.length > 6) {
@@ -1063,37 +1113,10 @@ export function initMintUi() {
     setStatus("Preparing mint steps...");
     try {
       await refreshFloorSnapshot(true);
-      const provider = new BrowserProvider(walletState.provider);
-      const walletNetwork = await provider.getNetwork();
-      const walletChainId = Number(walletNetwork.chainId);
-      if (!isSupportedChainId(walletChainId)) {
-        throw new Error("Unsupported wallet network. Switch to mainnet or Base.");
-      }
-      if (walletChainId !== CUBIXLES_CONTRACT.chainId) {
-        setStatus(
-          `Approve network switch to ${formatChainName(
-            CUBIXLES_CONTRACT.chainId
-          )} in your wallet.`,
-          "error"
-        );
-        const switched = await switchToActiveChain();
-        if (!switched) {
-          throw new Error(
-            `Wallet on ${formatChainName(walletChainId)}. Switch to ${formatChainName(
-              CUBIXLES_CONTRACT.chainId
-            )} to mint.`
-          );
-        }
-        const refreshedNetwork = await provider.getNetwork();
-        const refreshedChainId = Number(refreshedNetwork.chainId);
-        if (refreshedChainId !== CUBIXLES_CONTRACT.chainId) {
-          throw new Error(
-            `Wallet on ${formatChainName(refreshedChainId)}. Switch to ${formatChainName(
-              CUBIXLES_CONTRACT.chainId
-            )} to mint.`
-          );
-        }
-      }
+      let provider = null;
+      let walletChainId = null;
+      let signer = null;
+      ({ provider, walletChainId } = await getWriteContext("mint"));
       const readProvider = await getReadProvider();
       if (!readProvider) {
         throw new Error("Read-only RPC unavailable. Try again shortly.");
@@ -1110,7 +1133,7 @@ export function initMintUi() {
       if (!currentMintPriceWei) {
         throw new Error("Mint price unavailable. Try again shortly.");
       }
-      const signer = await provider.getSigner();
+      signer = await provider.getSigner();
       const readContract = new Contract(
         CUBIXLES_CONTRACT.address,
         CUBIXLES_CONTRACT.abi,
@@ -1330,6 +1353,13 @@ export function initMintUi() {
         address: walletState.address,
       });
       const metadataHash = normalizeBytes32(rawMetadataHash, "Metadata hash");
+      ({ provider, walletChainId } = await getWriteContext("commit metadata"));
+      signer = await provider.getSigner();
+      contract = new Contract(
+        CUBIXLES_CONTRACT.address,
+        CUBIXLES_CONTRACT.abi,
+        signer
+      );
       const metadataCommitted = Boolean(
         commitState?.metadataCommitted ?? commitState?.[6]
       );
@@ -1400,6 +1430,13 @@ export function initMintUi() {
       state.currentCubeTokenId = tokenId;
       document.dispatchEvent(new CustomEvent("cube-token-change"));
       const mintValueWei = currentMintPriceWei;
+      ({ provider, walletChainId } = await getWriteContext("mint"));
+      signer = await provider.getSigner();
+      contract = new Contract(
+        CUBIXLES_CONTRACT.address,
+        CUBIXLES_CONTRACT.abi,
+        signer
+      );
       const overrides = { value: mintValueWei };
       await ensureBalanceForMint({
         provider,
@@ -1468,6 +1505,7 @@ export function initMintUi() {
       const message = formatError(error, {
         iface: contract?.interface || CUBIXLES_INTERFACE,
       });
+      didError = true;
       setStatus(message, "error");
       showToast({
         title: "Mint failed",
@@ -1478,7 +1516,9 @@ export function initMintUi() {
       setCommitProgress(false);
       setDisabled(false);
       refreshCommitPresence();
-      updateEligibility();
+      if (!didError) {
+        updateEligibility();
+      }
       isMinting = false;
     }
   }
