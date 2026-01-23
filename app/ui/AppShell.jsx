@@ -119,6 +119,10 @@ export default function AppShell({ mode = "mint" }) {
                     an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
                     interactive cube,
                   </li>
+                  <li>
+                    a generative paperclipping (.png) that is unique to your wallet address and
+                    this interaction.
+                  </li>
                   <li>and your right to set future royalties in the splitter contract.</li>
                 </ul>
                 <p className="overlay-text">
@@ -133,6 +137,10 @@ export default function AppShell({ mode = "mint" }) {
                   <li>
                     an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
                     interactive cube.
+                  </li>
+                  <li>
+                    a generative paperclipping (.png) that is unique to your wallet address and
+                    this interaction.
                   </li>
                   <li>the right to set the per-token royalty forwarding contract (builder mints).</li>
                 </ul>
