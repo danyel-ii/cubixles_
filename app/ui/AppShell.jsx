@@ -166,9 +166,12 @@ export default function AppShell({ mode = "mint" }) {
               <>
                 <p className="overlay-text">
                   <span className="overlay-em">Builder mints</span> cost 0.0055 ETH + 5% of the
-                  snapshot floor total (0.01 ETH fallback per face).
+                  snapshot floor total (0.01 ETH fallback per face). 8.5% of total mint fees goes
+                  to EACH of the linked projects (that's 51% in total to the projects you choose
+                  when linking 6 NFTs to your cubixles_).<sup>1</sup>
                 </p>
-                <p className="overlay-text">
+                <p className="overlay-text overlay-footnote">
+                  <sup>1</sup>
                   <span className="overlay-em">Bootlegger mints</span> follow a legacy pricing
                   system that depends on the active network.
                 </p>

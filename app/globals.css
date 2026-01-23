@@ -510,6 +510,19 @@ body.is-intro #paperclip-panel {
   line-height: 1.4;
 }
 
+.overlay-text sup {
+  font-size: 0.7em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin-right: 4px;
+  vertical-align: super;
+}
+
+.overlay-footnote {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
 .overlay-em {
   color: var(--ink);
 }
