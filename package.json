@@ -9,7 +9,10 @@
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 3000",
     "build": "next build",
+    "postbuild": "npm run build:cubixles_scape",
     "start": "next start",
+    "dev:cubixles_scape": "npm --workspace apps/cubixles_scape run dev",
+    "build:cubixles_scape": "npm --workspace apps/cubixles_scape run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "playwright test",
@@ -43,10 +46,12 @@
     "@upstash/redis": "^1.32.0",
     "@walletconnect/ethereum-provider": "^2.23.1",
     "buffer": "^6.0.3",
+    "cannon-es": "^0.20.0",
     "ethers": "^6.16.0",
     "gif-encoder-2": "^1.0.5",
     "p5": "^1.9.2",
     "qrcode": "1.5.3",
+    "three": "^0.182.0",
     "zod": "^3.23.8"
   },
   "overrides": {

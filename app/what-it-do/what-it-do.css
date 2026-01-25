@@ -1,0 +1,112 @@
+:root {
+  --where-to-bg: #0f0b12;
+  --where-to-panel: rgba(18, 14, 23, 0.9);
+  --where-to-line: rgba(255, 255, 255, 0.12);
+  --where-to-text: #f7ece6;
+  --where-to-accent: #ff2eb4;
+}
+
+.where-to-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 46, 180, 0.12), transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(46, 231, 255, 0.08), transparent 35%),
+    var(--where-to-bg);
+  color: var(--where-to-text);
+  display: flex;
+  flex-direction: column;
+}
+
+.where-to-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px clamp(20px, 4vw, 64px);
+  border-bottom: 1px solid var(--where-to-line);
+  background: var(--where-to-panel);
+}
+
+.where-to-title {
+  font-size: clamp(22px, 2.6vw, 32px);
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+}
+
+.where-to-subtitle {
+  font-size: 14px;
+  color: rgba(247, 236, 230, 0.7);
+}
+
+.where-to-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.where-to-toggle {
+  border: 1px solid var(--where-to-line);
+  background: transparent;
+  color: inherit;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.where-to-toggle.is-active {
+  border-color: var(--where-to-accent);
+  box-shadow: 0 0 12px rgba(255, 46, 180, 0.3);
+}
+
+.where-to-stage {
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr;
+  padding: 16px clamp(16px, 3vw, 48px) 32px;
+}
+
+.where-to-frame {
+  width: 100%;
+  height: 100%;
+  min-height: min(72vh, 820px);
+  border-radius: 18px;
+  border: 1px solid var(--where-to-line);
+  background: rgba(12, 9, 15, 0.8);
+  overflow: hidden;
+  position: relative;
+}
+
+.where-to-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.where-to-lite {
+  width: 100%;
+  height: 100%;
+}
+
+.where-to-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.where-to-links a {
+  color: var(--where-to-text);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 720px) {
+  .where-to-stage {
+    padding: 12px 12px 24px;
+  }
+  .where-to-frame {
+    min-height: 60vh;
+  }
+}
