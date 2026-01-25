@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 3000",
     "build": "npm run build:cubixles_scape && next build",
+    "postinstall": "node scripts/vercel-postinstall.mjs",
     "start": "next start",
     "dev:cubixles_scape": "npm --workspace apps/cubixles_scape run dev",
     "build:cubixles_scape": "npm --workspace apps/cubixles_scape run build",
