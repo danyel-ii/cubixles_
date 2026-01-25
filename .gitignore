@@ -33,3 +33,4 @@ contracts/lcov.info
 .env*.local
 test-results/
 apps/cubixles_scape/.git.bak/
+apps/public/

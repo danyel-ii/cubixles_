@@ -24,7 +24,7 @@ export default {
     },
     build:
     {
-        outDir: '../../public/what-it-do/cubixles_scape', // Output in the Next public folder
+        outDir: '../../../public/what-it-do/cubixles_scape', // Output in the Next public folder
         emptyOutDir: true, // Empty the folder first
         sourcemap: false // Add sourcemap
     },
