@@ -31,6 +31,7 @@ export class AltarArea extends Area
         this.setBeamParticles()
         this.setGlyphs()
         this.setCounter()
+        this.setNakamigoLeaflets()
         this.setDeathZone()
         this.setData()
         this.setAchievement()
@@ -446,6 +447,76 @@ export class AltarArea extends Area
         )
     }
 
+    setNakamigoLeaflets()
+    {
+        const totalImages = 1200
+        const count = 12
+        const picked = new Set()
+
+        while(picked.size < count)
+        {
+            picked.add(Math.floor(Math.random() * totalImages))
+        }
+
+        this.nakamigoLeaflets = []
+        this.nakamigoGroup = new THREE.Group()
+        this.nakamigoGroup.position.copy(this.position)
+        this.game.scene.add(this.nakamigoGroup)
+        this.objects.hideable.push(this.nakamigoGroup)
+
+        const geometry = new THREE.PlaneGeometry(1, 1)
+        const loader = this.game.resourcesLoader.getLoader('texture')
+
+        for(const index of picked)
+        {
+            const material = new THREE.MeshStandardMaterial({
+                transparent: true,
+                depthWrite: false,
+                roughness: 0.6,
+                metalness: 0,
+                side: THREE.DoubleSide,
+                alphaTest: 0.15
+            })
+
+            loader.load(`/assets/images/${index}.png`, (texture) =>
+            {
+                texture.colorSpace = THREE.SRGBColorSpace
+                texture.flipY = false
+                texture.minFilter = THREE.LinearFilter
+                texture.magFilter = THREE.LinearFilter
+                texture.generateMipmaps = false
+                material.map = texture
+                material.needsUpdate = true
+            })
+
+            const mesh = new THREE.Mesh(geometry, material)
+            const radius = 3.2 + Math.random() * 2.4
+            const baseHeight = 1.6 + Math.random() * 1.8
+            const baseAngle = Math.random() * Math.PI * 2
+            const orbitSpeed = 0.15 + Math.random() * 0.25
+            const bobAmplitude = 0.25 + Math.random() * 0.35
+            const waveOffset = Math.random() * Math.PI * 2
+            const spinSpeed = (Math.random() - 0.5) * 0.5
+            const scale = 0.55 + Math.random() * 0.4
+
+            mesh.scale.set(scale, scale, 1)
+            mesh.position.set(Math.cos(baseAngle) * radius, baseHeight, Math.sin(baseAngle) * radius)
+            mesh.rotation.set(0, -baseAngle + Math.PI * 0.5, (Math.random() - 0.5) * 0.6)
+
+            this.nakamigoGroup.add(mesh)
+            this.nakamigoLeaflets.push({
+                mesh,
+                radius,
+                baseHeight,
+                baseAngle,
+                orbitSpeed,
+                bobAmplitude,
+                waveOffset,
+                spinSpeed
+            })
+        }
+    }
+
     setData()
     {
         this.data = {}
@@ -537,6 +608,30 @@ export class AltarArea extends Area
                 }
             }
         )
+    }
+
+    update()
+    {
+        if(!this.nakamigoLeaflets)
+            return
+
+        const time = this.game.ticker.elapsed
+
+        for(const leaflet of this.nakamigoLeaflets)
+        {
+            const angle = leaflet.baseAngle + time * leaflet.orbitSpeed
+            const bob = Math.sin(time * 1.6 + leaflet.waveOffset) * leaflet.bobAmplitude
+            const sway = Math.sin(time * 2.1 + leaflet.waveOffset) * 0.35
+            const roll = Math.cos(time * 1.3 + leaflet.waveOffset) * 0.25
+
+            leaflet.mesh.position.x = Math.cos(angle) * leaflet.radius
+            leaflet.mesh.position.z = Math.sin(angle) * leaflet.radius
+            leaflet.mesh.position.y = leaflet.baseHeight + bob
+
+            leaflet.mesh.rotation.y = -angle + Math.PI * 0.5
+            leaflet.mesh.rotation.x = sway
+            leaflet.mesh.rotation.z = roll + time * leaflet.spinSpeed
+        }
     }
 
     setAchievement()

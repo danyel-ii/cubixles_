@@ -97,7 +97,9 @@ export function middleware(request) {
   const reportUrl = new URL(reportUri, request.nextUrl.origin).toString();
   const isProd =
     process.env.NODE_ENV === "production" && process.env.VERCEL_ENV !== "preview";
-  const allowInline = request.nextUrl.pathname.startsWith("/m2/preview");
+  const pathname = request.nextUrl.pathname;
+  const allowInline =
+    pathname.startsWith("/m2/preview") || pathname.startsWith("/what-it-do");
   const csp = buildCsp({
     nonce,
     frameAncestors,
