@@ -154,14 +154,18 @@ export class AltarArea extends Area
             const outer = smoothstep(0.40, 0.415, dist).oneMinus()
             const inner = smoothstep(0.315, 0.33, dist)
             const ringMask = outer.mul(inner)
+            const discMask = smoothstep(0.47, 0.5, dist).oneMinus()
             const textMask = texture(nodeTexture, baseUv).r
-            const logoMask = ringMask.mul(textMask)
+            const highlightMask = max(ringMask, textMask)
 
             const gooColor = this.game.fog.strength.mix(vec3(0), this.game.fog.color) // Fog
 
-            const emissiveColor = this.color.mul(this.emissive)
-            
-            const finalColor = mix(gooColor, emissiveColor, logoMask)
+            const paletteColor = texture(this.game.resources.altarPaletteTexture, baseUv).rgb
+            const baseColor = paletteColor.mul(0.65)
+            const highlightColor = paletteColor.mul(1.05)
+            const altarColor = mix(baseColor, highlightColor, highlightMask)
+
+            const finalColor = mix(gooColor, altarColor, discMask)
 
             return vec4(finalColor, 1)
         })()

@@ -301,6 +301,25 @@ export default function WorldScene() {
       emissive: new THREE.Color(0x1a0f1a),
       emissiveIntensity: 0.15,
     });
+    let cpnTexture = null;
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(
+      "/assets/CPN.png",
+      (tex) => {
+        if (disposed) {
+          tex.dispose();
+          return;
+        }
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.ClampToEdgeWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        groundMat.map = tex;
+        groundMat.needsUpdate = true;
+        cpnTexture = tex;
+      },
+      undefined,
+      () => {}
+    );
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     scene.add(ground);
@@ -976,6 +995,9 @@ export default function WorldScene() {
       }
       if (audioCtx) {
         audioCtx.close?.();
+      }
+      if (cpnTexture) {
+        cpnTexture.dispose();
       }
       renderer.dispose();
       mount.removeChild(renderer.domElement);
