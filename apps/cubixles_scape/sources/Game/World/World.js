@@ -67,25 +67,59 @@ export class World
             this.fireballs = new Fireballs()
             this.snow = new Snow()
             this.visualTornado = new VisualTornado()
-            this.bushes = new Bushes()
-            this.birchTrees = new Trees('Birch Tree', this.game.resources.birchTreesVisualModel.scene, this.game.resources.birchTreesReferencesModel.scene.children, '#ff4f2b', '#ff903f')
-            this.oakTrees = new Trees('Oak Tree', this.game.resources.oakTreesVisualModel.scene, this.game.resources.oakTreesReferencesModel.scene.children, '#b4b536', '#d8cf3b')
-            this.cherryTrees = new Trees('Cherry Tree', this.game.resources.cherryTreesVisualModel.scene, this.game.resources.cherryTreesReferencesModel.scene.children, '#ff6d6d', '#ff9990')
-            this.flowers = new Flowers()
-            this.bricks = new Bricks()
-            this.fences = new Fences()
-            this.benches = new Benches()
-            this.explosiveCrates = new ExplosiveCrates()
-            this.poleLights = new PoleLights()
-            this.lanterns = new Lanterns()
-            this.scenery = new Scenery()
-            this.areas = new Areas()
-            this.skinStation = new SkinStation()
+            this.loadDecorations()
         }
         else if(step === 2)
         {
             this.whispers = new Whispers()
         }
+    }
+
+    loadDecorations()
+    {
+        const resources = this.game.resources
+
+        if(!this.bushes && resources.bushesReferences && resources.foliageTexture)
+            this.bushes = new Bushes()
+
+        if(!this.birchTrees && resources.birchTreesVisualModel && resources.birchTreesReferencesModel)
+            this.birchTrees = new Trees('Birch Tree', resources.birchTreesVisualModel.scene, resources.birchTreesReferencesModel.scene.children, '#ff4f2b', '#ff903f')
+
+        if(!this.oakTrees && resources.oakTreesVisualModel && resources.oakTreesReferencesModel)
+            this.oakTrees = new Trees('Oak Tree', resources.oakTreesVisualModel.scene, resources.oakTreesReferencesModel.scene.children, '#b4b536', '#d8cf3b')
+
+        if(!this.cherryTrees && resources.cherryTreesVisualModel && resources.cherryTreesReferencesModel)
+            this.cherryTrees = new Trees('Cherry Tree', resources.cherryTreesVisualModel.scene, resources.cherryTreesReferencesModel.scene.children, '#ff6d6d', '#ff9990')
+
+        if(!this.flowers && resources.flowersReferencesModel && resources.foliageTexture)
+            this.flowers = new Flowers()
+
+        if(!this.bricks && resources.bricksModel)
+            this.bricks = new Bricks()
+
+        if(!this.fences && resources.fencesModel)
+            this.fences = new Fences()
+
+        if(!this.benches && resources.benchesModel)
+            this.benches = new Benches()
+
+        if(!this.explosiveCrates && resources.explosiveCratesModel)
+            this.explosiveCrates = new ExplosiveCrates()
+
+        if(!this.poleLights && resources.poleLightsModel)
+            this.poleLights = new PoleLights()
+
+        if(!this.lanterns && resources.lanternsModel)
+            this.lanterns = new Lanterns()
+
+        if(!this.scenery && resources.sceneryModel)
+            this.scenery = new Scenery()
+
+        if(!this.areas && resources.areasModel)
+            this.areas = new Areas()
+
+        if(!this.skinStation && resources.areasModel)
+            this.skinStation = new SkinStation()
     }
 
     setPhysicalFloor()

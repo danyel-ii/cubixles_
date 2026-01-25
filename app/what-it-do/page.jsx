@@ -1,6 +1,6 @@
  "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./what-it-do.css";
 
 const CUBIXLES_SCAPE_URL =
@@ -9,6 +9,7 @@ const CUBIXLES_SCAPE_URL =
 
 export default function WhatItDoPage() {
   const iframeRef = useRef(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -19,6 +20,7 @@ export default function WhatItDoPage() {
       } catch {
         // ignore
       }
+      setLoading(false);
     };
     iframe.addEventListener("load", handleLoad);
     return () => {
@@ -33,6 +35,10 @@ export default function WhatItDoPage() {
           className="where-to-frame"
           onClick={() => iframeRef.current?.contentWindow?.focus()}
         >
+          <div className={`where-to-loading ${loading ? "" : "is-hidden"}`}>
+            <div className="spinner" />
+            <div>Loading cubixles_scape</div>
+          </div>
           <iframe
             title="cubixles_scape"
             src={CUBIXLES_SCAPE_URL}

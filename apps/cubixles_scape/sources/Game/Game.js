@@ -120,50 +120,15 @@ export class Game
         // Load and init RAPIER
         const rapierPromise = import('@dimforge/rapier3d')
 
-        // Load rest of resources
-        const resourcesPromise = this.resourcesLoader.load(
+        const coreResourcesPromise = this.resourcesLoader.load(
             [
-                [ 'foliageTexture',                        'foliage/foliageSDF.ktx',                                     'textureKtx', (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false; } ],
-                [ 'bushesReferences',                      'bushes/bushesReferences-compressed.glb',                     'gltf' ],
-                [ 'vehicle',                               'vehicle/default-compressed.glb',                             'gltf' ],
-                [ 'playgroundVisual',                      'playground/playgroundVisual-compressed.glb',                 'gltf' ],
-                [ 'playgroundPhysical',                    'playground/playgroundPhysical-compressed.glb',               'gltf' ],
-                [ 'flowersReferencesModel',                'flowers/flowersReferences-compressed.glb',                   'gltf' ],
-                [ 'bricksModel',                           'bricks/bricks-compressed.glb',                               'gltf' ],
-                [ 'fencesModel',                           'fences/fences-compressed.glb',                               'gltf' ],
-                [ 'benchesModel',                          'benches/benches-compressed.glb',                             'gltf' ],
-                [ 'explosiveCratesModel',                  'explosiveCrates/explosiveCrates-compressed.glb',             'gltf' ],
-                [ 'lanternsModel',                         'lanterns/lanterns-compressed.glb',                           'gltf' ],
                 [ 'terrainTexture',                        'terrain/terrain.ktx',                                        'textureKtx', (resource) => { resource.flipY = false; } ],
                 [ 'terrainModel',                          'terrain/terrain-compressed.glb',                             'gltf' ],
                 [ 'floorSlabsTexture',                     'floor/slabs.ktx',                                            'textureKtx', (resource) => { resource.wrapS = THREE.RepeatWrapping; resource.wrapT = THREE.RepeatWrapping; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false } ],
-                [ 'birchTreesVisualModel',                 'birchTrees/birchTreesVisual-compressed.glb',                 'gltf' ],
-                [ 'birchTreesReferencesModel',             'birchTrees/birchTreesReferences-compressed.glb',             'gltf' ],
-                [ 'oakTreesVisualModel',                   'oakTrees/oakTreesVisual-compressed.glb',                     'gltf' ],
-                [ 'oakTreesReferencesModel',               'oakTrees/oakTreesReferences.glb',                            'gltf'    ],
-                [ 'cherryTreesVisualModel',                'cherryTrees/cherryTreesVisual-compressed.glb',               'gltf' ],
-                [ 'cherryTreesReferencesModel',            'cherryTrees/cherryTreesReferences-compressed.glb',           'gltf' ],
-                [ 'sceneryModel',                          'scenery/scenery-compressed.glb',                             'gltf' ],
-                [ 'areasModel',                            'areas/areas-compressed.glb',                                 'gltf' ],
-                [ 'poleLightsModel',                       'poleLights/poleLights-compressed.glb',                       'gltf' ],
-                [ 'whisperFlameTexture',                   'whispers/whisperFlame.ktx',                                  'textureKtx', (resource) => { resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false } ],
-                [ 'altarLogoTexture',                      'areas/founding-grant.webp',                                  'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
-                [ 'altarPaletteTexture',                   'areas/Punk_colors_HR.png',                                   'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
-                [ 'tornadoPathReferencesModel',            'tornado/tornadoPathReferences-compressed.glb',               'gltf' ],
                 [ 'overlayPatternTexture',                 'overlay/overlayPattern.ktx',                                 'textureKtx', (resource) => { resource.wrapS = THREE.RepeatWrapping; resource.wrapT = THREE.RepeatWrapping; resource.magFilter = THREE.NearestFilter; resource.minFilter = THREE.NearestFilter; resource.generateMipmaps = false } ],
                 [ 'interactivePointsKeyIconCrossTexture',  'interactivePoints/interactivePointsKeyIconCross.ktx',        'textureKtx', (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false } ],
                 [ 'interactivePointsKeyIconEnterTexture',  'interactivePoints/interactivePointsKeyIconEnter.ktx',        'textureKtx', (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false } ],
                 [ 'interactivePointsKeyIconATexture',      'interactivePoints/interactivePointsKeyIconA.ktx',            'textureKtx', (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false } ],
-                [ 'jukeboxMusicNotes',                     'jukebox/jukeboxMusicNotes.ktx',                              'textureKtx', (resource) => { resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false } ],
-                [ 'achievementsGlyphsTexture',             'achievements/glyphs.ktx',                                    'textureKtx', (resource) => { resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.RepeatWrapping; } ],
-                [ 'careerFreelancerTexture',               'career/careerFreelancer.png',                                'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
-                [ 'careerHeticTexture',                    'career/careerHetic.png',                                     'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
-                [ 'careerImmersiveGardenTexture',          'career/careerImmersiveGarden.png',                           'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
-                [ 'careerIRLTeacherTexture',               'career/careerIRLTeacher.png',                                'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
-                [ 'careerOnlineTeacherTexture',            'career/careerOnlineTeacher.png',                             'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
-                [ 'careerUzikTexture',                     'career/careerUzik.png',                                      'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
-                [ 'timeMachineScreenMGSTexture',           'timeMachine/timeMachineScreenMGS.ktx',                       'textureKtx', (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; resource.colorSpace = THREE.SRGBColorSpace; } ],
-                [ 'timeMachineScreenFolioTexture',         'timeMachine/timeMachineScreenFolio.ktx',                     'textureKtx', (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; resource.colorSpace = THREE.SRGBColorSpace; } ],
             ],
             (toLoad, total) =>
             {
@@ -171,9 +136,9 @@ export class Game
             }
         )
 
-        const [ newResources, RAPIER ] = await Promise.all([ resourcesPromise, rapierPromise ])
+        const [ coreResources, RAPIER ] = await Promise.all([ coreResourcesPromise, rapierPromise ])
         this.RAPIER = RAPIER
-        this.resources = { ...newResources, ...this.resources }
+        this.resources = { ...coreResources, ...this.resources }
 
         this.terrain = new Terrain()
         this.physics = new Physics()
@@ -186,7 +151,6 @@ export class Game
         this.overlay = new Overlay()
         this.konamiCode = new KonamiCode()
         this.achievements = new Achievements()
-        this.tornado = new Tornado()
         this.map = new Map()
         this.title = new Title()
         // this.monitoring = new Monitoring()
@@ -206,6 +170,54 @@ export class Game
         {
             this.achievements.setProgress('debug', 1)
         }
+
+        const deferredResourcesPromise = this.resourcesLoader.load(
+            [
+                [ 'foliageTexture',                        'foliage/foliageSDF.ktx',                                     'textureKtx', (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false; } ],
+                [ 'bushesReferences',                      'bushes/bushesReferences-compressed.glb',                     'gltf' ],
+                [ 'vehicle',                               'vehicle/default-compressed.glb',                             'gltf' ],
+                [ 'flowersReferencesModel',                'flowers/flowersReferences-compressed.glb',                   'gltf' ],
+                [ 'bricksModel',                           'bricks/bricks-compressed.glb',                               'gltf' ],
+                [ 'fencesModel',                           'fences/fences-compressed.glb',                               'gltf' ],
+                [ 'benchesModel',                          'benches/benches-compressed.glb',                             'gltf' ],
+                [ 'explosiveCratesModel',                  'explosiveCrates/explosiveCrates-compressed.glb',             'gltf' ],
+                [ 'lanternsModel',                         'lanterns/lanterns-compressed.glb',                           'gltf' ],
+                [ 'birchTreesVisualModel',                 'birchTrees/birchTreesVisual-compressed.glb',                 'gltf' ],
+                [ 'birchTreesReferencesModel',             'birchTrees/birchTreesReferences-compressed.glb',             'gltf' ],
+                [ 'oakTreesVisualModel',                   'oakTrees/oakTreesVisual-compressed.glb',                     'gltf' ],
+                [ 'oakTreesReferencesModel',               'oakTrees/oakTreesReferences.glb',                            'gltf'    ],
+                [ 'cherryTreesVisualModel',                'cherryTrees/cherryTreesVisual-compressed.glb',               'gltf' ],
+                [ 'cherryTreesReferencesModel',            'cherryTrees/cherryTreesReferences-compressed.glb',           'gltf' ],
+                [ 'sceneryModel',                          'scenery/scenery-compressed.glb',                             'gltf' ],
+                [ 'areasModel',                            'areas/areas-compressed.glb',                                 'gltf' ],
+                [ 'poleLightsModel',                       'poleLights/poleLights-compressed.glb',                       'gltf' ],
+                [ 'whisperFlameTexture',                   'whispers/whisperFlame.ktx',                                  'textureKtx', (resource) => { resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false } ],
+                [ 'altarLogoTexture',                      'areas/founding-grant.webp',                                  'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
+                [ 'altarPaletteTexture',                   'areas/Punk_colors_HR.png',                                   'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
+                [ 'tornadoPathReferencesModel',            'tornado/tornadoPathReferences-compressed.glb',               'gltf' ],
+                [ 'jukeboxMusicNotes',                     'jukebox/jukeboxMusicNotes.ktx',                              'textureKtx', (resource) => { resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false } ],
+                [ 'achievementsGlyphsTexture',             'achievements/glyphs.ktx',                                    'textureKtx', (resource) => { resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.RepeatWrapping; } ],
+                [ 'careerFreelancerTexture',               'career/careerFreelancer.png',                                'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
+                [ 'careerHeticTexture',                    'career/careerHetic.png',                                     'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
+                [ 'careerImmersiveGardenTexture',          'career/careerImmersiveGarden.png',                           'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
+                [ 'careerIRLTeacherTexture',               'career/careerIRLTeacher.png',                                'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
+                [ 'careerOnlineTeacherTexture',            'career/careerOnlineTeacher.png',                             'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
+                [ 'careerUzikTexture',                     'career/careerUzik.png',                                      'texture', (resource) => { resource.colorSpace = THREE.SRGBColorSpace; resource.flipY = false; resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; } ],
+                [ 'timeMachineScreenMGSTexture',           'timeMachine/timeMachineScreenMGS.ktx',                       'textureKtx', (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; resource.colorSpace = THREE.SRGBColorSpace; } ],
+                [ 'timeMachineScreenFolioTexture',         'timeMachine/timeMachineScreenFolio.ktx',                     'textureKtx', (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false; resource.wrapS = THREE.ClampToEdgeWrapping; resource.wrapT = THREE.ClampToEdgeWrapping; resource.colorSpace = THREE.SRGBColorSpace; } ],
+            ]
+        )
+
+        deferredResourcesPromise
+            .then((newResources) =>
+            {
+                this.resources = { ...newResources, ...this.resources }
+                this.world.loadDecorations()
+                this.tornado = new Tornado()
+                if(this.reveal?.step >= 2 && !this.world.whispers)
+                    this.world.step(2)
+            })
+            .catch(() => {})
     }
 
     reset()

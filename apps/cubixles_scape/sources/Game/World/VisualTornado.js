@@ -162,6 +162,9 @@ export class VisualTornado
 
     update()
     {
+        if(!this.game.tornado)
+            return
+
         this.visibility.value = this.game.tornado.strength
 
         this.mesh.visible = !!this.game.tornado.strength

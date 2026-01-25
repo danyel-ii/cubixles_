@@ -210,9 +210,11 @@ export class Reveal
         }
         else if(step === 2)
         {
-            this.game.interactivePoints.recover()
-            
-            this.game.world.step(2)
+            if(this.game.interactivePoints)
+                this.game.interactivePoints.recover()
+
+            if(this.game.resources.whisperFlameTexture && !this.game.world.whispers)
+                this.game.world.step(2)
             this.game.world.grid.destroy()
             this.game.world.intro.destroy()
             this.game.world.intro = null
