@@ -92,7 +92,7 @@ export class SkinStation
 
     async fetchMintedTokens()
     {
-        const baseUrls = this.getInspectaBaseUrls()
+        const baseUrls = this.getShaolinBaseUrls()
         let lastError = null
 
         for(const baseUrl of baseUrls)
@@ -123,18 +123,19 @@ export class SkinStation
         throw new Error('Token fetch failed')
     }
 
-    getInspectaBaseUrls()
+    getShaolinBaseUrls()
     {
         const urls = []
-        const envBase = import.meta.env.VITE_INSPECTA_BASE_URL
+        const envBase = import.meta.env.VITE_SHAOLIN_BASE_URL
         if(envBase)
             urls.push(envBase)
 
         if(typeof window !== 'undefined' && window.location?.origin)
-            urls.push(`${window.location.origin}/inspecta_deck`)
+            urls.push(window.location.origin)
 
-        urls.push('https://www.cubixles.xyz/inspecta_deck')
-        urls.push('http://localhost:3000/inspecta_deck')
+        urls.push('https://cubixles.xyz')
+        urls.push('https://www.cubixles.xyz')
+        urls.push('http://localhost:3000')
 
         return urls
     }

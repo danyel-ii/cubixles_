@@ -15,6 +15,11 @@ export default {
         host: true, // Open to local network and display URL
         open: true, // Open in browser
         proxy: {
+            '/api': {
+                target: 'http://localhost:3000',
+                changeOrigin: true,
+                secure: false
+            },
             '/inspecta_deck': {
                 target: 'http://localhost:3000',
                 changeOrigin: true,

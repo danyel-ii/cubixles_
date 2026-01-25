@@ -24,7 +24,7 @@ export class TimeMachine extends Area
             InteractivePoints.STATE_CONCEALED,
             () =>
             {
-                window.open('https://cubixles.xyz')
+                window.open('https://danyel-ii.tumblr.com/')
             },
             () =>
             {

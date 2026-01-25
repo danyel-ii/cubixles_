@@ -423,6 +423,11 @@ export class AltarArea extends Area
             'enter',
             () =>
             {
+                if(this.redirecting)
+                    return
+
+                this.redirecting = true
+
                 this.animateBeam()
                 this.animateBeamParticles()
                 this.data.insert()
@@ -434,6 +439,9 @@ export class AltarArea extends Area
                     this.sounds.deathBell1.play()
                 })
                 this.game.achievements.setProgress('sacrifice', 1)
+
+                if(typeof window !== 'undefined')
+                    window.location.assign('https://cubixles.xyz/')
             }
         )
     }
