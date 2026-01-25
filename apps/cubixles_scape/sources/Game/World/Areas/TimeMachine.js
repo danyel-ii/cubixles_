@@ -19,12 +19,13 @@ export class TimeMachine extends Area
     {
         this.interactivePoint = this.game.interactivePoints.create(
             this.references.items.get('interactivePoint')[0].position,
-            'Time Machine',
+            'Bootleggers Both',
             InteractivePoints.ALIGN_RIGHT,
             InteractivePoints.STATE_CONCEALED,
             () =>
             {
-                window.open('https://danyel-ii.tumblr.com/')
+                if(typeof window !== 'undefined')
+                    window.location.assign('https://cubixles.xyz/inspecta_deck')
             },
             () =>
             {
