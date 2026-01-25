@@ -24,7 +24,13 @@ function buildCsp({
   includeUpgrade,
   allowInline,
 }) {
-  const scriptSrc = ["'self'", "https://cdn.jsdelivr.net", "https://vercel.live"];
+  const scriptSrc = [
+    "'self'",
+    "https://cdn.jsdelivr.net",
+    "https://vercel.live",
+    "https://www.googletagmanager.com",
+    "https://www.google-analytics.com",
+  ];
   if (isProd && nonce && !allowInline) {
     scriptSrc.push(`'nonce-${nonce}'`);
   }
@@ -39,6 +45,15 @@ function buildCsp({
     "https://fonts.googleapis.com",
     "https://provenance-viewer.vercel.app",
   ];
+  const connectSrc = [
+    "'self'",
+    "https:",
+    "wss:",
+    "data:",
+    "blob:",
+    "https://www.google-analytics.com",
+    "https://www.googletagmanager.com",
+  ];
   const directives = [
     "default-src 'self'",
     "base-uri 'self'",
@@ -46,13 +61,14 @@ function buildCsp({
     `frame-ancestors ${frameAncestors}`,
     "object-src 'none'",
     "frame-src 'self' https://vercel.live https://verify.walletconnect.org",
+    "worker-src 'self' blob:",
     `script-src ${scriptSrc.join(" ")}`,
     `script-src-elem ${scriptSrcElem.join(" ")}`,
     `style-src ${styleSrc.join(" ")}`,
     `style-src-elem ${styleSrc.join(" ")}`,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https://fonts.gstatic.com https:",
-    "connect-src 'self' https: wss: data: blob:",
+    `connect-src ${connectSrc.join(" ")}`,
     ...(includeUpgrade ? ["upgrade-insecure-requests"] : []),
   ];
 
