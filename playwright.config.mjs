@@ -1,7 +1,9 @@
 import { defineConfig } from "@playwright/test";
 
 const isCI = Boolean(process.env.CI);
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000";
+const defaultPort = process.env.PLAYWRIGHT_PORT || "3100";
+const baseURL =
+  process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${defaultPort}`;
 const baseUrl = new URL(baseURL);
 const webServerHost = baseUrl.hostname;
 const webServerPort =
@@ -13,7 +15,7 @@ const webServer =
     : {
         command: `npm run dev -- --hostname ${webServerHost} --port ${webServerPort}`,
         url: webServerUrl,
-        reuseExistingServer: !isCI,
+        reuseExistingServer: process.env.PLAYWRIGHT_REUSE_SERVER === "1" && !isCI,
         timeout: 240_000,
         stdout: "inherit",
         stderr: "inherit",
