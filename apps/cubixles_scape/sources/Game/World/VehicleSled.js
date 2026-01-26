@@ -3,6 +3,78 @@ import { color, float, mix, normalLocal, positionLocal, step } from 'three/tsl'
 
 export function createCubeSledVehicle()
 {
+    const createGhostCanvasTexture = () =>
+    {
+        if(typeof document === 'undefined')
+            return null
+
+        const size = 32
+        const canvas = document.createElement('canvas')
+        canvas.width = size
+        canvas.height = size
+        const ctx = canvas.getContext('2d')
+        if(!ctx)
+            return null
+
+        ctx.clearRect(0, 0, size, size)
+
+        const pixels = [
+            '00000111111100000000000000000000',
+            '00001111111110000000000000000000',
+            '00011111111111000000000000000000',
+            '00112222222222110000000000000000',
+            '01122222222222211000000000000000',
+            '01122222002222211000000000000000',
+            '01122222002222211000000000000000',
+            '01122222222222211000000000000000',
+            '01122222222222211000000000000000',
+            '01122222222222211000000000000000',
+            '01122222222222211000000000000000',
+            '01122222222222211000000000000000',
+            '01122222222222211000000000000000',
+            '01122222222222211000000000000000',
+            '00112222222222110000000000000000',
+            '00011110000011100000000000000000'
+        ]
+
+        const scale = size / pixels.length
+        for(let y = 0; y < pixels.length; y++)
+        {
+            const row = pixels[y]
+            for(let x = 0; x < row.length; x++)
+            {
+                const value = row[x]
+                if(value === '0')
+                    continue
+                ctx.fillStyle = value === '1' ? '#000000' : '#ffffff'
+                ctx.fillRect(x * scale, y * scale, scale, scale)
+            }
+        }
+
+        const texture = new THREE.CanvasTexture(canvas)
+        texture.colorSpace = THREE.SRGBColorSpace
+        texture.flipY = false
+        texture.minFilter = THREE.NearestFilter
+        texture.magFilter = THREE.NearestFilter
+        texture.generateMipmaps = false
+        texture.needsUpdate = true
+        return texture
+    }
+
+    const applyGhostTexture = (material, texture) =>
+    {
+        if(!material || !texture)
+            return
+        texture.colorSpace = THREE.SRGBColorSpace
+        texture.flipY = false
+        texture.minFilter = THREE.NearestFilter
+        texture.magFilter = THREE.NearestFilter
+        texture.generateMipmaps = false
+        texture.needsUpdate = true
+        material.map = texture
+        material.needsUpdate = true
+    }
+
     const root = new THREE.Group()
 
     const chassis = new THREE.Group()
@@ -68,53 +140,31 @@ export function createCubeSledVehicle()
     frontBar.position.set(1.3, 0.8, 0)
     chassis.add(frontBar)
 
-    const ethGroup = new THREE.Group()
-    ethGroup.name = 'ethereum'
-    ethGroup.position.set(2.2, 0.6, 0)
-    ethGroup.scale.set(2.06, 2.06, 2.06)
-
-    const ethTopMat = new THREE.MeshStandardMaterial({
-        color: 0xaeb3ff,
-        roughness: 0.35,
-        metalness: 0.2,
-        emissive: 0x6f7dff,
-        emissiveIntensity: 0.4,
-        name: 'ethTop'
+    const ghostMaterial = new THREE.SpriteMaterial({
+        transparent: true,
+        depthWrite: false
     })
-    const ethBottomMat = new THREE.MeshStandardMaterial({
-        color: 0x6a6d9b,
-        roughness: 0.4,
-        metalness: 0.25,
-        emissive: 0x3c4180,
-        emissiveIntensity: 0.35,
-        name: 'ethBottom'
-    })
+    const ghostSprite = new THREE.Sprite(ghostMaterial)
+    ghostSprite.name = 'ghostSprite'
+    ghostSprite.position.set(2.2, 1.1, 0)
+    ghostSprite.scale.set(1.6, 1.6, 1.6)
 
-    const topGeo = new THREE.ConeGeometry(0.28, 0.5, 4)
-    const top = new THREE.Mesh(topGeo, ethTopMat)
-    top.position.set(0, 0.4, 0)
-    top.rotation.y = Math.PI / 4
-    ethGroup.add(top)
+    const fallbackTexture = createGhostCanvasTexture()
+    if(fallbackTexture)
+        applyGhostTexture(ghostMaterial, fallbackTexture)
 
-    const bottomGeo = new THREE.ConeGeometry(0.28, 0.6, 4)
-    const bottom = new THREE.Mesh(bottomGeo, ethBottomMat)
-    bottom.position.set(0, 0.05, 0)
-    bottom.rotation.y = Math.PI / 4
-    bottom.rotation.x = Math.PI
-    ethGroup.add(bottom)
+    const ghostLoader = new THREE.TextureLoader()
+    ghostLoader.load(
+        '/assets/ghost-sprite.png',
+        (texture) =>
+        {
+            applyGhostTexture(ghostMaterial, texture)
+        },
+        undefined,
+        () => {}
+    )
 
-    const core = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.18, 4), ethTopMat)
-    core.position.set(0, 0.15, 0)
-    core.rotation.y = Math.PI / 4
-    ethGroup.add(core)
-
-    chassis.add(ethGroup)
-
-    const harnessMat = new THREE.MeshStandardMaterial({ color: 0xd25353, roughness: 0.4, metalness: 0.1, name: 'harness' })
-    const harness = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.8, 8), harnessMat)
-    harness.rotation.z = Math.PI / 2
-    harness.position.set(1.8, 0.8, 0)
-    chassis.add(harness)
+    chassis.add(ghostSprite)
 
     const blinkerMat = new THREE.MeshStandardMaterial({ color: 0xfff1eb, emissive: 0xff5c7a, emissiveIntensity: 0.8, name: 'blinkers' })
     const blinkerLeft = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), blinkerMat)
