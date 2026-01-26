@@ -13,6 +13,9 @@ if (typeof document !== "undefined") {
   initPaletteTheme();
 }
 
+const isTestHooks =
+  typeof window !== "undefined" && window.__CUBIXLES_TEST_HOOKS__ === true;
+
 registerAppLifecycle();
 if (typeof document !== "undefined") {
   if (document.readyState === "loading") {
@@ -74,4 +77,6 @@ function ensureP5Instance() {
     });
 }
 
-ensureP5Instance();
+if (!isTestHooks) {
+  ensureP5Instance();
+}
