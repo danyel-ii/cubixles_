@@ -25,6 +25,7 @@ export class VisualVehicle
         this.setBoostTrails()
         this.setBoostAnimation()
         this.setScreenPosition()
+        this.setNakamigoTrail()
         this.setPaints()
 
         this.tickCallback = () =>
@@ -446,6 +447,200 @@ export class VisualVehicle
         this.screenPosition = new THREE.Vector2(0, 0)
     }
 
+    setNakamigoTrail()
+    {
+        this.nakamigoTrail = {}
+        this.nakamigoTrail.items = []
+        this.nakamigoTrail.poolIndex = 0
+        this.nakamigoTrail.lastSpawnTime = 0
+        this.nakamigoTrail.lastSpawnPosition = new THREE.Vector3(Infinity, Infinity, Infinity)
+        this.nakamigoTrail.spawnDistance = 1.6
+        this.nakamigoTrail.spawnCooldown = 0.22
+        this.nakamigoTrail.seekDelay = 3.5
+        this.nakamigoTrail.maxLife = 12
+        this.nakamigoTrail.totalImages = 1200
+        this.nakamigoTrail.textureCache = new Map()
+        this.nakamigoTrail.textureLoader = this.game.resourcesLoader.getLoader('texture')
+        this.nakamigoTrail.group = new THREE.Group()
+        this.nakamigoTrail.group.name = 'nakamigoTrail'
+        this.game.scene.add(this.nakamigoTrail.group)
+
+        const geometry = new THREE.PlaneGeometry(0.85, 0.85)
+        const total = 18
+
+        for(let i = 0; i < total; i++)
+        {
+            const material = new THREE.MeshStandardMaterial({
+                transparent: true,
+                depthWrite: false,
+                roughness: 0.6,
+                metalness: 0,
+                side: THREE.DoubleSide,
+                alphaTest: 0.15,
+                opacity: 0
+            })
+            const mesh = new THREE.Mesh(geometry, material)
+            mesh.visible = false
+            this.nakamigoTrail.group.add(mesh)
+
+            this.nakamigoTrail.items.push({
+                mesh,
+                material,
+                active: false,
+                age: 0,
+                life: this.nakamigoTrail.maxLife,
+                seekDelay: this.nakamigoTrail.seekDelay,
+                velocity: new THREE.Vector3(),
+                wobble: Math.random() * Math.PI * 2,
+                targetOffset: new THREE.Vector3(),
+                seekSpeed: 0.25 + Math.random() * 0.15
+            })
+        }
+    }
+
+    getNakamigoAltarTarget()
+    {
+        if(this.nakamigoTrail.altarTarget)
+            return this.nakamigoTrail.altarTarget
+
+        const areaTarget = this.game.world?.areas?.altar?.position
+        const respawnTarget = this.game.respawns?.getByName('altar')?.position
+        const target = areaTarget || respawnTarget
+
+        if(target)
+            this.nakamigoTrail.altarTarget = target.clone()
+
+        return this.nakamigoTrail.altarTarget
+    }
+
+    spawnNakamigoFlyer(position, forward)
+    {
+        const trail = this.nakamigoTrail
+        const item = trail.items[trail.poolIndex]
+        trail.poolIndex = (trail.poolIndex + 1) % trail.items.length
+
+        if(!item)
+            return
+
+        const right = new THREE.Vector3(-forward.z, 0, forward.x).normalize()
+        const jitter = (Math.random() - 0.5) * 1.1
+        const spawnPos = position.clone()
+            .add(forward.clone().multiplyScalar(-1.4))
+            .add(right.multiplyScalar(jitter))
+
+        spawnPos.y += 0.35 + Math.random() * 0.4
+
+        const textureIndex = Math.floor(Math.random() * trail.totalImages)
+        const texturePath = `/assets/images/${textureIndex}.png`
+
+        item.active = true
+        item.age = 0
+        item.life = trail.maxLife - Math.random() * 2
+        item.seekDelay = trail.seekDelay + Math.random() * 1.6
+        item.wobble = Math.random() * Math.PI * 2
+        item.seekSpeed = 0.2 + Math.random() * 0.2
+        item.targetOffset.set((Math.random() - 0.5) * 3, 1 + Math.random() * 2.5, (Math.random() - 0.5) * 3)
+
+        item.velocity.set(
+            (Math.random() - 0.5) * 0.06,
+            0.04 + Math.random() * 0.04,
+            (Math.random() - 0.5) * 0.06
+        )
+
+        item.mesh.position.copy(spawnPos)
+        item.mesh.rotation.set(
+            (Math.random() - 0.5) * 0.6,
+            Math.atan2(forward.x, forward.z) + Math.PI,
+            (Math.random() - 0.5) * 1.2
+        )
+        item.mesh.scale.setScalar(0.45 + Math.random() * 0.35)
+        item.mesh.visible = true
+        item.material.opacity = 0.9
+
+        if(trail.textureCache.has(texturePath))
+        {
+            item.material.map = trail.textureCache.get(texturePath)
+            item.material.needsUpdate = true
+        }
+        else
+        {
+            trail.textureLoader.load(
+                texturePath,
+                (texture) =>
+                {
+                    texture.colorSpace = THREE.SRGBColorSpace
+                    texture.flipY = false
+                    texture.minFilter = THREE.LinearFilter
+                    texture.magFilter = THREE.LinearFilter
+                    texture.generateMipmaps = false
+                    trail.textureCache.set(texturePath, texture)
+                    if(item.active)
+                    {
+                        item.material.map = texture
+                        item.material.needsUpdate = true
+                    }
+                }
+            )
+        }
+    }
+
+    updateNakamigoTrail()
+    {
+        const trail = this.nakamigoTrail
+        if(!trail)
+            return
+
+        const now = this.game.ticker.elapsed
+        const delta = this.game.ticker.deltaScaled
+        const vehicle = this.game.physicalVehicle
+
+        const distance = trail.lastSpawnPosition.distanceTo(vehicle.position)
+        if(distance > trail.spawnDistance && now - trail.lastSpawnTime > trail.spawnCooldown)
+        {
+            this.spawnNakamigoFlyer(vehicle.position, vehicle.forward)
+            trail.lastSpawnTime = now
+            trail.lastSpawnPosition.copy(vehicle.position)
+        }
+
+        const altarTarget = this.getNakamigoAltarTarget()
+
+        for(const item of trail.items)
+        {
+            if(!item.active)
+                continue
+
+            item.age += delta
+            if(item.age >= item.life)
+            {
+                item.active = false
+                item.mesh.visible = false
+                continue
+            }
+
+            const flutter = Math.sin(item.age * 2.6 + item.wobble) * 0.18
+            const roll = Math.cos(item.age * 1.8 + item.wobble) * 0.28
+
+            if(altarTarget && item.age > item.seekDelay)
+            {
+                const target = altarTarget.clone().add(item.targetOffset)
+                const direction = target.sub(item.mesh.position)
+                item.mesh.position.addScaledVector(direction.normalize(), item.seekSpeed * delta)
+            }
+            else
+            {
+                item.mesh.position.addScaledVector(item.velocity, delta)
+            }
+
+            item.mesh.position.y += flutter * 0.12
+            item.mesh.rotation.x = flutter
+            item.mesh.rotation.z = roll
+
+            const fadeStart = item.life * 0.65
+            const fade = item.age > fadeStart ? 1 - (item.age - fadeStart) / (item.life - fadeStart) : 1
+            item.material.opacity = 0.85 * Math.max(0, Math.min(1, fade))
+        }
+    }
+
     update()
     {
         const physicalVehicle = this.game.physicalVehicle
@@ -574,5 +769,8 @@ export class VisualVehicle
 
         this.screenPosition.x = (vector.x * 0.5 + 0.5)
         this.screenPosition.y = (vector.y * -0.5 + 0.5)
+
+        // Nakamigo trail
+        this.updateNakamigoTrail()
     }
 }

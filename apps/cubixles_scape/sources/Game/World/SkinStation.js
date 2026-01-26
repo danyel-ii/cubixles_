@@ -85,8 +85,7 @@ export class SkinStation
 
         if(this.skins.length)
         {
-            this.index = 0
-            this.applySkin(this.index)
+            this.index = -1
         }
     }
 
