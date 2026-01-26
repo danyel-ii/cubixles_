@@ -148,7 +148,7 @@ export function createCubeSledVehicle()
     const ghostSprite = new THREE.Sprite(ghostMaterial)
     ghostSprite.name = 'ghostSprite'
     ghostSprite.position.set(2.2, 1.1, 0)
-    ghostSprite.scale.set(1.6, 1.6, 1.6)
+    ghostSprite.scale.set(1.25, 1.25, 1.25)
 
     const fallbackTexture = createGhostCanvasTexture()
     if(fallbackTexture)
