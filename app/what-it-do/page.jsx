@@ -12,6 +12,35 @@ export default function WhatItDoPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data;
+      if (!data || data.type !== "navigate" || typeof data.url !== "string")
+        return;
+
+      try {
+        const target = new URL(data.url, window.location.origin);
+        const allowedOrigins = new Set([
+          window.location.origin,
+          "https://cubixles.xyz",
+          "https://www.cubixles.xyz",
+        ]);
+        const allowedPaths = new Set([
+          "/",
+          "/shaolin_deck",
+          "/inspecta_deck",
+        ]);
+
+        if (!allowedOrigins.has(target.origin)) return;
+        if (!allowedPaths.has(target.pathname)) return;
+
+        window.location.assign(target.toString());
+      } catch {
+        // ignore invalid urls
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
     const iframe = iframeRef.current;
     if (!iframe) return;
     const handleLoad = () => {
@@ -24,6 +53,7 @@ export default function WhatItDoPage() {
     };
     iframe.addEventListener("load", handleLoad);
     return () => {
+      window.removeEventListener("message", handleMessage);
       iframe.removeEventListener("load", handleLoad);
     };
   }, []);

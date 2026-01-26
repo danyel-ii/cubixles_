@@ -4,6 +4,37 @@ import { Area } from './Area.js'
 import { Fn, texture, uv, vec2, vec3, vec4 } from 'three/tsl'
 import gsap from 'gsap'
 
+const navigateTop = (url) =>
+{
+    if(typeof window === 'undefined')
+        return
+
+    try
+    {
+        if(window.top && window.top !== window)
+        {
+            window.top.location.assign(url)
+            return
+        }
+    }
+    catch(error)
+    {
+        // Ignore cross-origin access errors
+    }
+
+    try
+    {
+        if(window.parent && window.parent !== window)
+            window.parent.postMessage({ type: 'navigate', url }, window.location.origin)
+    }
+    catch(error)
+    {
+        // ignore
+    }
+
+    window.location.assign(url)
+}
+
 export class TimeMachine extends Area
 {
     constructor(model)
@@ -24,8 +55,7 @@ export class TimeMachine extends Area
             InteractivePoints.STATE_CONCEALED,
             () =>
             {
-                if(typeof window !== 'undefined')
-                    window.location.assign('https://cubixles.xyz/inspecta_deck')
+                navigateTop('https://cubixles.xyz/inspecta_deck')
             },
             () =>
             {
