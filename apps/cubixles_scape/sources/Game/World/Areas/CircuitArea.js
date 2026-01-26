@@ -816,6 +816,42 @@ export class CircuitArea extends Area
         textTexture.colorSpace = THREE.SRGBColorSpace
         textTexture.generateMipmaps = false
 
+        const leaderboardImage = new Image()
+        leaderboardImage.crossOrigin = 'anonymous'
+        leaderboardImage.decoding = 'async'
+        let leaderboardImageReady = false
+        const drawImageCover = (image) =>
+        {
+            const canvasAspect = canvas.width / canvas.height
+            const imageAspect = image.width / image.height
+            let drawWidth = canvas.width
+            let drawHeight = canvas.height
+            let offsetX = 0
+            let offsetY = 0
+
+            if(imageAspect > canvasAspect)
+            {
+                drawHeight = canvas.height
+                drawWidth = canvas.height * imageAspect
+                offsetX = (canvas.width - drawWidth) / 2
+            }
+            else if(imageAspect < canvasAspect)
+            {
+                drawWidth = canvas.width
+                drawHeight = canvas.width / imageAspect
+                offsetY = (canvas.height - drawHeight) / 2
+            }
+
+            context.drawImage(image, offsetX, offsetY, drawWidth, drawHeight)
+        }
+        leaderboardImage.onload = () =>
+        {
+            leaderboardImageReady = true
+            if(this.leaderboard?.update)
+                this.leaderboard.update(this.leaderboard.scores)
+        }
+        leaderboardImage.src = 'leaderboard/leaderboard-splash.jpg'
+
         // Digits
         // const geometry = new THREE.PlaneGeometry(this.timer.digits.ratio, 1)
 
@@ -860,6 +896,13 @@ export class CircuitArea extends Area
             {
                 // Clear
                 context.clearRect(0, 0, canvas.width, canvas.height)
+
+                if(leaderboardImageReady)
+                {
+                    drawImageCover(leaderboardImage)
+                    textTexture.needsUpdate = true
+                    return
+                }
 
                 if(scores === null)
                 {
