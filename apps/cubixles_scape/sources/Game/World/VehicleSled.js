@@ -156,7 +156,7 @@ export function createCubeSledVehicle()
 
     const ghostLoader = new THREE.TextureLoader()
     ghostLoader.load(
-        '/vehicle/ghost-sprite.png',
+        'vehicle/ghost-sprite.png',
         (texture) =>
         {
             applyGhostTexture(ghostMaterial, texture)

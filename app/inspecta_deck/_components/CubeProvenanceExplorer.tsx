@@ -26,7 +26,10 @@ function getOpenSeaCollectionUrl(explorerUrl?: string | null): string | null {
 
   try {
     const url = new URL(explorerUrl);
-    if (!url.hostname.includes("opensea.io")) {
+    const hostname = url.hostname.toLowerCase();
+    const isOpenSeaHost =
+      hostname === "opensea.io" || hostname.endsWith(".opensea.io");
+    if (!isOpenSeaHost || url.protocol !== "https:") {
       return null;
     }
 
