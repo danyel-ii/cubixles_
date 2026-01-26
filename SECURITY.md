@@ -1,6 +1,6 @@
 # Security Policy
 
-Last updated: 2026-01-22
+Last updated: 2026-01-26
 
 ## Reporting a vulnerability
 Please report security issues privately.
@@ -24,3 +24,6 @@ This policy applies to:
 
 ## Coordinated disclosure
 We ask that reporters keep details private until a fix or mitigation is available.
+
+## Dependency advisory note
+See `docs/security.md` for the current dependency advisory notes (including the dismissed `elliptic` alert rationale).

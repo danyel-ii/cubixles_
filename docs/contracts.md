@@ -1,5 +1,5 @@
 # cubixles_ Contracts
-Last updated: 2026-01-22
+Last updated: 2026-01-26
 
 ## Contract set
 - `contracts/src/cubixles/CubixlesMinter.sol` (legacy minter)
@@ -8,6 +8,8 @@ Last updated: 2026-01-22
 - `contracts/src/builders/CubixlesBuilderMinter.sol` (builder minter)
 - `contracts/src/royalties/BuilderRoyaltyForwarder.sol` (per-mint royalty receiver)
 - `contracts/src/cubixles_v.1.0..sol` (v1.0 marker contract)
+
+Builder contracts are the primary minting path; legacy contracts remain for historical tokens.
 
 ## CubixlesMinter (legacy)
 - ERC-721 with ERC-2981 resale royalties.

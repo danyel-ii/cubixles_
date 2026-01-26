@@ -1,5 +1,5 @@
 # cubixles_ Security Overview
-Last updated: 2026-01-22
+Last updated: 2026-01-26
 
 This repository mixes onchain minting contracts with a server-assisted mint pipeline. The security model assumes untrusted NFT references, untrusted metadata URLs, and untrusted client inputs.
 
@@ -30,3 +30,8 @@ This repository mixes onchain minting contracts with a server-assisted mint pipe
 - Royalty receiver contracts can reject ETH; those amounts are redirected to the owner payout
   address, and if that transfer fails they accrue to `pendingOwnerBalance`.
 - The builder price quote is only as accurate as the floor oracle data used by the signer.
+
+## Dependency advisory note (elliptic)
+- Dependabot alerts for `elliptic` were dismissed as not used for signing/auth/transactions.
+- The package is transitive via `vite-plugin-node-polyfills` and only applies to legacy/dev polyfills
+  for the Three.js landscape build; it is not part of the minting runtime or wallet signing path.

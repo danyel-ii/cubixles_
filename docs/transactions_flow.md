@@ -1,7 +1,7 @@
 # Mint Transaction Flow
-Last updated: 2026-01-22
+Last updated: 2026-01-26
 
-This primer describes how ETH is routed during minting, including swaps and owner payouts.
+This primer describes how ETH is routed during minting, including swaps and owner payouts. The builder flow is the primary minting path; the legacy flow is retained for earlier tokens.
 
 ## Builder mint flow (CubixlesBuilderMinter)
 1. The client requests a signed quote from `/api/builder/quote`.

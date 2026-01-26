@@ -1,5 +1,5 @@
 # cubixles_ — Documentation Index
-Last updated: 2026-01-22
+Last updated: 2026-01-26
 
 Start here:
 - `docs/overview.md`

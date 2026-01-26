@@ -368,15 +368,16 @@ export class SkinStation
         const faceUrls = skin.faces && skin.faces.length ? skin.faces : Array(6).fill(skin.url)
         const textures = await Promise.all(faceUrls.map((url) => this.loadTexture(url)))
 
-        const materials = textures.map((texture) =>
+        const materials = textures.map((texture, index) =>
         {
+            const faceTexture = this.prepareFaceTexture(texture, index)
             const material = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
                 roughness: 0.55,
                 metalness: 0.1,
                 transparent: true,
                 opacity: 0.95,
-                map: texture
+                map: faceTexture
             })
             material.userData.prevent = true
             return material
@@ -386,6 +387,24 @@ export class SkinStation
             materials,
             previewTexture: textures[0]
         }
+    }
+
+    prepareFaceTexture(texture, index)
+    {
+        if(!texture)
+            return texture
+
+        // BoxGeometry mirrors the back face UVs; flip U so the image reads outward.
+        const shouldFlipU = index === 5
+        if(!shouldFlipU)
+            return texture
+
+        const clone = texture.clone()
+        clone.wrapS = THREE.RepeatWrapping
+        clone.repeat.set(-1, 1)
+        clone.offset.set(1, 0)
+        clone.needsUpdate = true
+        return clone
     }
 
     loadTexture(url)

@@ -1,5 +1,5 @@
 # cubixles_ Operations
-Last updated: 2026-01-22
+Last updated: 2026-01-26
 
 ## Governance
 - Maintainer: danyel-ii.
@@ -17,3 +17,8 @@ Last updated: 2026-01-22
 - Frontend uses Next.js + p5.js with ethers.js for wallet interactions.
 - Client code never stores private keys or constructs raw transaction blobs; wallet signing stays in the provider.
 - Foundry is the Solidity build/test toolchain.
+
+## Build + deploy notes
+- Builder mint (`/build`) is the primary flow; legacy minting is retained for historical tokens.
+- The `/what-it-do` landscape is a toy intro built from `apps/cubixles_scape/` and does not touch minting.
+- `npm run build` runs `apps/cubixles_scape` first and emits a static build into `public/what-it-do/cubixles_scape/` before building the Next.js app.

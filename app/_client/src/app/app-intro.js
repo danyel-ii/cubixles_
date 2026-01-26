@@ -214,8 +214,8 @@ function buildFaceTransforms() {
   const half = config.cubeSize / 2 - 1;
   return [
     { x: half, y: 0, z: 0, rx: 0, ry: HALF_PI, rz: 0, mirrorX: false },
-    { x: -half, y: 0, z: 0, rx: 0, ry: -HALF_PI, rz: 0, mirrorX: true },
-    { x: 0, y: half, z: 0, rx: HALF_PI, ry: 0, rz: 0, mirrorX: true },
+    { x: -half, y: 0, z: 0, rx: 0, ry: -HALF_PI, rz: 0, mirrorX: false },
+    { x: 0, y: half, z: 0, rx: HALF_PI, ry: 0, rz: 0, mirrorX: false },
     { x: 0, y: -half, z: 0, rx: -HALF_PI, ry: 0, rz: 0, mirrorX: false },
     { x: 0, y: 0, z: half, rx: 0, ry: 0, rz: 0, mirrorX: false },
     { x: 0, y: 0, z: -half, rx: 0, ry: PI, rz: 0, mirrorX: true },

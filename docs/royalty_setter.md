@@ -1,7 +1,7 @@
 # Resale Royalty Setter Guide
-Last updated: 2026-01-22
+Last updated: 2026-01-26
 
-This primer explains how resale royalties are handled onchain and who can configure them.
+This primer explains how resale royalties are handled onchain and who can configure them. Builder royalties are the primary path; legacy royalties apply to earlier tokens.
 
 ## Legacy royalties (CubixlesMinter)
 - The legacy minter sets a default ERC-2981 royalty receiver and bps.
@@ -36,6 +36,6 @@ This primer explains how resale royalties are handled onchain and who can config
 4. Recipients can withdraw accrued ETH via `withdrawPending()`.
 
 ## Deployment note (mainnet)
-- 2026-01-22: Builder minter broadcast on Ethereum mainnet.
+- 2026-01-26: Builder minter broadcast on Ethereum mainnet.
 - Builder minter: `0x35aD1B49C956c0236ADcD2E7051c3C4e78D4FccA`
 - Royalty forwarder implementation: `0xF16B3427aDa1a6325005f13223aeb6C0bBF09169`

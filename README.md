@@ -1,18 +1,21 @@
 # cubixles_
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/danyel-ii/cubixles_)
-Last updated: 2026-01-22
+Last updated: 2026-01-26
 
-cubixles_ is a Next.js miniapp for minting ERC-721 cubes whose faces are linked to NFTs the minter already owns. It ships a legacy mint flow and a builder mint flow, each with its own pricing and royalty mechanics.
+cubixles_ is a Next.js miniapp for minting ERC-721 cubes whose faces are linked to NFTs the minter already owns. The builder mint flow is the primary path; the legacy flow remains for earlier tokens and historical compatibility.
 
 ## Highlights
+- Builder mints use signed floor quotes (0.0055 ETH + 5% of floor totals, 0.01 ETH floor clamp), pay 8.5% of the mint price to each referenced NFT royalty receiver (fallback to owner payout when ERC-2981 is missing or fails), and deploy a per-mint royalty forwarder owned by the minter.
 - Legacy mints use commit-reveal and LESS/linear pricing.
-- Builder mints use signed floor quotes (0.0055 ETH + 5% of floor totals, 0.01 ETH floor clamp), pay 8.5% of the mint price to each referenced NFT royalty receiver (falling back to owner payout when ERC-2981 is missing or fails), and deploy a per-mint royalty forwarder owned by the minter.
-- Token viewers live at `/m/<tokenId>` (legacy) and `/m2/<tokenId>` (builder).
+- Builder mint UI lives at `/build`.
+- Builder token viewers live at `/m2/<tokenId>`; legacy viewers live at `/m/<tokenId>`.
+- `/what-it-do` is a toy intro that drops into the Three.js landscape; it does not touch minting.
 - Metadata and generated assets are pinned to IPFS.
 
 ## Repository layout
 - `app/` — Next.js app router, API routes, and UI.
 - `app/_client/` — p5.js rendering and client-side features.
+- `apps/cubixles_scape/` — Three.js landscape (Vite). Builds into `public/what-it-do/cubixles_scape/`.
 - `contracts/` — Solidity contracts, tests, and deployment scripts.
 - `docs/` — core project documentation.
 
