@@ -123,6 +123,7 @@ export function createCubeSledVehicle()
     chassis.add(skinCube)
 
     const sledMat = new THREE.MeshStandardMaterial({ color: 0x3a2a34, roughness: 0.8, metalness: 0.1, name: 'sledBase' })
+    const harnessMat = new THREE.MeshStandardMaterial({ color: 0xd25353, roughness: 0.4, metalness: 0.1, name: 'harness' })
     const sledBase = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.3, 2.2), sledMat)
     sledBase.position.set(0, 0.6, 0)
     chassis.add(sledBase)
@@ -155,7 +156,7 @@ export function createCubeSledVehicle()
 
     const ghostLoader = new THREE.TextureLoader()
     ghostLoader.load(
-        '/assets/ghost-sprite.png',
+        '/vehicle/ghost-sprite.png',
         (texture) =>
         {
             applyGhostTexture(ghostMaterial, texture)
