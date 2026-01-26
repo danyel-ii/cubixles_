@@ -53,7 +53,7 @@ export function createCubeSledVehicle()
 
         const texture = new THREE.CanvasTexture(canvas)
         texture.colorSpace = THREE.SRGBColorSpace
-        texture.flipY = false
+        texture.flipY = true
         texture.minFilter = THREE.NearestFilter
         texture.magFilter = THREE.NearestFilter
         texture.generateMipmaps = false
@@ -66,7 +66,7 @@ export function createCubeSledVehicle()
         if(!material || !texture)
             return
         texture.colorSpace = THREE.SRGBColorSpace
-        texture.flipY = false
+        texture.flipY = true
         texture.minFilter = THREE.NearestFilter
         texture.magFilter = THREE.NearestFilter
         texture.generateMipmaps = false
