@@ -3628,10 +3628,12 @@ body {
   transition: transform 0.45s ease;
   will-change: transform;
   overflow-x: hidden;
+  width: 100%;
 }
 
 .landing-tour-slide {
-  min-width: 100%;
+  flex: 0 0 100%;
+  width: 100%;
   padding: clamp(18px, 3vw, 44px);
   box-sizing: border-box;
   overflow-x: hidden;
