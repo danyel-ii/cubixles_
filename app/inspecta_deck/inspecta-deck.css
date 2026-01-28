@@ -43,6 +43,7 @@ body {
   flex-direction: column;
   gap: clamp(24px, 3vw, 48px);
   background: radial-gradient(circle at 20% 20%, rgba(10, 12, 20, 0.8), #030305 45%, #000 100%);
+  overflow-x: hidden;
 }
 
 .landing-loader {
@@ -3616,6 +3617,7 @@ body {
   display: flex;
   transition: transform 0.45s ease;
   will-change: transform;
+  overflow-x: hidden;
 }
 
 .landing-tour-slide {
@@ -3634,6 +3636,7 @@ body {
   max-width: 100%;
   overflow-x: hidden;
   touch-action: pan-y;
+  width: 100%;
 }
 
 .landing-tour-panel--wide {
@@ -3780,6 +3783,7 @@ body {
     overflow-wrap: anywhere;
     word-break: break-word;
     hyphens: auto;
+    width: 100%;
   }
 
   .landing-body {
@@ -3788,11 +3792,13 @@ body {
     overflow-wrap: anywhere;
     word-break: break-word;
     hyphens: auto;
+    width: 100%;
   }
 
   .landing-home .panel-eyebrow {
     font-size: 10px;
     letter-spacing: 0.1em;
+    width: 100%;
   }
 
   .landing-home .panel-title {
@@ -3803,6 +3809,7 @@ body {
     overflow-wrap: anywhere;
     word-break: break-word;
     hyphens: auto;
+    width: 100%;
   }
 
   .landing-tour-panel p,
