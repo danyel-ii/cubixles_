@@ -1,7 +1,8 @@
 # cubixles_ Security Overview
-Last updated: 2026-01-26
+Last updated: 2026-01-28
 
-This repository mixes onchain minting contracts with a server-assisted mint pipeline. The security model assumes untrusted NFT references, untrusted metadata URLs, and untrusted client inputs.
+This repository mixes onchain minting contracts with a server-assisted mint pipeline. The security
+model assumes untrusted NFT references, untrusted metadata URLs, and untrusted client inputs.
 
 ## Onchain risk model
 - External calls are treated as untrusted (ERC-721 `ownerOf`, ERC-2981 `royaltyInfo`, and royalty receivers).
@@ -18,6 +19,14 @@ This repository mixes onchain minting contracts with a server-assisted mint pipe
 - IPFS and metadata fetches are constrained by allowlists and size limits to reduce SSRF risk.
   - Allowlists can be extended via `TOKEN_METADATA_ALLOWED_HOSTS`, `BUILDER_METADATA_ALLOWED_HOSTS`,
     `METADATA_ALLOWED_HOSTS`, `IPFS_GATEWAY_ALLOWLIST`, and `IMAGE_PROXY_ALLOWED_HOSTS`.
+- Sensitive routes enforce origin allowlists via `CUBIXLES_ALLOWED_ORIGINS`.
+
+## CSP + route isolation
+- `middleware.js` sets per-request CSP headers.
+- `/what-it-do` (and `/m2/preview`) allow inline scripts and eval to support the Vite build.
+- Minting routes default to nonce-based CSP in production.
+- Use top-level navigation (not iframe history) when jumping from the landscape to minting routes
+  to ensure the stricter CSP is applied.
 
 ## Key assumptions
 - The quote signer and pinning credentials are secure and rotated when needed.

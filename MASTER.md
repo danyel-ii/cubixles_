@@ -1,8 +1,11 @@
 # cubixles_ — Documentation Index
-Last updated: 2026-01-26
+Last updated: 2026-01-28
 
 Start here:
 - `docs/overview.md`
+- `docs/builder-mint.md`
+- `docs/bootlegger-mint.md`
+- `docs/paperclips.md`
 - `docs/contracts.md`
 - `docs/security.md`
 - `docs/operations.md`

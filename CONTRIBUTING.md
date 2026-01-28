@@ -1,8 +1,9 @@
 # Contributing to cubixles_
 
-Last updated: 2026-01-26
+Last updated: 2026-01-28
 
-Thanks for your interest in contributing. This doc describes how to propose changes and the standards we expect.
+Thanks for your interest in contributing. This doc describes how to propose changes and the
+standards we expect.
 
 ## Ways to contribute
 - Report bugs and regressions
@@ -10,14 +11,15 @@ Thanks for your interest in contributing. This doc describes how to propose chan
 - Submit pull requests
 
 ## Before you start
-- Search existing issues and discussions to avoid duplicates
+- Search existing issues and discussions to avoid duplicates.
 - For security issues, do not open a public issue. See `SECURITY.md`.
 
 ## Development workflow
 1. Fork the repo and create a feature branch.
 2. Make your changes with clear, focused commits.
 3. Run relevant checks:
-   - `npm run dev` (UI)
+   - `npm run dev` (Next.js app)
+   - `npm run dev:cubixles_scape` (optional Vite landscape)
    - `cd contracts && forge test -vvv` (contracts)
    - `npm run coverage:contracts` (coverage gate)
 4. Open a pull request with a concise summary and test evidence.

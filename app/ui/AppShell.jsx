@@ -188,7 +188,7 @@ export default function AppShell({ mode = "mint" }) {
             {pricingContent}
             <div className="overlay-actions">
               <a id="overlay-build" className="overlay-button overlay-button--dig" href="/build">
-                Mint
+                Builder Mint
               </a>
               <a id="overlay-inspect" className="overlay-button is-ghost" href="/shaolin_deck">
                 Inspect

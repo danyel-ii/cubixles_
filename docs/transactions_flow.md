@@ -1,13 +1,15 @@
 # Mint Transaction Flow
-Last updated: 2026-01-26
+Last updated: 2026-01-28
 
-This primer describes how ETH is routed during minting, including swaps and owner payouts. The builder flow is the primary minting path; the legacy flow is retained for earlier tokens.
+This primer describes how ETH is routed during minting, including swaps and owner payouts.
+The builder flow is the primary minting path; the legacy flow is retained for earlier tokens.
+For full UX steps, see `docs/builder-mint.md` and `docs/bootlegger-mint.md`.
 
 ## Builder mint flow (CubixlesBuilderMinter)
 1. The client requests a signed quote from `/api/builder/quote`.
 2. The signer fetches collection floors; any missing, zero, or sub-0.01 floor is clamped to 0.01 ETH.
 3. Mint price is computed as `0.0055 ETH + (sumFloor * 0.05)`.
-4. The minter calls `mintBuilders` (or `mintBuildersWithMetadata`) and pays the exact mint price.
+4. The minter calls `mintBuilders` or `mintBuildersWithMetadata` and pays the exact mint price.
 5. The contract resolves ERC-2981 royalty receivers for each referenced NFT (falls back to the owner
    payout receiver if ERC-2981 is missing or `royaltyInfo` fails).
 6. Each referenced NFT royalty receiver receives 8.5% of the total mint price; any fallback share

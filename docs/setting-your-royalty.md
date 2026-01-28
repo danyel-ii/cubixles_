@@ -1,5 +1,5 @@
 # Setting Your Builder Royalty Forwarder
-Last updated: 2026-01-26
+Last updated: 2026-01-28
 
 This primer explains how to set resale royalty splits for a builder mint after you
 have minted a cubixles_ builder token. The builder mint deploys a per-token
@@ -7,9 +7,10 @@ BuilderRoyaltyForwarder that you (the minter) own. You can update the split at
 any time.
 
 Builder minting is the primary flow; legacy/bootleg notes only apply to earlier tokens.
+For the full builder mint flow, see `docs/builder-mint.md`.
 
 If you minted via the legacy/bootleg flow, this document does not apply. That
-flow uses the shared RoyaltySplitter; see [docs/royalty_setter.md](docs/royalty_setter.md).
+flow uses the shared RoyaltySplitter; see `docs/royalty_setter.md`.
 
 ## What gets created at mint
 

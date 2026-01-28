@@ -1,6 +1,6 @@
 # Security Policy
 
-Last updated: 2026-01-26
+Last updated: 2026-01-28
 
 ## Reporting a vulnerability
 Please report security issues privately.
@@ -15,7 +15,7 @@ Alternative:
 This policy applies to:
 - Smart contracts under `contracts/src/`
 - Server routes under `app/api/`
-- Client app under `app/` and `app/_client/`
+- Client app under `app/` and `app/_client/` (including `/what-it-do`)
 
 ## Response targets
 - Acknowledgment: within 3 business days
@@ -26,4 +26,5 @@ This policy applies to:
 We ask that reporters keep details private until a fix or mitigation is available.
 
 ## Dependency advisory note
-See `docs/security.md` for the current dependency advisory notes (including the dismissed `elliptic` alert rationale).
+See `docs/security.md` for the current dependency advisory notes (including the dismissed
+`elliptic` alert rationale).
