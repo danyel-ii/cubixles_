@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import CubixlesLogo from "../_components/CubixlesLogo.jsx";
 import CubixlesText from "../_components/CubixlesText.jsx";
@@ -65,6 +65,241 @@ export default function AppShell({ mode = "mint" }) {
       <li className="mint-confirm-wait">Wait for mint confirmation.</li>
     </>
   );
+  const [slideIndex, setSlideIndex] = useState(0);
+  const touchStartRef = useRef(null);
+  const slides = useMemo(() => {
+    const mintedContent = isBuilder ? (
+      <>
+        <p className="overlay-text">An ERC-721 with:</p>
+        <ul className="overlay-steps">
+          <li>hosted metadata pinned during the mint flow, and</li>
+          <li>
+            an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
+            interactive cube,
+          </li>
+          <li>
+            a generative paperclipping (.png) that is unique to your wallet address and this
+            interaction.
+          </li>
+          <li>and your right to set future royalties in the splitter contract.</li>
+        </ul>
+        <p className="overlay-text">
+          <CubixlesText text="The referenced NFTs remain fully independent assets. The cubixle does not contain, escrow, or substitute them -- cubixles_ record their configuration." />
+        </p>
+      </>
+    ) : (
+      <>
+        <p className="overlay-text">An ERC-721 with:</p>
+        <ul className="overlay-steps">
+          <li>hosted metadata pinned during the mint flow, and</li>
+          <li>
+            an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
+            interactive cube.
+          </li>
+          <li>
+            a generative paperclipping (.png) that is unique to your wallet address and this
+            interaction.
+          </li>
+          <li>the right to set the per-token royalty forwarding contract (builder mints).</li>
+        </ul>
+        <p className="overlay-text">
+          <CubixlesText text="The referenced NFTs remain fully independent assets. The cubixle does not contain, escrow, or substitute them -- cubixles_ record their configuration." />
+        </p>
+      </>
+    );
+
+    const pricingContent = isBuilder ? (
+      <>
+        <p className="overlay-text">
+          <span className="overlay-em">Builder mints</span>
+        </p>
+        <p className="overlay-text">
+          0.0055 ETH + 5% of snapshot floor totals (0.01 ETH fallback per face).
+        </p>
+        <ul className="overlay-steps">
+          <li>Each referenced NFT receives 8.5% of the total mint price.</li>
+          <li>Remaining value routes to the builder payout address.</li>
+          <li>Builder mints deploy a per-token royalty forwarder owned by the minter.</li>
+        </ul>
+        <p className="overlay-text">
+          <span className="overlay-em">Bootlegger mints</span>
+        </p>
+        <p className="overlay-text">Use an alternative pricing and royalty model.</p>
+      </>
+    ) : (
+      <>
+        <p className="overlay-text">
+          <span className="overlay-em">Builder mints</span> cost 0.0055 ETH + 5% of the snapshot
+          floor total (0.01 ETH fallback per face). 8.5% of total mint fees goes to EACH of the
+          linked projects (that's 51% in total to the projects you choose when linking 6 NFTs to
+          your <CubixlesLogo />).<sup>1</sup>
+        </p>
+        <p className="overlay-text overlay-footnote">
+          <sup>1</sup>
+          <span className="overlay-em">Bootlegger mints</span> follow a legacy pricing system that
+          depends on the active network.
+        </p>
+      </>
+    );
+
+    return [
+      {
+        key: "intro",
+        label: "Welcome",
+        content: (
+          <>
+            <div className="overlay-sub">
+              <CubixlesText text="cubixles_ is an ERC-721 experiment in defining and exercising productive rights in NFT ownership:" />
+            </div>
+            <p className="overlay-text">
+              <CubixlesText text="In cubixles_, ownership functions as the right to compose, curate, and externalize context without transferring or encumbering the originals." />
+            </p>
+            <p className="overlay-text">
+              Each cubixle is an ERC-721 whose artistic identity is defined by, and whose
+              provenance is anchored to, an ownership-verified configuration of existing NFTs you
+              already own.
+            </p>
+          </>
+        ),
+      },
+      {
+        key: "how",
+        label: "How it works",
+        content: (
+          <ol className="overlay-steps">
+            <li>Connect your wallet.</li>
+            <li>Select 1–6 NFTs you own.</li>
+            <li>We snapshot key metadata (and collection floors when available).</li>
+            <li>The interactive artwork and metadata are pinned to IPFS.</li>
+            <li>You sign the mint transaction on the selected network.</li>
+          </ol>
+        ),
+      },
+      {
+        key: "minted",
+        label: "What gets minted",
+        content: mintedContent,
+      },
+      {
+        key: "pricing",
+        label: "Mint pricing",
+        content: (
+          <>
+            {pricingContent}
+            <div className="overlay-actions">
+              <a id="overlay-build" className="overlay-button overlay-button--dig" href="/build">
+                Mint
+              </a>
+              <a id="overlay-inspect" className="overlay-button is-ghost" href="/shaolin_deck">
+                Inspect
+              </a>
+              <a id="overlay-royalties" className="overlay-button is-ghost" href="/royalties">
+                Royalties
+              </a>
+              <a
+                id="enter-btn"
+                className="overlay-button is-ghost overlay-button--bootleg"
+                href="/inspecta_deck"
+              >
+                Bootleg it
+              </a>
+            </div>
+            <div id="overlay-about-panel" className="overlay-about">
+              <div className="overlay-about-head">
+                <div className="overlay-section-title">Contextualized Rarity as Inversion</div>
+                <button id="overlay-about-back" className="overlay-back" type="button">
+                  Back
+                </button>
+              </div>
+              <p className="overlay-text">
+                NFT-native digital art forces a reconsideration of rarity. In a medium where
+                images are infinitely replicable and traits are algorithmically enumerable,
+                scarcity at the level of form is largely synthetic.
+              </p>
+              <p className="overlay-text">
+                Cubixles starts from a different premise: the only element that is conceptually
+                rare in NFT space is contextualized provenance.
+              </p>
+              <p className="overlay-text">
+                Images can be copied. Styles can be forked. Traits can be regenerated.
+              </p>
+              <p className="overlay-text">
+                But the specific, verifiable context of ownership relations - who owned what, when,
+                and how those works were brought into relation - is irreducible.
+              </p>
+              <p className="overlay-text">
+                Cubixles consolidates this insight into three aligned layers:
+              </p>
+              <ul className="overlay-steps overlay-dig-list">
+                <li>
+                  <span className="overlay-em">Principle:</span> Rarity in NFTs does not emerge from
+                  visual uniqueness, but from contextualized lineage - the historically specific
+                  configuration of provenance mapped onto ownership and reference.
+                </li>
+                <li>
+                  <span className="overlay-em">Primitive:</span> Provenance itself becomes the
+                  creator market primitive: a composable, ownership-verified relation between
+                  tokens.
+                </li>
+                <li>
+                  <span className="overlay-em">Mechanism:</span> The minting process binds the
+                  verifiable provenance of NFTs a user already owns into a new token, making
+                  contextual rarity executable and material.
+                </li>
+              </ul>
+              <p className="overlay-text">
+                Builder mints snapshot live floor data to set the Feingehalt, route 8.5% of the
+                total mint price to each referenced NFT royalty receiver, deploy a per-mint royalty
+                forwarder so the minter controls future splits, and generate a wallet-seeded paper
+                clip sculpture (with QR) pinned to IPFS as the display image, plus a p5.js inspector
+                capture of the cube at mint.
+              </p>
+              <p className="overlay-text">
+                In this framework, rarity is no longer a property of images or traits. It is a
+                property of relations.
+              </p>
+            </div>
+          </>
+        ),
+      },
+    ];
+  }, [isBuilder]);
+  const totalSlides = slides.length;
+
+  const goPrev = () => {
+    setSlideIndex((current) => Math.max(0, current - 1));
+  };
+
+  const goNext = () => {
+    setSlideIndex((current) => Math.min(totalSlides - 1, current + 1));
+  };
+
+  const handleTouchStart = (event) => {
+    const touch = event.touches?.[0];
+    if (!touch) {
+      return;
+    }
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event) => {
+    const touch = event.changedTouches?.[0];
+    const start = touchStartRef.current;
+    if (!touch || !start) {
+      return;
+    }
+    touchStartRef.current = null;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) {
+      return;
+    }
+    if (dx < 0) {
+      goNext();
+      return;
+    }
+    goPrev();
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -82,182 +317,68 @@ export default function AppShell({ mode = "mint" }) {
     <>
       <div id="intro-shield" className="intro-shield" aria-hidden="true"></div>
       <div id="overlay" className={`overlay${overlayHidden ? " is-hidden" : ""}`}>
-        <div className="overlay-card">
+        <div className="overlay-card overlay-card--carousel">
           <div className="overlay-title is-logotype" aria-label="cubixles_">
             <span className="logo-mark" aria-hidden="true">
               {"\uE000"}
             </span>
             <span className="sr-only">cubixles_</span>
           </div>
-          <div className="overlay-sub">
-            <CubixlesText text="cubixles_ is an ERC-721 experiment in defining and exercising productive rights in NFT ownership:" />
-          </div>
-          <p className="overlay-text">
-            <CubixlesText text="In cubixles_, ownership functions as the right to compose, curate, and externalize context without transferring or encumbering the originals." />
-          </p>
-          <p className="overlay-text">
-            Each cubixle is an ERC-721 whose artistic identity is defined by, and whose provenance
-            is anchored to, an ownership-verified configuration of existing NFTs you already own.
-          </p>
-          <div className="overlay-section">
-            <div className="overlay-section-title">How it works</div>
-            <ol className="overlay-steps">
-              <li>Connect your wallet.</li>
-              <li>Select 1–6 NFTs you own.</li>
-              <li>We snapshot key metadata (and collection floors when available).</li>
-              <li>The interactive artwork and metadata are pinned to IPFS.</li>
-              <li>You sign the mint transaction on the selected network.</li>
-            </ol>
-          </div>
-          <div className="overlay-section">
-            <div className="overlay-section-title">What gets minted</div>
-            {isBuilder ? (
-              <>
-                <p className="overlay-text">An ERC-721 with:</p>
-                <ul className="overlay-steps">
-                  <li>hosted metadata pinned during the mint flow, and</li>
-                  <li>
-                    an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
-                    interactive cube,
-                  </li>
-                  <li>
-                    a generative paperclipping (.png) that is unique to your wallet address and
-                    this interaction.
-                  </li>
-                  <li>and your right to set future royalties in the splitter contract.</li>
-                </ul>
-                <p className="overlay-text">
-                  <CubixlesText text="The referenced NFTs remain fully independent assets. The cubixle does not contain, escrow, or substitute them -- cubixles_ record their configuration." />
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="overlay-text">An ERC-721 with:</p>
-                <ul className="overlay-steps">
-                  <li>hosted metadata pinned during the mint flow, and</li>
-                  <li>
-                    an <span className="overlay-em">external_url</span> pointing to your IPFS-hosted
-                    interactive cube.
-                  </li>
-                  <li>
-                    a generative paperclipping (.png) that is unique to your wallet address and
-                    this interaction.
-                  </li>
-                  <li>the right to set the per-token royalty forwarding contract (builder mints).</li>
-                </ul>
-                <p className="overlay-text">
-                  <CubixlesText text="The referenced NFTs remain fully independent assets. The cubixle does not contain, escrow, or substitute them -- cubixles_ record their configuration." />
-                </p>
-              </>
-            )}
-          </div>
-          <div className="overlay-section">
-            <div className="overlay-section-title">Mint pricing</div>
-            {isBuilder ? (
-              <>
-                <p className="overlay-text">
-                  <span className="overlay-em">Builder mints</span>
-                </p>
-                <p className="overlay-text">
-                  0.0055 ETH + 5% of snapshot floor totals (0.01 ETH fallback per face).
-                </p>
-                <ul className="overlay-steps">
-                  <li>Each referenced NFT receives 8.5% of the total mint price.</li>
-                  <li>Remaining value routes to the builder payout address.</li>
-                  <li>Builder mints deploy a per-token royalty forwarder owned by the minter.</li>
-                </ul>
-                <p className="overlay-text">
-                  <span className="overlay-em">Bootlegger mints</span>
-                </p>
-                <p className="overlay-text">Use an alternative pricing and royalty model.</p>
-              </>
-            ) : (
-              <>
-                <p className="overlay-text">
-                  <span className="overlay-em">Builder mints</span> cost 0.0055 ETH + 5% of the
-                  snapshot floor total (0.01 ETH fallback per face). 8.5% of total mint fees goes
-                  to EACH of the linked projects (that's 51% in total to the projects you choose
-                  when linking 6 NFTs to your <CubixlesLogo />).<sup>1</sup>
-                </p>
-                <p className="overlay-text overlay-footnote">
-                  <sup>1</sup>
-                  <span className="overlay-em">Bootlegger mints</span> follow a legacy pricing
-                  system that depends on the active network.
-                </p>
-              </>
-            )}
-          </div>
-          <div className="overlay-actions">
-            <a id="overlay-build" className="overlay-button overlay-button--dig" href="/build">
-              Mint
-            </a>
-            <a id="overlay-inspect" className="overlay-button is-ghost" href="/shaolin_deck">
-              Inspect
-            </a>
-            <a id="overlay-royalties" className="overlay-button is-ghost" href="/royalties">
-              Royalties
-            </a>
-            <a
-              id="enter-btn"
-              className="overlay-button is-ghost overlay-button--bootleg"
-              href="/inspecta_deck"
+          <div
+            className="overlay-carousel"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div
+              className="overlay-track"
+              style={{ transform: `translateX(-${slideIndex * 100}%)` }}
             >
-              Bootleg it
-            </a>
-          </div>
-          <div id="overlay-about-panel" className="overlay-about">
-            <div className="overlay-about-head">
-              <div className="overlay-section-title">Contextualized Rarity as Inversion</div>
-              <button id="overlay-about-back" className="overlay-back" type="button">
-                Back
-              </button>
+              {slides.map((slide, index) => (
+                <section
+                  key={slide.key}
+                  className="overlay-slide"
+                  aria-hidden={slideIndex !== index}
+                >
+                  <div className="overlay-slide-head">
+                    <div className="overlay-section-title">{slide.label}</div>
+                    <div className="overlay-slide-count">
+                      {index + 1}/{totalSlides}
+                    </div>
+                  </div>
+                  <div className="overlay-slide-body">{slide.content}</div>
+                </section>
+              ))}
             </div>
-            <p className="overlay-text">
-              NFT-native digital art forces a reconsideration of rarity. In a medium where images
-              are infinitely replicable and traits are algorithmically enumerable, scarcity at the
-              level of form is largely synthetic.
-            </p>
-            <p className="overlay-text">
-              Cubixles starts from a different premise: the only element that is conceptually rare
-              in NFT space is contextualized provenance.
-            </p>
-            <p className="overlay-text">
-              Images can be copied. Styles can be forked. Traits can be regenerated.
-            </p>
-            <p className="overlay-text">
-              But the specific, verifiable context of ownership relations - who owned what, when,
-              and how those works were brought into relation - is irreducible.
-            </p>
-            <p className="overlay-text">
-              Cubixles consolidates this insight into three aligned layers:
-            </p>
-            <ul className="overlay-steps overlay-dig-list">
-              <li>
-                <span className="overlay-em">Principle:</span> Rarity in NFTs does not emerge from
-                visual uniqueness, but from contextualized lineage - the historically specific
-                configuration of provenance mapped onto ownership and reference.
-              </li>
-              <li>
-                <span className="overlay-em">Primitive:</span> Provenance itself becomes the creator
-                market primitive: a composable, ownership-verified relation between tokens.
-              </li>
-              <li>
-                <span className="overlay-em">Mechanism:</span> The minting process binds the
-                verifiable provenance of NFTs a user already owns into a new token, making
-                contextual rarity executable and material.
-              </li>
-            </ul>
-            <p className="overlay-text">
-              Builder mints snapshot live floor data to set the Feingehalt, route 8.5% of the total
-              mint price to each referenced NFT royalty receiver, deploy a per-mint royalty
-              forwarder so the minter controls future splits, and generate a wallet-seeded paper
-              clip sculpture (with QR) pinned to IPFS as the display image, plus a p5.js inspector
-              capture of the cube at mint.
-            </p>
-            <p className="overlay-text">
-              In this framework, rarity is no longer a property of images or traits. It is a
-              property of relations.
-            </p>
+          </div>
+          <div className="overlay-nav">
+            <button
+              className="overlay-nav-button is-ghost"
+              type="button"
+              onClick={goPrev}
+              disabled={slideIndex === 0}
+            >
+              Back
+            </button>
+            <div className="overlay-dots" role="tablist" aria-label="Intro slides">
+              {slides.map((slide, index) => (
+                <button
+                  key={slide.key}
+                  type="button"
+                  className={`overlay-dot${slideIndex === index ? " is-active" : ""}`}
+                  onClick={() => setSlideIndex(index)}
+                  aria-label={`Go to ${slide.label}`}
+                  aria-pressed={slideIndex === index}
+                />
+              ))}
+            </div>
+            <button
+              className="overlay-nav-button"
+              type="button"
+              onClick={goNext}
+              disabled={slideIndex === totalSlides - 1}
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
