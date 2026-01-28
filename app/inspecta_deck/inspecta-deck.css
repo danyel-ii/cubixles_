@@ -3749,6 +3749,23 @@ body {
   .landing-tour-panel {
     overflow-y: visible;
   }
+
+  .landing-tour-panel {
+    overflow-x: clip;
+  }
+
+  .landing-tour-panel .panel-title,
+  .landing-tour-panel .panel-eyebrow,
+  .landing-tour-panel .landing-subhead,
+  .landing-tour-panel .landing-body {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+  }
   .landing-home .cubixles-logo-link {
     padding: 6px 10px;
     border-width: 3px;
