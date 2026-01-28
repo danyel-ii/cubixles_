@@ -6,6 +6,7 @@ const nextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
   experimental: {
+    serverComponentsExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
     turbo: {
       resolveAlias: {
         "src/shared": resolve("./app/_client/src/shared"),
