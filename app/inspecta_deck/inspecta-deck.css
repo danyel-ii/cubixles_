@@ -3608,6 +3608,7 @@ body {
   box-shadow: 12px 12px 0 var(--neo-border);
   background: var(--neo-bg);
   touch-action: pan-y;
+  overscroll-behavior: contain;
 }
 
 .landing-tour-track {
@@ -3721,6 +3722,13 @@ body {
 
   .landing-tour-panel * {
     min-width: 0;
+  }
+
+  .landing-tour-panel {
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
   .landing-home .cubixles-logo-link {
     padding: 6px 10px;
