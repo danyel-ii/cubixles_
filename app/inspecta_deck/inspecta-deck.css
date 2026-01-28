@@ -3620,6 +3620,7 @@ body {
   min-width: 100%;
   padding: clamp(18px, 3vw, 44px);
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .landing-tour-panel {
@@ -3628,6 +3629,8 @@ body {
   box-shadow: 10px 10px 0 var(--neo-border);
   background: var(--neo-surface);
   padding: clamp(18px, 3vw, 36px);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .landing-tour-panel--wide {
@@ -3710,6 +3713,15 @@ body {
 }
 
 @media (max-width: 600px) {
+  .landing-tour-shell,
+  .landing-tour-panel,
+  .landing-tour-slide {
+    overflow-x: hidden;
+  }
+
+  .landing-tour-panel * {
+    min-width: 0;
+  }
   .landing-home .cubixles-logo-link {
     padding: 6px 10px;
     border-width: 3px;
@@ -3770,6 +3782,18 @@ body {
     font-size: 1.1rem;
     line-height: 1.2;
     padding: 4px 8px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .landing-tour-panel p,
+  .landing-tour-panel h1,
+  .landing-tour-panel h2,
+  .landing-tour-panel h3,
+  .landing-tour-panel h4,
+  .landing-tour-panel a,
+  .landing-tour-panel span {
     overflow-wrap: anywhere;
     word-break: break-word;
     hyphens: auto;
