@@ -5,17 +5,12 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   serverExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals = config.externals || [];
-      config.externals.push("@napi-rs/canvas", "gif-encoder-2");
-    }
-    config.resolve = config.resolve || {};
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      "src/shared": resolve("./app/_client/src/shared"),
-    };
-    return config;
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        "src/shared": resolve("./app/_client/src/shared"),
+      },
+    },
   },
   async redirects() {
     return [
