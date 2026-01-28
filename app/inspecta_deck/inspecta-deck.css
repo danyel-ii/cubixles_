@@ -3614,6 +3614,8 @@ body {
   background: var(--neo-bg);
   touch-action: pan-x;
   overscroll-behavior: contain;
+  width: 100%;
+  max-width: 100vw;
 }
 
 .landing-tour-track {
@@ -3721,6 +3723,13 @@ body {
 }
 
 @media (max-width: 600px) {
+  html,
+  body,
+  .inspecta-deck-root,
+  .landing-page {
+    overflow-x: hidden;
+  }
+
   .landing-tour-shell,
   .landing-tour-panel,
   .landing-tour-slide {
@@ -3790,6 +3799,8 @@ body {
     font-size: 10px;
     letter-spacing: 0.1em;
     width: 100%;
+    display: block;
+    box-sizing: border-box;
   }
 
   .landing-home .panel-title {
@@ -3801,6 +3812,7 @@ body {
     word-break: break-word;
     hyphens: auto;
     width: 100%;
+    box-sizing: border-box;
   }
 
   .landing-tour-panel p,
