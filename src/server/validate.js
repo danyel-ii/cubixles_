@@ -11,7 +11,7 @@ export const pinRequestSchema = z.object({
   nonce: z.string(),
   signature: z.string(),
   chainId: CHAIN_ID_SCHEMA.optional(),
-  payload: z.record(z.unknown()),
+  payload: z.record(z.string(), z.unknown()),
 });
 
 export const builderAssetRequestSchema = z.object({
@@ -37,7 +37,12 @@ export const nftRequestSchema = z.object({
   mode: z.enum(["alchemy", "rpc"]).optional(),
   chainId: CHAIN_ID_SCHEMA,
   path: z.string().optional(),
-  query: z.record(z.union([z.string(), z.number(), z.array(z.union([z.string(), z.number()]))])).optional(),
+  query: z
+    .record(
+      z.string(),
+      z.union([z.string(), z.number(), z.array(z.union([z.string(), z.number()]))])
+    )
+    .optional(),
   calls: z
     .array(
       z.object({

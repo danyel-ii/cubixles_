@@ -4,9 +4,7 @@ import { resolve } from "node:path";
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  experimental: {
-    serverComponentsExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
-  },
+  serverExternalPackages: ["@napi-rs/canvas", "gif-encoder-2"],
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = config.externals || [];

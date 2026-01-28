@@ -3595,3 +3595,116 @@ body {
     letter-spacing: 0.12em;
   }
 }
+
+.landing-home.landing-tour {
+  gap: clamp(16px, 2vw, 28px);
+}
+
+.landing-tour-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 4px solid var(--neo-border);
+  box-shadow: 12px 12px 0 var(--neo-border);
+  background: var(--neo-bg);
+  touch-action: pan-y;
+}
+
+.landing-tour-track {
+  display: flex;
+  transition: transform 0.45s ease;
+  will-change: transform;
+}
+
+.landing-tour-slide {
+  min-width: 100%;
+  padding: clamp(18px, 3vw, 44px);
+  box-sizing: border-box;
+}
+
+.landing-tour-panel {
+  border: 4px solid var(--neo-border);
+  border-radius: 12px;
+  box-shadow: 10px 10px 0 var(--neo-border);
+  background: var(--neo-surface);
+  padding: clamp(18px, 3vw, 36px);
+}
+
+.landing-tour-panel--wide {
+  width: 100%;
+}
+
+.landing-tour-split {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.4fr);
+  gap: clamp(18px, 3vw, 32px);
+  align-items: start;
+}
+
+.landing-tour-scroll {
+  max-height: min(60vh, 640px);
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.landing-tour-hero {
+  margin: 0;
+}
+
+.landing-tour-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.landing-nav-button {
+  border: 3px solid var(--neo-border);
+  background: var(--neo-secondary);
+  color: var(--neo-on-secondary);
+  border-radius: 999px;
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+  box-shadow: 4px 4px 0 var(--neo-border);
+  cursor: pointer;
+}
+
+.landing-nav-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.landing-nav-dots {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.landing-nav-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid var(--neo-border);
+  background: var(--neo-mint);
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--neo-border);
+}
+
+.landing-nav-dot.is-active {
+  background: var(--neo-accent);
+}
+
+@media (max-width: 900px) {
+  .landing-tour-shell {
+    border-radius: 14px;
+  }
+
+  .landing-tour-split {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-tour-scroll {
+    max-height: none;
+  }
+}
