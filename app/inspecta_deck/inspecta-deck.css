@@ -32,6 +32,17 @@ body {
   box-sizing: border-box;
 }
 
+.inspecta-deck-root {
+  min-height: 100vh;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: auto;
+}
+
 .inspecta-deck-root a {
   color: inherit;
 }
